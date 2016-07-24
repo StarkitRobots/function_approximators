@@ -1,0 +1,17 @@
+<?xml version="1.0"?>
+<package>
+  <name>rosban_fa</name>
+  <version>0.0.0</version>
+  <description>This package contains several function approximators and a factory to build them</description>
+
+  <maintainer email="medrimonia@gmail.com">medrimonia</maintainer>
+  <author email="medrimonia@gmail.com">medrimonia</author>
+
+  <license>NCY</license>
+
+  <buildtool_depend>catkin</buildtool_depend>
+  <build_depend>rosban_regression_forests</build_depend>
+  <run_depend>rosban_regression_forests</run_depend>
+
+  <export/>
+</package>
