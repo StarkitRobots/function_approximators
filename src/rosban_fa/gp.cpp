@@ -8,65 +8,53 @@
 
 #include <iostream>
 
-using rosban_gp::CovarianceFunction;
 using rosban_gp::GaussianProcess;
-using rosban_gp::SquaredExponential;
 
 namespace rosban_fa
 {
 
-int GP::getOutputDim() const
+GP::GP(std::unique_ptr<std::vector<rosban_gp::GaussianProcess>> gps_,
+       const rosban_gp::RandomizedRProp::Config & ga_conf_)
+  : gps(std::move(gps_)), ga_conf(ga_conf_)
 {
-  return gps.size();
 }
 
-void GP::train(const Eigen::MatrixXd & inputs,
-               const Eigen::MatrixXd & observations,
-               const Eigen::MatrixXd & limits)
+GP::~GP() {}
+
+int GP::getOutputDim() const
 {
-  checkConsistency(inputs, observations, limits);
-  gps.clear();
-  for (int output_dim = 0; output_dim < observations.cols(); output_dim++)
-  {
-    std::unique_ptr<CovarianceFunction> cov_func(new SquaredExponential(inputs.rows()));
-    gps.push_back(GaussianProcess(inputs, observations.col(output_dim),
-                                  std::move(cov_func)));
-    gps[output_dim].autoTune(conf);
-  }
+  if (!gps) return 0;
+  return gps->size();
 }
+
 
 void GP::predict(const Eigen::VectorXd & input,
                        Eigen::VectorXd & mean,
-                       Eigen::MatrixXd & covar)
+                       Eigen::MatrixXd & covar) const
 {
-  mean = Eigen::VectorXd::Zero(gps.size());
-  Eigen::VectorXd vars = Eigen::VectorXd::Zero(gps.size());
-  for (size_t output_dim = 0; output_dim < gps.size(); output_dim++) {
+  int O = getOutputDim();
+  mean = Eigen::VectorXd::Zero(O);
+  covar = Eigen::MatrixXd::Identity(O, O);
+  for (int output_dim = 0; output_dim < getOutputDim(); output_dim++) {
     double dim_mean, dim_var;
-    gps[output_dim].getDistribParameters(input, dim_mean, dim_var);
+    (*gps)[output_dim].getDistribParameters(input, dim_mean, dim_var);
     mean(output_dim) = dim_mean;
-    vars(output_dim) = dim_var;
+    covar(output_dim, output_dim) = dim_var;
   }
-  covar = Eigen::MatrixXd::Identity(gps.size(), gps.size()) * vars;
 }
 
 void GP::gradient(const Eigen::VectorXd & input,
-                  Eigen::VectorXd & gradient)
+                  Eigen::VectorXd & gradient) const
 {
   check1DOutput("gradient");
   gradient = Eigen::VectorXd::Zero(input.rows(), 1);
-  gradient = gps[0].getGradient(input);
+  gradient = (*gps)[0].getGradient(input);
 }
 
 void GP::getMaximum(const Eigen::MatrixXd & limits,
-                          Eigen::VectorXd & input, double & output)
+                          Eigen::VectorXd & input, double & output) const
 {
   check1DOutput("getMaximum");
-  // TODO put those parameters as parseable in xml
-  // rProp properties
-  int nb_trials = 100;
-  double epsilon = std::pow(10, -6);
-  int max_nb_guess = 2000;
   // Preparing functions
   std::function<Eigen::VectorXd(const Eigen::VectorXd)> gradient_func;
   gradient_func = [this](const Eigen::VectorXd & guess)
@@ -85,25 +73,10 @@ void GP::getMaximum(const Eigen::MatrixXd & limits,
     };
   // Performing multiple rProp and conserving the best candidate
   Eigen::VectorXd best_guess;
-  best_guess = rosban_gp::randomizedRProp(gradient_func, scoring_func, limits,
-                                          epsilon, nb_trials, max_nb_guess);
+  best_guess = rosban_gp::RandomizedRProp::run(gradient_func, scoring_func, limits,
+                                               ga_conf);
   input = best_guess;
   output = scoring_func(best_guess);
-}
-
-std::string GP::class_name() const
-{
-  return "gp";
-}
-
-void GP::to_xml(std::ostream &out) const
-{
-  conf.write("conf", out);
-}
-
-void GP::from_xml(TiXmlNode *node)
-{
-  conf.tryRead(node, "conf");
 }
 
 }

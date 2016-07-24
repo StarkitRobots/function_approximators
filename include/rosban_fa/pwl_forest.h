@@ -12,29 +12,25 @@ namespace rosban_fa
 class PWLForest : public FunctionApproximator
 {
 public:
+  typedef std::vector<std::unique_ptr<regression_forests::Forest>> Forests;
+
+  PWLForest(std::unique_ptr<Forests> forests,
+            int max_action_tiles);
 
   virtual ~PWLForest();
 
   virtual int getOutputDim() const override;
 
-  virtual void train(const Eigen::MatrixXd & input,
-                     const Eigen::MatrixXd & observations,
-                     const Eigen::MatrixXd & limits) override;
-
   virtual void predict(const Eigen::VectorXd & input,
                        Eigen::VectorXd & mean,
-                       Eigen::MatrixXd & covar) override;
+                       Eigen::MatrixXd & covar) const override;
 
   virtual void gradient(const Eigen::VectorXd & input,
-                        Eigen::VectorXd & gradient) override;
+                        Eigen::VectorXd & gradient) const override;
 
   virtual void getMaximum(const Eigen::MatrixXd & limits,
                           Eigen::VectorXd & input,
-                          double & output) override;
-
-  virtual std::string class_name() const override;
-  virtual void to_xml(std::ostream &out) const override;
-  virtual void from_xml(TiXmlNode *node) override;
+                          double & output) const override;
 
 private:
   std::vector<std::unique_ptr<regression_forests::Forest>> forests;

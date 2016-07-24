@@ -6,10 +6,11 @@
 namespace rosban_fa
 {
 
+FunctionApproximator::~FunctionApproximator() {}
 
 void FunctionApproximator::predict(const Eigen::VectorXd & input,
                                    double & mean,
-                                   double & var)
+                                   double & var) const
 {
   Eigen::VectorXd output;
   Eigen::MatrixXd covar;
@@ -25,7 +26,7 @@ void FunctionApproximator::predict(const Eigen::VectorXd & input,
   var = covar(0,0);
 }
 
-void FunctionApproximator::debugPrediction(const Eigen::VectorXd & input, std::ostream & out)
+void FunctionApproximator::debugPrediction(const Eigen::VectorXd & input, std::ostream & out) const
 {
   (void)input;(void)out;
   std::ostringstream oss;
@@ -34,33 +35,7 @@ void FunctionApproximator::debugPrediction(const Eigen::VectorXd & input, std::o
   throw std::logic_error(oss.str());
 }
 
-void FunctionApproximator::checkConsistency(const Eigen::MatrixXd & inputs,
-                                            const Eigen::MatrixXd & observations,
-                                            const Eigen::MatrixXd & limits)
-{
-  if (inputs.cols() != observations.rows()) {
-    std::ostringstream oss;
-    oss << "FunctionApproximator::checkConsistency: inconsistent number of samples: "
-        << "inputs.cols() != observations.rows() "
-        << "(" << inputs.cols() << " != " << observations.rows() << ")";
-    throw std::logic_error(oss.str());
-  }
-  if (limits.rows() != inputs.rows()) {
-    std::ostringstream oss;
-    oss << "FunctionApproximator::checkConsistency: inconsistent dimension for input: "
-        << "inputs.rows() != limits.rows() "
-        << "(" << inputs.rows() << " != " << limits.rows() << ")";
-    throw std::logic_error(oss.str());
-  }
-  if (limits.cols() != 2) {
-    std::ostringstream oss;
-    oss << "FunctionApproximator::checkConsistency: invalid dimensions for limits: "
-        << "expecting 2 columns and received " << limits.rows();
-    throw std::logic_error(oss.str());
-  }
-}
-
-void FunctionApproximator::check1DOutput(const std::string & caller_name)
+void FunctionApproximator::check1DOutput(const std::string & caller_name) const
 {
   if (getOutputDim() != 1) {
     std::ostringstream oss;

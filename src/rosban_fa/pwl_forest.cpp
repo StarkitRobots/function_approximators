@@ -15,6 +15,11 @@ using regression_forests::Node;
 namespace rosban_fa
 {
 
+PWLForest::PWLForest(std::unique_ptr<Forests> forests_,
+                     int max_action_tiles_)
+  : forests(std::move(forests_)), max_action_tiles(max_action_tiles_)
+{}
+
 PWLForest::~PWLForest() {}
 
 int PWLForest::getOutputDim() const
@@ -22,26 +27,9 @@ int PWLForest::getOutputDim() const
   return forests.size();
 }
 
-void PWLForest::train(const Eigen::MatrixXd & inputs,
-                      const Eigen::MatrixXd & observations,
-                      const Eigen::MatrixXd & limits)
-{
-  checkConsistency(inputs, observations, limits);
-  ExtraTrees solver;
-  solver.conf =  ExtraTrees::Config::generateAuto(limits,
-                                                  observations.rows(),
-                                                  ApproximationType::PWL);
-  forests.clear();
-  for (int output_dim = 0; output_dim < observations.cols(); output_dim++)
-  {
-    TrainingSet ts(inputs, observations.col(output_dim));
-    forests.push_back(solver.solve(ts, limits));
-  }
-}
-
 void PWLForest::predict(const Eigen::VectorXd & input,
                         Eigen::VectorXd & mean,
-                        Eigen::MatrixXd & covar)
+                        Eigen::MatrixXd & covar) const
 {
   int O = getOutputDim();
   mean = Eigen::VectorXd::Zero(O);
@@ -54,7 +42,7 @@ void PWLForest::predict(const Eigen::VectorXd & input,
 }
 
 void PWLForest::gradient(const Eigen::VectorXd & input,
-                         Eigen::VectorXd & gradient)
+                         Eigen::VectorXd & gradient) const
 {
   (void) input;
   (void) gradient;
@@ -62,7 +50,8 @@ void PWLForest::gradient(const Eigen::VectorXd & input,
 }
 
 void PWLForest::getMaximum(const Eigen::MatrixXd & limits,
-                                 Eigen::VectorXd & input, double & output)
+                           Eigen::VectorXd & input,
+                           double & output) const
 {
   check1DOutput("getMaximum");
   //TODO: as parameter
@@ -76,23 +65,6 @@ void PWLForest::getMaximum(const Eigen::MatrixXd & limits,
 
   input = max_pair.second;
   output = max_pair.first;
-}
-
-std::string PWLForest::class_name() const
-{
-  return "pwl_forest_solver";
-}
-
-void PWLForest::to_xml(std::ostream &out) const
-{
-  (void) out;
-  throw std::runtime_error("PWLForest::to_xml: unimplemented");
-}
-
-void PWLForest::from_xml(TiXmlNode *node)
-{
-  (void) node;
-  throw std::runtime_error("PWLForest::from_xml: unimplemented");
 }
 
 }
