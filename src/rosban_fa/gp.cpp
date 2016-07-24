@@ -57,7 +57,7 @@ void GP::getMaximum(const Eigen::MatrixXd & limits,
                           Eigen::VectorXd & input, double & output)
 {
   check1DOutput("getMaximum");
-  // TODO put those options as parseable in xml
+  // TODO put those parameters as parseable in xml
   // rProp properties
   int nb_trials = 100;
   double epsilon = std::pow(10, -6);
