@@ -1,19 +1,19 @@
-#include "regression_experiments/solver_factory.h"
+#include "rosban_fa/factory.h"
 
-#include "regression_experiments/gp_forest_solver.h"
-#include "regression_experiments/gp_solver.h"
-#include "regression_experiments/pwc_forest_solver.h"
-#include "regression_experiments/pwl_forest_solver.h"
+#include "rosban_fa/gp_forest.h"
+#include "rosban_fa/gp.h"
+#include "rosban_fa/pwc_forest.h"
+#include "rosban_fa/pwl_forest.h"
 
-namespace regression_experiments
+namespace rosban_fa
 {
 
-SolverFactory::SolverFactory()
+Factory::Factory()
 {
   registerBuilder("gp_forest",
                   [](TiXmlNode * node)
                   {
-                    Solver * solver = new GPForestSolver();
+                    FunctionApproximator * solver = new GPForest();
                     solver->from_xml(node);
                     return solver;
                   });
@@ -21,18 +21,18 @@ SolverFactory::SolverFactory()
                   [](TiXmlNode * node)
                   {
                     (void)node;
-                    return new PWCForestSolver();
+                    return new PWCForest();
                   });
   registerBuilder("pwl_forest",
                   [](TiXmlNode * node)
                   {
                     (void)node;
-                    return new PWLForestSolver();
+                    return new PWLForest();
                   });
   registerBuilder("gp",
                   [](TiXmlNode * node)
                   {
-                    Solver * solver = new GPSolver();
+                    FunctionApproximator * solver = new GP();
                     solver->from_xml(node);
                     return solver;
                   });

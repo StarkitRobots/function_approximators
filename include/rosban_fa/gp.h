@@ -17,6 +17,8 @@ public:
 
   virtual ~GP() {}
 
+  virtual int getOutputDim() const override;
+
   /// Update internal structure according to the provided samples
   virtual void train(const Eigen::MatrixXd & inputs,
                      const Eigen::MatrixXd & observations,

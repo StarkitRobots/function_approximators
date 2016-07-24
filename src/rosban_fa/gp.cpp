@@ -15,6 +15,11 @@ using rosban_gp::SquaredExponential;
 namespace rosban_fa
 {
 
+int GP::getOutputDim() const
+{
+  return gps.size();
+}
+
 void GP::train(const Eigen::MatrixXd & inputs,
                const Eigen::MatrixXd & observations,
                const Eigen::MatrixXd & limits)

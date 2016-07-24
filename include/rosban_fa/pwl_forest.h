@@ -15,6 +15,8 @@ public:
 
   virtual ~PWLForest();
 
+  virtual int getOutputDim() const override;
+
   virtual void train(const Eigen::MatrixXd & input,
                      const Eigen::MatrixXd & observations,
                      const Eigen::MatrixXd & limits) override;

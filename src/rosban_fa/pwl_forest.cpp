@@ -17,6 +17,11 @@ namespace rosban_fa
 
 PWLForest::~PWLForest() {}
 
+int PWLForest::getOutputDim() const
+{
+  return forests.size();
+}
+
 void PWLForest::train(const Eigen::MatrixXd & inputs,
                       const Eigen::MatrixXd & observations,
                       const Eigen::MatrixXd & limits)

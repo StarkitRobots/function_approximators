@@ -4,5 +4,5 @@ set(SOURCES
   gp_forest.cpp
   pwc_forest.cpp
   pwl_forest.cpp
-#  solver_factory.cpp
+  factory.cpp
 )
