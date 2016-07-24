@@ -1,4 +1,4 @@
-#include "regression_experiments/pwc_forest_solver.h"
+#include "rosban_fa/pwc_forest.h"
 
 #include "rosban_regression_forests/algorithms/extra_trees.h"
 #include "rosban_regression_forests/approximations/approximation_type.h"
@@ -12,50 +12,65 @@ using regression_forests::Forest;
 using regression_forests::Tree;
 using regression_forests::Node;
 
-namespace regression_experiments
+namespace rosban_fa
 {
 
-PWCForestSolver::~PWCForestSolver() {}
+PWCForest::~PWCForest() {}
 
-void PWCForestSolver::solve(const Eigen::MatrixXd & inputs,
-                            const Eigen::VectorXd & observations,
-                            const Eigen::MatrixXd & limits)
+int PWCForest::getOutputDim() const
 {
+  return forests.size();
+}
+
+void PWCForest::train(const Eigen::MatrixXd & inputs,
+                      const Eigen::MatrixXd & observations,
+                      const Eigen::MatrixXd & limits)
+{
+  checkConsistency(inputs, observations, limits);
   ExtraTrees solver;
   solver.conf =  ExtraTrees::Config::generateAuto(limits,
                                                   observations.rows(),
                                                   ApproximationType::PWC);
-  TrainingSet ts(inputs, observations);
-
-  forest = solver.solve(ts, limits);
-}
-
-void PWCForestSolver::predict(const Eigen::MatrixXd & inputs,
-                             Eigen::VectorXd & means,
-                             Eigen::VectorXd & vars)
-{
-  Eigen::VectorXd result(inputs.cols());
-  means = Eigen::VectorXd::Zero(inputs.cols());
-  vars = Eigen::VectorXd::Zero(inputs.cols());
-  for (int point = 0; point < inputs.cols(); point++) {
-    means(point) = forest->getValue(inputs.col(point));
-    vars(point)  = forest->getVar(inputs.col(point));
+  forests.clear();
+  for (int  output_dim = 0; output_dim < observations.cols(); output_dim++)
+  {
+    TrainingSet ts(inputs, observations.col(output_dim));
+    forests.push_back(solver.solve(ts, limits));
   }
 }
 
-void PWCForestSolver::gradients(const Eigen::MatrixXd & inputs,
-                               Eigen::MatrixXd & gradients)
+void PWCForest::predict(const Eigen::VectorXd & input,
+                        Eigen::VectorXd & mean,
+                        Eigen::MatrixXd & covar)
 {
-  (void) inputs;(void) gradients;
-  throw std::runtime_error("PWCForestSolver::gradients: not implemented");
+  int O = getOutputDim();
+  mean = Eigen::VectorXd::Zero(O);
+  Eigen::VectorXd vars = Eigen::VectorXd::Zero(O);
+  for (int output_dim = 0; output_dim < O; output_dim++)
+  {
+    mean(output_dim) = forests[output_dim]->getValue(input);
+    vars(output_dim) = forests[output_dim]->getVar(input);
+  }
+  covar = Eigen::MatrixXd::Identity(O,O) * vars;
 }
 
-void PWCForestSolver::getMaximum(const Eigen::MatrixXd & limits,
-                                 Eigen::VectorXd & input, double & output)
+void PWCForest::gradient(const Eigen::VectorXd & input,
+                         Eigen::VectorXd & gradient)
 {
+  (void) input;(void) gradient;
+  throw std::runtime_error("PWCForest::gradients: not implemented");
+}
+
+void PWCForest::getMaximum(const Eigen::MatrixXd & limits,
+                           Eigen::VectorXd & input,
+                           double & output)
+{
+  check1DOutput("getMaximum");
+  //TODO max_action_tiles as parameter
+  //TODO eventually use gradient ascent as optional part
   int max_action_tiles = 2000;
   std::unique_ptr<regression_forests::Tree> sub_tree;
-  sub_tree = forest->unifiedProjectedTree(limits, max_action_tiles);
+  sub_tree = forests[0]->unifiedProjectedTree(limits, max_action_tiles);
 
   std::pair<double, Eigen::VectorXd> max_pair;
   max_pair = sub_tree->getMaxPair(limits);
@@ -64,21 +79,21 @@ void PWCForestSolver::getMaximum(const Eigen::MatrixXd & limits,
   output = max_pair.first;
 }
 
-std::string PWCForestSolver::class_name() const
+std::string PWCForest::class_name() const
 {
-  return "pwc_forest_solver";
+  return "pwc_forest";
 }
 
-void PWCForestSolver::to_xml(std::ostream &out) const
+void PWCForest::to_xml(std::ostream &out) const
 {
   (void) out;
-  throw std::runtime_error("PWCForestSolver::to_xml: unimplemented");
+  throw std::runtime_error("PWCForest::to_xml: unimplemented");
 }
 
-void PWCForestSolver::from_xml(TiXmlNode *node)
+void PWCForest::from_xml(TiXmlNode *node)
 {
   (void) node;
-  throw std::runtime_error("PWCForestSolver::from_xml: unimplemented");
+  throw std::runtime_error("PWCForest::from_xml: unimplemented");
 }
 
 }
