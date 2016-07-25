@@ -15,7 +15,7 @@ class FunctionApproximator;
 /// Describe the interface of a FunctionApproximator trainer.
 /// Can be serialized from/to xml files
 /// Can be built with a TrainerFactory
-class Trainer : rosban_utils::Serializable
+class Trainer : public rosban_utils::Serializable
 {
 public:
 

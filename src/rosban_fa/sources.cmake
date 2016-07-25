@@ -9,5 +9,5 @@ set(SOURCES
   pwl_forest.cpp
   pwl_forest_trainer.cpp
   trainer.cpp
-#  factory.cpp
+  trainer_factory.cpp
 )

@@ -9,7 +9,7 @@ namespace rosban_fa
 
 class GPTrainer : public Trainer
 {
-
+public:
   GPTrainer();
 
   virtual std::unique_ptr<FunctionApproximator>

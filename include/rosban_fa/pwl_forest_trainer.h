@@ -7,6 +7,7 @@ namespace rosban_fa
 
 class PWLForestTrainer : public Trainer
 {
+public:
   PWLForestTrainer();
 
   /// Update internal structure according to the provided samples
