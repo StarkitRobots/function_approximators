@@ -1,4 +1,4 @@
-#include "rosban_fa/function_approximator.h"
+#include "rosban_fa/trainer.h"
 
 #include <sstream>
 #include <stdexcept>

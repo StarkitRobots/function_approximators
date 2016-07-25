@@ -31,7 +31,7 @@ void FunctionApproximator::debugPrediction(const Eigen::VectorXd & input, std::o
   (void)input;(void)out;
   std::ostringstream oss;
   oss << "FunctionApproximator::debugPrediction: "
-      << "Unimplemented Method for class '" << class_name() << "'";
+      << "Unimplemented Method for current class";
   throw std::logic_error(oss.str());
 }
 
@@ -39,7 +39,7 @@ void FunctionApproximator::check1DOutput(const std::string & caller_name) const
 {
   if (getOutputDim() != 1) {
     std::ostringstream oss;
-    oss << class_name() << "::" << caller_name << ": "
+    oss << "FunctionApproximator" << "::" << caller_name << ": "
         << "requiring a 1D output to a "
         << getOutputDim() << "D output function";
     throw std::logic_error(oss.str());

@@ -2,6 +2,8 @@
 
 #include "rosban_fa/trainer.h"
 
+#include "rosban_gp/gradient_ascent/randomized_rprop.h"
+
 namespace rosban_fa
 {
 
@@ -15,7 +17,7 @@ public:
   enum class Type
   { SQRT, CURT, LOG2};
 
-  GPTrainer(Type t = Type::LOG2);
+  GPForestTrainer(Type t = Type::LOG2);
 
   virtual std::unique_ptr<FunctionApproximator>
   train(const Eigen::MatrixXd & inputs,

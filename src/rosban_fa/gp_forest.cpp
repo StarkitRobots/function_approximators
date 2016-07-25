@@ -1,7 +1,5 @@
 #include "rosban_fa/gp_forest.h"
 
-#include "rosban_regression_forests/algorithms/extra_trees.h"
-#include "rosban_regression_forests/approximations/approximation_type.h"
 #include "rosban_regression_forests/approximations/gp_approximation.h"
 
 #include "rosban_gp/auto_tuning.h"
@@ -10,10 +8,7 @@
 
 #include "rosban_random/tools.h"
 
-using regression_forests::ApproximationType;
 using regression_forests::GPApproximation;
-using regression_forests::ExtraTrees;
-using regression_forests::TrainingSet;
 using regression_forests::Forest;
 using regression_forests::Tree;
 using regression_forests::Node;
@@ -22,6 +17,13 @@ using rosban_gp::GaussianProcess;
 
 namespace rosban_fa
 {
+
+GPForest::GPForest(std::unique_ptr<Forests> forests_,
+                   const rosban_gp::RandomizedRProp::Config & ga_conf_)
+  : forests(std::move(forests_)), ga_conf(ga_conf_)
+{
+}
+
 GPForest::~GPForest() {}
 
 int GPForest::getOutputDim() const
@@ -41,8 +43,8 @@ void GPForest::predict(const Eigen::VectorXd & input,
     // TODO: change design to make something 'cleaner'
     // Retrieving all the gaussian processes at the given point
     std::vector<GaussianProcess> gps;
-    for (size_t tree_id = 0; tree_id < *forests[output_dim]->nbTrees(); tree_id++) {
-      const Tree & tree = *forests[output_dim]->getTree(tree_id);
+    for (size_t tree_id = 0; tree_id < (*forests)[output_dim]->nbTrees(); tree_id++) {
+      const Tree & tree = (*forests)[output_dim]->getTree(tree_id);
       const Node * leaf = tree.root->getLeaf(input);
       const GPApproximation * gp_approximation = dynamic_cast<const GPApproximation *>(leaf->a);
       if (gp_approximation == nullptr) {
@@ -60,13 +62,13 @@ void GPForest::predict(const Eigen::VectorXd & input,
 
 void GPForest::debugPrediction(const Eigen::VectorXd & input, std::ostream & out) const
 {
-  for (size_t output_dim = 0; output_dim < getOutputDim(); output_dim++)
+  for (int output_dim = 0; output_dim < getOutputDim(); output_dim++)
   {
     out << "### Debug along dimension " << output_dim << std::endl;
     // Retrieving gaussian processes at the given point
     std::vector<GaussianProcess> gps;
-    for (size_t tree_id = 0; tree_id < *forests[output_dim]->nbTrees(); tree_id++) {
-      const Tree & tree = *forests[output_dim]->getTree(tree_id);
+    for (size_t tree_id = 0; tree_id < (*forests)[output_dim]->nbTrees(); tree_id++) {
+      const Tree & tree = (*forests)[output_dim]->getTree(tree_id);
       const Node * leaf = tree.root->getLeaf(input);
       const GPApproximation * gp_approximation = dynamic_cast<const GPApproximation *>(leaf->a);
       if (gp_approximation == nullptr) {
@@ -87,8 +89,8 @@ void GPForest::gradient(const Eigen::VectorXd & input,
   check1DOutput("gradient");
   gradient = Eigen::VectorXd::Zero(input.rows());
   double total_weight = 0;
-  for (size_t tree_id = 0; tree_id < *forests[0]->nbTrees(); tree_id++) {
-    const Tree & tree = *forests[0]->getTree(tree_id);
+  for (size_t tree_id = 0; tree_id < (*forests)[0]->nbTrees(); tree_id++) {
+    const Tree & tree = (*forests)[0]->getTree(tree_id);
     const Node * leaf = tree.root->getLeaf(input);
     const GPApproximation * gp_approximation = dynamic_cast<const GPApproximation *>(leaf->a);
     if (gp_approximation == nullptr) {
@@ -131,7 +133,7 @@ void GPForest::getMaximum(const Eigen::MatrixXd & limits,
   // Performing multiple rProp and conserving the best candidate
   Eigen::VectorXd best_guess;
   best_guess = rosban_gp::RandomizedRProp::run(gradient_func, scoring_func, limits,
-                                               find_max_conf);
+                                               ga_conf);
   input = best_guess;
   output = scoring_func(best_guess);
 }

@@ -33,7 +33,8 @@ public:
                           double & output) const override;
 
 private:
-  std::vector<std::unique_ptr<regression_forests::Forest>> forests;
+  std::unique_ptr<Forests> forests;
+  int max_action_tiles;
 };
 
 }

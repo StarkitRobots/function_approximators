@@ -24,7 +24,8 @@ PWLForest::~PWLForest() {}
 
 int PWLForest::getOutputDim() const
 {
-  return forests.size();
+  if (!forests) return 0;
+  return forests->size();
 }
 
 void PWLForest::predict(const Eigen::VectorXd & input,
@@ -36,8 +37,8 @@ void PWLForest::predict(const Eigen::VectorXd & input,
   covar = Eigen::MatrixXd::Zero(O,O);
   for (int output_dim = 0; output_dim < O; output_dim++)
   {
-    mean(output_dim) = forests[output_dim]->getValue(input);
-    covar(output_dim, output_dim) = forests[output_dim]->getVar(input);
+    mean(output_dim) = (*forests)[output_dim]->getValue(input);
+    covar(output_dim, output_dim) = (*forests)[output_dim]->getVar(input);
   }
 }
 
@@ -54,11 +55,9 @@ void PWLForest::getMaximum(const Eigen::MatrixXd & limits,
                            double & output) const
 {
   check1DOutput("getMaximum");
-  //TODO: as parameter
   //TODO: optional other way to compute max (gradient based)
-  int max_action_tiles = 20000;
   std::unique_ptr<regression_forests::Tree> sub_tree;
-  sub_tree = forests[0]->unifiedProjectedTree(limits, max_action_tiles);
+  sub_tree = (*forests)[0]->unifiedProjectedTree(limits, max_action_tiles);
 
   std::pair<double, Eigen::VectorXd> max_pair;
   max_pair = sub_tree->getMaxPair(limits);

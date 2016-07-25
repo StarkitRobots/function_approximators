@@ -32,23 +32,23 @@ std::unique_ptr<FunctionApproximator> GPTrainer::train(const Eigen::MatrixXd & i
     std::unique_ptr<CovarianceFunction> cov_func(new SquaredExponential(inputs.rows()));
     gps->push_back(GaussianProcess(inputs, observations.col(output_dim),
                                   std::move(cov_func)));
-    (*gps)[output_dim].autoTune(conf);
+    (*gps)[output_dim].autoTune(autotune_conf);
   }
-  return GP(std::move(gps), ga_conf);  
+  return std::unique_ptr<FunctionApproximator>(new GP(std::move(gps), ga_conf));
 }
 
-std::string GP::class_name() const
+std::string GPTrainer::class_name() const
 {
   return "GPTrainer";
 }
 
-void GP::to_xml(std::ostream &out) const
+void GPTrainer::to_xml(std::ostream &out) const
 {
   autotune_conf.write("autotune_conf", out);
   ga_conf.write("ga_conf", out);
 }
 
-void GP::from_xml(TiXmlNode *node)
+void GPTrainer::from_xml(TiXmlNode *node)
 {
   autotune_conf.tryRead(node, "auto_tune_conf");
   ga_conf.tryRead(node, "ga_conf");

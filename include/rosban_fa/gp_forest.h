@@ -15,7 +15,8 @@ public:
 
   typedef std::vector<std::unique_ptr<regression_forests::Forest>> Forests;
 
-  GPForest();
+  GPForest(std::unique_ptr<Forests> forests,
+           const rosban_gp::RandomizedRProp::Config & conf);
 
   virtual ~GPForest();
 

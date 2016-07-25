@@ -12,10 +12,7 @@ namespace rosban_fa
 /// f: R^I -> R^O
 /// where I is the dimension of the input space and O the dimension
 /// of the output space
-///
-/// All function approximators can be serialized as xml files in order to
-/// allow loading their configuration from a file
-class FunctionApproximator : public rosban_utils::Serializable
+class FunctionApproximator
 {
 public:
 

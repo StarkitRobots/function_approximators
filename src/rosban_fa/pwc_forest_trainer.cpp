@@ -1,18 +1,27 @@
-#include "rosban_fa/pwc_forest_trainer.cpp"
+#include "rosban_fa/pwc_forest_trainer.h"
 
-#include "rosban_fa/pwc_forest.cpp"
+#include "rosban_fa/pwc_forest.h"
+
+#include "rosban_regression_forests/approximations/approximation_type.h"
+#include "rosban_regression_forests/algorithms/extra_trees.h"
+
+#include "rosban_utils/xml_tools.h"
+
+using regression_forests::ApproximationType;
+using regression_forests::ExtraTrees;
+using regression_forests::TrainingSet;
 
 namespace rosban_fa
 {
 
 PWCForestTrainer::PWCForestTrainer()
-  : max_action_tiles(2000);
+  : max_action_tiles(2000)
 {}
 
 std::unique_ptr<FunctionApproximator>
-PWCForest::train(const Eigen::MatrixXd & inputs,
-                 const Eigen::MatrixXd & observations,
-                 const Eigen::MatrixXd & limits) const
+PWCForestTrainer::train(const Eigen::MatrixXd & inputs,
+                        const Eigen::MatrixXd & observations,
+                        const Eigen::MatrixXd & limits) const
 {
   checkConsistency(inputs, observations, limits);
   ExtraTrees solver;
@@ -26,24 +35,24 @@ PWCForest::train(const Eigen::MatrixXd & inputs,
     TrainingSet ts(inputs, observations.col(output_dim));
     forests->push_back(solver.solve(ts, limits));
   }
-  return std::unique_ptr<FunctionApproximator>(new PWCForest(forests, max_action_tiles));
+  return std::unique_ptr<FunctionApproximator>(new PWCForest(std::move(forests), max_action_tiles));
 }
 
 
 
-std::string PWCForest::class_name() const
+std::string PWCForestTrainer::class_name() const
 {
   return "PWCForestTrainer";
 }
 
-void PWCForest::to_xml(std::ostream &out) const
+void PWCForestTrainer::to_xml(std::ostream &out) const
 {
   rosban_utils::xml_tools::write<int>("max_action_tiles", max_action_tiles, out);
 }
 
-void PWCForest::from_xml(TiXmlNode *node)
+void PWCForestTrainer::from_xml(TiXmlNode *node)
 {
-  rosban_utils::xml_tools::tryRead<int>(node, "max_action_tiles", max_action_tiles);
+  rosban_utils::xml_tools::try_read<int>(node, "max_action_tiles", max_action_tiles);
 }
 
 }

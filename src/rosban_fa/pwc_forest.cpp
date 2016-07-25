@@ -38,8 +38,8 @@ void PWCForest::predict(const Eigen::VectorXd & input,
   Eigen::VectorXd vars = Eigen::VectorXd::Zero(O);
   for (int output_dim = 0; output_dim < O; output_dim++)
   {
-    mean(output_dim) = *forests[output_dim]->getValue(input);
-    covar(output_dim, output_dim) = *forests[output_dim]->getVar(input);
+    mean(output_dim) = (*forests)[output_dim]->getValue(input);
+    covar(output_dim, output_dim) = (*forests)[output_dim]->getVar(input);
   }
 }
 
@@ -56,7 +56,7 @@ void PWCForest::getMaximum(const Eigen::MatrixXd & limits,
 {
   check1DOutput("getMaximum");
   std::unique_ptr<regression_forests::Tree> sub_tree;
-  sub_tree = *forests[0]->unifiedProjectedTree(limits, max_action_tiles);
+  sub_tree = (*forests)[0]->unifiedProjectedTree(limits, max_action_tiles);
 
   std::pair<double, Eigen::VectorXd> max_pair;
   max_pair = sub_tree->getMaxPair(limits);

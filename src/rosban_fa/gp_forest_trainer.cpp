@@ -1,17 +1,32 @@
 #include "rosban_fa/gp_forest_trainer.h"
 
+#include "rosban_fa/gp_forest.h"
+
+#include "rosban_regression_forests/approximations/approximation_type.h"
+#include "rosban_regression_forests/algorithms/extra_trees.h"
+
+using regression_forests::ApproximationType;
+using regression_forests::ExtraTrees;
+using regression_forests::TrainingSet;
+
 namespace rosban_fa
 {
 
-GPForest::GPForest(Type t)
+GPForestTrainer::GPForestTrainer(Type t)
   : type(t), nb_threads(1)
 {
+  autotune_conf.nb_trials = 2;
+  autotune_conf.rprop_conf->max_iterations = 50;
+  autotune_conf.rprop_conf->epsilon = std::pow(10,-6);
+  ga_conf.nb_trials = 10;
+  ga_conf.rprop_conf->max_iterations = 1000;
+  ga_conf.rprop_conf->epsilon = std::pow(10,-6);
 }
 
-std::unique_ptr<FunctionApproximation>
+std::unique_ptr<FunctionApproximator>
 GPForestTrainer::train(const Eigen::MatrixXd & inputs,
                        const Eigen::MatrixXd & observations,
-                       const Eigen::MatrixXd & limits)
+                       const Eigen::MatrixXd & limits) const
 {
   checkConsistency(inputs, observations, limits);
 
@@ -24,34 +39,34 @@ GPForestTrainer::train(const Eigen::MatrixXd & inputs,
   // Updating nmin with respect to type
   switch(type)
   {
-    case GPForest::Type::SQRT:
+    case GPForestTrainer::Type::SQRT:
       solver.conf.n_min = std::sqrt(nb_samples);
       break;
-    case GPForest::Type::CURT:
+    case GPForestTrainer::Type::CURT:
       solver.conf.n_min = std::pow(nb_samples, 1.0 / 3);
       break;
-    case GPForest::Type::LOG2:
+    case GPForestTrainer::Type::LOG2:
       solver.conf.n_min = std::log2(nb_samples);
       break;
   }
   solver.conf.nb_threads = nb_threads;
-  solver.conf.gp_conf = approximation_conf;
+  solver.conf.gp_conf = autotune_conf;
 
-  std::unique_ptr<GPForest::Forests> forests(new GPForest::Forests())
+std::unique_ptr<GPForest::Forests> forests(new GPForest::Forests());
   for (int output_dim = 0; output_dim < observations.cols(); output_dim++)
   {
     TrainingSet ts(inputs, observations.col(output_dim));
     forests->push_back(solver.solve(ts, limits));
   }
-  return std::unique_ptr<FunctionApproximator>(new GPForest(forests, ga_conf));
+  return std::unique_ptr<FunctionApproximator>(new GPForest(std::move(forests), ga_conf));
 }
 
-std::string GPForest::class_name() const
+std::string GPForestTrainer::class_name() const
 {
   return "GPForestTrainer";
 }
 
-void GPForest::to_xml(std::ostream &out) const
+void GPForestTrainer::to_xml(std::ostream &out) const
 {
   rosban_utils::xml_tools::write<std::string>("type", to_string(type), out);
   rosban_utils::xml_tools::write<int>("nb_threads", nb_threads, out);
@@ -59,7 +74,7 @@ void GPForest::to_xml(std::ostream &out) const
   ga_conf.write("ga_conf", out);
 }
 
-void GPForest::from_xml(TiXmlNode *node)
+void GPForestTrainer::from_xml(TiXmlNode *node)
 {
   std::string type_str;
   rosban_utils::xml_tools::try_read<std::string>(node, "type", type_str);
@@ -71,9 +86,9 @@ void GPForest::from_xml(TiXmlNode *node)
 
 GPForestTrainer::Type GPForestTrainer::loadType(const std::string &s)
 {
-  if (s == "SQRT") return GPForest::Type::SQRT;
-  if (s == "CURT") return GPForest::Type::CURT;
-  if (s == "LOG2") return GPForest::Type::LOG2;
+  if (s == "SQRT") return GPForestTrainer::Type::SQRT;
+  if (s == "CURT") return GPForestTrainer::Type::CURT;
+  if (s == "LOG2") return GPForestTrainer::Type::LOG2;
   throw std::runtime_error("Unknown GPForestTrainer::Type: '" + s + "'");
 }
 
@@ -81,9 +96,9 @@ std::string to_string(GPForestTrainer::Type type)
 {
   switch(type)
   {
-    case GPForest::Type::SQRT: return "SQRT";
-    case GPForest::Type::CURT: return "CURT";
-    case GPForest::Type::LOG2: return "LOG2";
+    case GPForestTrainer::Type::SQRT: return "SQRT";
+    case GPForestTrainer::Type::CURT: return "CURT";
+    case GPForestTrainer::Type::LOG2: return "LOG2";
   }
   throw std::runtime_error("GPForestTrainer::Type unknown in to_string");
 }

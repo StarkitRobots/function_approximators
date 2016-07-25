@@ -5,7 +5,7 @@
 namespace rosban_fa
 {
 
-class PWLForestTrainer
+class PWLForestTrainer : public Trainer
 {
   PWLForestTrainer();
 
