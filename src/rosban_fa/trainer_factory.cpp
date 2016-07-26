@@ -10,34 +10,10 @@ namespace rosban_fa
 
 TrainerFactory::TrainerFactory()
 {
-  registerBuilder("GPTrainer",
-                  [](TiXmlNode * node)
-                  {
-                    Trainer * trainer = new GPTrainer();
-                    trainer->from_xml(node);
-                    return trainer;
-                  });
-  registerBuilder("GPForestTrainer",
-                  [](TiXmlNode * node)
-                  {
-                    Trainer * trainer = new GPForestTrainer();
-                    trainer->from_xml(node);
-                    return trainer;
-                  });
-  registerBuilder("PWCForestTrainer",
-                  [](TiXmlNode * node)
-                  {
-                    Trainer * trainer = new PWCForestTrainer();
-                    trainer->from_xml(node);
-                    return trainer;
-                  });
-  registerBuilder("PWLForestTrainer",
-                  [](TiXmlNode * node)
-                  {
-                    Trainer * trainer = new PWLForestTrainer();
-                    trainer->from_xml(node);
-                    return trainer;
-                  });
+  registerBuilder("GPTrainer"       , [](){return std::unique_ptr<Trainer>(new GPTrainer);       });
+  registerBuilder("GPForestTrainer" , [](){return std::unique_ptr<Trainer>(new GPForestTrainer); });
+  registerBuilder("PWCForestTrainer", [](){return std::unique_ptr<Trainer>(new PWCForestTrainer);});
+  registerBuilder("PWLForestTrainer", [](){return std::unique_ptr<Trainer>(new PWLForestTrainer);});
 }
 
 }

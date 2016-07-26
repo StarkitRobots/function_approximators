@@ -16,6 +16,7 @@ GPTrainer::GPTrainer()
   autotune_conf.nb_trials = 2;
   autotune_conf.rprop_conf->max_iterations = 50;
   autotune_conf.rprop_conf->epsilon = std::pow(10,-6);
+  autotune_conf.rprop_conf->tuning_space = rosban_gp::RProp::TuningSpace::Log;
   ga_conf.nb_trials = 10;
   ga_conf.rprop_conf->max_iterations = 1000;
   ga_conf.rprop_conf->epsilon = std::pow(10,-6);
