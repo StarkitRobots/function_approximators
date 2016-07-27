@@ -20,7 +20,6 @@ public:
   virtual void to_xml(std::ostream &out) const override;
   virtual void from_xml(TiXmlNode *node) override;
 
-
 private:
   int max_action_tiles;
 };

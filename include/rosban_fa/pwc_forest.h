@@ -30,6 +30,7 @@ public:
   virtual void getMaximum(const Eigen::MatrixXd & limits,
                           Eigen::VectorXd & input,
                           double & output) const override;
+
 private:
   std::unique_ptr<Forests> forests;
   int max_action_tiles;
