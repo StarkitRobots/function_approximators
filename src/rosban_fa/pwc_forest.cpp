@@ -74,14 +74,31 @@ int PWCForest::getClassID() const
 
 int PWCForest::writeInternal(std::ostream & out) const
 {
-  (void) out;
-  throw std::logic_error("PWCForest::writeInternal:not implemented");
+  int bytes_written = 0;
+  bytes_written += rosban_utils::write<int>(out, getOutputDim());
+  for (int dim = 0; dim < getOutputDim(); dim++) {
+    bytes_written += (*forests)[dim]->write(out);
+  }
+  bytes_written += rosban_utils::write<int>(out, max_action_tiles);
+  return bytes_written;
 }
 
 int PWCForest::read(std::istream & in)
 {
-  (void) in;
-  throw std::logic_error("PWCForest::read: not implemented");
+  // First clear existing data
+  if (forests) forests.release();
+  forests = std::unique_ptr<Forests>(new Forests());
+  // Then read
+  int bytes_read = 0;
+  int output_dim;
+  bytes_read += rosban_utils::read<int>(in, &output_dim);
+  for (int dim = 0; dim < output_dim; dim++) {
+    std::unique_ptr<Forest> ptr(new Forest);
+    bytes_read += ptr->read(in);
+    forests->push_back(std::move(ptr));
+  }
+  bytes_read += rosban_utils::read<int>(in, &max_action_tiles);
+  return bytes_read;
 }
 
 }
