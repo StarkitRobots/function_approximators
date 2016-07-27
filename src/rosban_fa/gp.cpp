@@ -13,6 +13,10 @@ using rosban_gp::GaussianProcess;
 namespace rosban_fa
 {
 
+GP::GP()
+{
+}
+
 GP::GP(std::unique_ptr<std::vector<rosban_gp::GaussianProcess>> gps_,
        const rosban_gp::RandomizedRProp::Config & ga_conf_)
   : gps(std::move(gps_)), ga_conf(ga_conf_)
@@ -77,6 +81,33 @@ void GP::getMaximum(const Eigen::MatrixXd & limits,
                                                ga_conf);
   input = best_guess;
   output = scoring_func(best_guess);
+}
+
+int GP::getClassID() const
+{
+  return FunctionApproximator::GP;
+}
+
+int GP::writeInternal(std::ostream & out) const
+{
+  int bytes_written = 0;
+  bytes_written += rosban_utils::write<int>(out, getOutputDim());
+  for (int dim = 0; dim < getOutputDim(); dim++) {
+    bytes_written += (*gps)[dim].write(out);//TODO: change to write internal if it is changed
+  }
+  return bytes_written;
+}
+
+int GP::read(std::istream & in)
+{
+  int bytes_read = 0;
+  int output_dims;
+  bytes_read += rosban_utils::read<int>(in, &output_dims);
+  gps = std::unique_ptr<std::vector<GaussianProcess>>(new std::vector<GaussianProcess>(output_dims));
+  for (int output_dim = 0; output_dim < output_dims; output_dim++) {
+    bytes_read += (*gps)[output_dim].read(in);
+  }
+  return bytes_read;
 }
 
 }

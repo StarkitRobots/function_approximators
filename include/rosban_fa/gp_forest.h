@@ -15,6 +15,7 @@ public:
 
   typedef std::vector<std::unique_ptr<regression_forests::Forest>> Forests;
 
+  GPForest();
   GPForest(std::unique_ptr<Forests> forests,
            const rosban_gp::RandomizedRProp::Config & conf);
 
@@ -35,6 +36,10 @@ public:
   virtual void getMaximum(const Eigen::MatrixXd & limits,
                           Eigen::VectorXd & input,
                           double & output) const override;
+
+  virtual int getClassID() const override;
+  virtual int writeInternal(std::ostream & out) const override;
+  virtual int read(std::istream & in) override;
 
 private:
   std::unique_ptr<Forests> forests;

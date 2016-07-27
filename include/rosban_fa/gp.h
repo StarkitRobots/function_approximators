@@ -14,6 +14,7 @@ class GP : public FunctionApproximator
 {
 public:
 
+  GP();
   GP(std::unique_ptr<std::vector<rosban_gp::GaussianProcess>> gps,
      const rosban_gp::RandomizedRProp::Config & ga_conf);
 
@@ -31,6 +32,10 @@ public:
   virtual void getMaximum(const Eigen::MatrixXd & limits,
                           Eigen::VectorXd & input,
                           double & output) const override;
+
+  virtual int getClassID() const override;
+  virtual int writeInternal(std::ostream & out) const override;
+  virtual int read(std::istream & in) override;
 
 private:
   /// One Gaussian process per output dimension

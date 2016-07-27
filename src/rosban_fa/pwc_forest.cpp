@@ -15,6 +15,8 @@ using regression_forests::Node;
 namespace rosban_fa
 {
 
+PWCForest::PWCForest() {}
+
 PWCForest::PWCForest(std::unique_ptr<Forests> forests_,
                      int max_action_tiles_)
   : forests(std::move(forests_)), max_action_tiles(max_action_tiles_)
@@ -63,6 +65,23 @@ void PWCForest::getMaximum(const Eigen::MatrixXd & limits,
 
   input = max_pair.second;
   output = max_pair.first;
+}
+
+int PWCForest::getClassID() const
+{
+  return FunctionApproximator::PWCForest;
+}
+
+int PWCForest::writeInternal(std::ostream & out) const
+{
+  (void) out;
+  throw std::logic_error("PWCForest::writeInternal:not implemented");
+}
+
+int PWCForest::read(std::istream & in)
+{
+  (void) in;
+  throw std::logic_error("PWCForest::read: not implemented");
 }
 
 }

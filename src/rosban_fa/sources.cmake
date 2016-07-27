@@ -1,5 +1,6 @@
 set(SOURCES
   function_approximator.cpp
+  function_approximator_factory.cpp
   gp.cpp
   gp_trainer.cpp
   gp_forest.cpp

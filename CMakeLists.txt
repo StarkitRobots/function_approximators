@@ -49,3 +49,6 @@ endforeach (DIRECTORY)
 # Declare the library
 add_library(rosban_fa ${ALL_SOURCES} )
 target_link_libraries(rosban_fa ${catkin_LIBRARIES} )
+
+add_executable(test_io src/test_io.cpp)
+target_link_libraries(test_io rosban_fa ${catkin_LIBRARIES}  )

@@ -14,6 +14,7 @@ class PWLForest : public FunctionApproximator
 public:
   typedef std::vector<std::unique_ptr<regression_forests::Forest>> Forests;
 
+  PWLForest();
   PWLForest(std::unique_ptr<Forests> forests,
             int max_action_tiles);
 
@@ -31,6 +32,10 @@ public:
   virtual void getMaximum(const Eigen::MatrixXd & limits,
                           Eigen::VectorXd & input,
                           double & output) const override;
+
+  virtual int getClassID() const override;
+  virtual int writeInternal(std::ostream & out) const override;
+  virtual int read(std::istream & in) override;
 
 private:
   std::unique_ptr<Forests> forests;

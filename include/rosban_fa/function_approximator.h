@@ -1,6 +1,6 @@
 #pragma once
 
-#include "rosban_utils/serializable.h"
+#include "rosban_utils/stream_serializable.h"
 
 #include <Eigen/Core>
 
@@ -12,7 +12,7 @@ namespace rosban_fa
 /// f: R^I -> R^O
 /// where I is the dimension of the input space and O the dimension
 /// of the output space
-class FunctionApproximator
+class FunctionApproximator : public rosban_utils::StreamSerializable
 {
 public:
 
@@ -50,6 +50,17 @@ protected:
 
   /// Throws an explicit error message if the output is not 1D
   void check1DOutput(const std::string & caller_name) const;
+
+public:
+
+  /// Each function_approximator has its own class_id
+  enum ID : int
+    {
+      GP = 1,
+        GPForest = 2,
+        PWCForest = 3,
+        PWLForest = 4
+        };
 
 };
 

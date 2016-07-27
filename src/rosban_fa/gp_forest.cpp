@@ -18,6 +18,8 @@ using rosban_gp::GaussianProcess;
 namespace rosban_fa
 {
 
+GPForest::GPForest() {}
+
 GPForest::GPForest(std::unique_ptr<Forests> forests_,
                    const rosban_gp::RandomizedRProp::Config & ga_conf_)
   : forests(std::move(forests_)), ga_conf(ga_conf_)
@@ -136,6 +138,23 @@ void GPForest::getMaximum(const Eigen::MatrixXd & limits,
                                                ga_conf);
   input = best_guess;
   output = scoring_func(best_guess);
+}
+
+int GPForest::getClassID() const
+{
+  return FunctionApproximator::GPForest;
+}
+
+int GPForest::writeInternal(std::ostream & out) const
+{
+  (void) out;
+  throw std::logic_error("GPForest::writeInternal:not implemented");
+}
+
+int GPForest::read(std::istream & in)
+{
+  (void) in;
+  throw std::logic_error("GPForest::read: not implemented");
 }
 
 }
