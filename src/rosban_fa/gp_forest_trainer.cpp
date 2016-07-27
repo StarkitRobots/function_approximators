@@ -53,7 +53,7 @@ GPForestTrainer::train(const Eigen::MatrixXd & inputs,
   solver.conf.nb_threads = nb_threads;
   solver.conf.gp_conf = autotune_conf;
 
-std::unique_ptr<GPForest::Forests> forests(new GPForest::Forests());
+  std::unique_ptr<GPForest::Forests> forests(new GPForest::Forests());
   for (int output_dim = 0; output_dim < observations.cols(); output_dim++)
   {
     TrainingSet ts(inputs, observations.col(output_dim));
