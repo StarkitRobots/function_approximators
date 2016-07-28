@@ -8,6 +8,25 @@ namespace rosban_fa
 
 FunctionApproximator::~FunctionApproximator() {}
 
+double FunctionApproximator::predict(const Eigen::VectorXd & input, int dim) const
+{
+  double mean, var;
+  predict(input, dim, mean, var);
+  return mean;
+}
+
+void FunctionApproximator::predict(const Eigen::VectorXd & input,
+                                   int dim,
+                                   double & mean,
+                                   double & var) const
+{
+  Eigen::VectorXd means;
+  Eigen::MatrixXd covar;
+  predict(input, means, covar);
+  mean = means(dim);
+  var = covar(dim, dim);
+}
+
 void FunctionApproximator::predict(const Eigen::VectorXd & input,
                                    double & mean,
                                    double & var) const

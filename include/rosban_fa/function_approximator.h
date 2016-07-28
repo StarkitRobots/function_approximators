@@ -19,13 +19,26 @@ public:
   virtual ~FunctionApproximator();
 
   /// Return the output dimension of the function approximator
-  virtual int getOutputDim() const = 0;
+  virtual int getOutputDim() const = 0; 
+
+  /// Default implementation computes the prediction with variance and
+  /// discard the variance information
+  /// - might be overrided for speedup
+  virtual double predict(const Eigen::VectorXd & input, int dim) const;
 
   /// Easy mapping for function approximator with O = 1
   /// throws a logic_error if O != 1 during the training phase
   void predict(const Eigen::VectorXd & input,
                double & mean,
                double & var) const;
+
+  /// Default implementation computes the global prediction and then
+  /// select only the relevant features
+  /// - might be overrided for speedup
+  virtual void predict(const Eigen::VectorXd & input,
+                       int dim,
+                       double & mean,
+                       double & var) const;
 
   /// Predict the mean output and its covariance matrix for the given input
   virtual void predict(const Eigen::VectorXd & input,
