@@ -56,6 +56,10 @@ Viewer::Viewer(const std::string& fa_path,
   dim_names.push_back("output dim");
   mins.push_back("0");
   maxs.push_back(std::to_string(fa->getOutputDim() - 1));
+  // Adding the 'display type' dimension
+  dim_names.push_back("display type");
+  mins.push_back("0");
+  maxs.push_back("1");
   // Setting space limits
   space_limits = Eigen::MatrixXd(dim_names.size(), 2);
   for (size_t dim = 0; dim < dim_names.size(); dim++) {
@@ -64,26 +68,22 @@ Viewer::Viewer(const std::string& fa_path,
   }
 
   // Initially, all input dimensions are locked on the middle value
-  current_limits = Eigen::MatrixXd(inputSize() + 3, 2);
-  locked.clear();
+  current_limits = Eigen::MatrixXd(nbParameters(), 2);
+  locked = std::vector<bool>(nbParameters(), true);
   for (int dim = 0; dim < inputSize(); dim++) {
-    locked.push_back(true);
     double mid_val = (space_limits(dim, 0) + space_limits(dim, 1)) / 2;
-    for (int sub_dim : {0,1})
-    {
-      if (dim < inputSize())
-        current_limits(dim, sub_dim) = mid_val;
+    for (int sub_dim : {0,1}) {
+      current_limits(dim, sub_dim) = mid_val;
     }
   }
   // Special behavior for output
-  locked.push_back(true);
   current_limits.row(inputSize()) = space_limits.row(inputSize());
   // Special behavior for 'nb points by dim'
-  locked.push_back(true);
   current_limits.row(inputSize() + 1) = Eigen::VectorXd::Constant(2, 100).transpose();
   // Special behavior for 'output_dim'
-  locked.push_back(true);
   current_limits.row(inputSize() + 2) = Eigen::VectorXd::Constant(2, 0).transpose();
+  // Special behavior for 'display type'
+  current_limits.row(inputSize() + 3) = Eigen::VectorXd::Constant(2, 0).transpose();
 
   // Initializing keyboard callbacks
   onKeyPress[sf::Keyboard::Tab].push_back([this](){ this->navigate(); });
@@ -117,7 +117,12 @@ Viewer::Viewer(const std::string& fa_path,
 
 int Viewer::inputSize() const
 {
-  return dim_names.size() - 3;
+  return nbParameters() - 4;
+}
+
+int Viewer::nbParameters() const
+{
+  return dim_names.size();
 }
 
 double Viewer::rescaleValue(double rawValue, int dim)
@@ -303,9 +308,20 @@ void Viewer::updateCorners()
   double min_output = std::numeric_limits<double>::max();
   double max_output = std::numeric_limits<double>::lowest();
   for (int point = 0; point < inputs.cols(); point++) {
-    double output = fa->predict(inputs.col(point), output_dim);
+    double output, mean, var;
+    fa->predict(inputs.col(point), output_dim, mean, var);
+    int display_type = current_limits(inputSize() + 3, 0);
+    switch(display_type){
+      case 0:
+        output = mean;
+        break;
+      case 1:
+        output = std::sqrt(var);
+        break;
+      default:
+        throw std::logic_error("Invalid value for display type");
+    }
     outputs(point) = output;
-//    std::cout << "\t" << inputs.col(point).transpose() << " -> " << output << std::endl;
     min_output = std::min(output, min_output);
     max_output = std::max(output, max_output);
   }
@@ -412,7 +428,7 @@ void Viewer::navigate()
       dim_index--;
       // Circular list
       if (dim_index == -2) {
-        dim_index = inputSize() + 2;
+        dim_index = nbParameters() - 1;
       }
       // If final dimension is not locked, use last sub_dim_index
       if (dim_index >= 0 && !locked[dim_index])
@@ -433,7 +449,7 @@ void Viewer::navigate()
     {
       dim_index++;
       // circular list
-      if (dim_index > inputSize() + 2) {
+      if (dim_index >= nbParameters()) {
         dim_index = -1;
       }
       sub_dim_index = -1;
@@ -511,7 +527,7 @@ void Viewer::updateStatus()
 {
   std::ostringstream oss;
   // Input:
-  for (int dim = 0; dim <= inputSize() + 2; dim++)
+  for (int dim = 0; dim < nbParameters(); dim++)
   {
     appendDim(dim, oss);
   }
