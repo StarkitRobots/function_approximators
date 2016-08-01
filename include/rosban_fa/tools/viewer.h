@@ -26,6 +26,9 @@ public:
   /// Number of dimensions of input
   int inputSize() const;
 
+  /// Total number of parameters
+  int nbParameters() const;
+
   /**
    * Jump to previous index if shift is pressed, next otherwise 
    */
@@ -88,9 +91,10 @@ private:
   /// The dimension on which the user is currently acting
   /// -1: no dimension selected
   ///  [0, dim_names -2[ : input
-  /// dim_names -2: output
-  /// dim_names -1: nb points by dim
-  /// dim_names: output_dimension (for several output)
+  /// dim_names - 3: output
+  /// dim_names - 2: nb points by dim
+  /// dim_names - 1: output_dimension (for several output)
+  /// dim_names    : display mode [0:value, 1: stdDev]
   int dim_index;
 
   /// Internal index of the dimension:

@@ -37,10 +37,11 @@ void PWLForest::predict(const Eigen::VectorXd & input,
   int O = getOutputDim();
   mean = Eigen::VectorXd::Zero(O);
   covar = Eigen::MatrixXd::Zero(O,O);
+  Forest::AggregationMethod method = Forest::AggregationMethod::AutoCut;
   for (int output_dim = 0; output_dim < O; output_dim++)
   {
-    mean(output_dim) = (*forests)[output_dim]->getValue(input);
-    covar(output_dim, output_dim) = (*forests)[output_dim]->getVar(input);
+    mean(output_dim) = (*forests)[output_dim]->getValue(input, method);
+    covar(output_dim, output_dim) = (*forests)[output_dim]->getVar(input, method);
   }
 }
 
