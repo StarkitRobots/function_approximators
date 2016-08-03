@@ -1,32 +1,32 @@
 #pragma once
 
-#include "rosban_fa/forest_approximator.h"
+#include "rosban_fa/function_approximator.h"
 
-#include "rosban_gp/gradient_ascent/randomized_rprop.h"
+#include "rosban_regression_forests/core/forest.h"
 
 namespace rosban_fa
 {
 
-class GPForest : public ForestApproximator
+/// A generic class for forest approximatiors
+class ForestApproximator : public FunctionApproximator
 {
 public:
-
   typedef std::vector<std::unique_ptr<regression_forests::Forest>> Forests;
 
-  GPForest();
-  GPForest(std::unique_ptr<Forests> forests,
-           const rosban_gp::RandomizedRProp::Config & conf);
+  ForestApproximator();
+  ForestApproximator(std::unique_ptr<Forests> forests,
+                     int max_action_tiles);
 
-  virtual ~GPForest();
+  virtual ~ForestApproximator();
 
+  virtual int getOutputDim() const override;
+
+  /// Predict the outputs independently using internal structure
   virtual void predict(const Eigen::VectorXd & input,
-                       Eigen::VectorXd & means,
+                       Eigen::VectorXd & mean,
                        Eigen::MatrixXd & covar) const override;
 
-  virtual void debugPrediction(const Eigen::VectorXd & input,
-                               std::ostream & out) const override;
-
-  virtual void gradient(const Eigen::VectorXd & inputs,
+  virtual void gradient(const Eigen::VectorXd & input,
                         Eigen::VectorXd & gradient) const override;
 
   virtual void getMaximum(const Eigen::MatrixXd & limits,
@@ -37,8 +37,9 @@ public:
   virtual int writeInternal(std::ostream & out) const override;
   virtual int read(std::istream & in) override;
 
-private:
-  rosban_gp::RandomizedRProp::Config ga_conf;
+protected:
+  std::unique_ptr<Forests> forests;
+  int max_action_tiles;
 };
 
 }

@@ -72,7 +72,8 @@ public:
       GP = 1,
         GPForest = 2,
         PWCForest = 3,
-        PWLForest = 4
+        PWLForest = 4,
+        ForestApproximator = 5
         };
 
 };

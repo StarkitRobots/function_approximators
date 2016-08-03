@@ -22,17 +22,11 @@ GPForest::GPForest() {}
 
 GPForest::GPForest(std::unique_ptr<Forests> forests_,
                    const rosban_gp::RandomizedRProp::Config & ga_conf_)
-  : forests(std::move(forests_)), ga_conf(ga_conf_)
+  : ForestApproximator(std::move(forests_), 0), ga_conf(ga_conf_)
 {
 }
 
 GPForest::~GPForest() {}
-
-int GPForest::getOutputDim() const
-{
-  if (!forests) return 0;
-  return forests->size();
-}
 
 void GPForest::predict(const Eigen::VectorXd & input,
                              Eigen::VectorXd & mean,
@@ -148,28 +142,16 @@ int GPForest::getClassID() const
 int GPForest::writeInternal(std::ostream & out) const
 {
   int bytes_written = 0;
-  bytes_written += rosban_utils::write<int>(out, getOutputDim());
-  for (int dim = 0; dim < getOutputDim(); dim++) {
-    bytes_written += (*forests)[dim]->write(out);
-  }
+  bytes_written += ForestApproximator::writeInternal(out);
   bytes_written += ga_conf.write(out);
   return bytes_written;
 }
 
 int GPForest::read(std::istream & in)
 {
-  // First clear existing data
-  if (forests) forests.release();
-  forests = std::unique_ptr<Forests>(new Forests());
   // Then read
   int bytes_read = 0;
-  int output_dim;
-  bytes_read += rosban_utils::read<int>(in, &output_dim);
-  for (int dim = 0; dim < output_dim; dim++) {
-    std::unique_ptr<Forest> ptr(new Forest);
-    bytes_read += ptr->read(in);
-    forests->push_back(std::move(ptr));
-  }
+  bytes_read += ForestApproximator::read(in);
   bytes_read += ga_conf.read(in);
   return bytes_read;
 }
