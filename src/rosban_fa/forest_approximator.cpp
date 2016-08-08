@@ -71,7 +71,7 @@ int ForestApproximator::writeInternal(std::ostream & out) const
   int bytes_written = 0;
   bytes_written += rosban_utils::write<int>(out, getOutputDim());
   for (int dim = 0; dim < getOutputDim(); dim++) {
-    bytes_written += (*forests)[dim]->write(out);
+    bytes_written += (*forests)[dim]->writeInternal(out);
   }
   bytes_written += rosban_utils::write<int>(out, max_action_tiles);
   return bytes_written;

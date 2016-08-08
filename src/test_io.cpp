@@ -59,7 +59,9 @@ int main()
 
     // Reading from original
     int original_bytes_read = fa_factory.loadFromFile(filename, copy_fa);
-    std::cout << "Original bytes read   : " << original_bytes_read    << std::endl;
+    std::cout << "Original bytes read   : ";
+    std::cout << original_bytes_read;
+    std::cout << std::endl;
 
     // writing copy
     int copy_bytes_written = copy_fa->save(copy_filename);

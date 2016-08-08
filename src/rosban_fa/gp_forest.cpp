@@ -42,8 +42,9 @@ void GPForest::predict(const Eigen::VectorXd & input,
     for (size_t tree_id = 0; tree_id < (*forests)[output_dim]->nbTrees(); tree_id++) {
       const Tree & tree = (*forests)[output_dim]->getTree(tree_id);
       const Node * leaf = tree.root->getLeaf(input);
-      const GPApproximation * gp_approximation = dynamic_cast<const GPApproximation *>(leaf->a);
-      if (gp_approximation == nullptr) {
+      std::shared_ptr<const GPApproximation> gp_approximation;
+      gp_approximation = std::dynamic_pointer_cast<const GPApproximation>(leaf->a);
+      if (!gp_approximation) {
         throw std::runtime_error("Found an approximation which is not a gaussian process");
       }
       gps.push_back(gp_approximation->gp);
@@ -66,8 +67,9 @@ void GPForest::debugPrediction(const Eigen::VectorXd & input, std::ostream & out
     for (size_t tree_id = 0; tree_id < (*forests)[output_dim]->nbTrees(); tree_id++) {
       const Tree & tree = (*forests)[output_dim]->getTree(tree_id);
       const Node * leaf = tree.root->getLeaf(input);
-      const GPApproximation * gp_approximation = dynamic_cast<const GPApproximation *>(leaf->a);
-      if (gp_approximation == nullptr) {
+      std::shared_ptr<const GPApproximation> gp_approximation;
+      gp_approximation = std::dynamic_pointer_cast<const GPApproximation>(leaf->a);
+      if (!gp_approximation) {
         throw std::runtime_error("Found an approximation which is not a gaussian process");
       }
       gps.push_back(gp_approximation->gp);
@@ -88,8 +90,9 @@ void GPForest::gradient(const Eigen::VectorXd & input,
   for (size_t tree_id = 0; tree_id < (*forests)[0]->nbTrees(); tree_id++) {
     const Tree & tree = (*forests)[0]->getTree(tree_id);
     const Node * leaf = tree.root->getLeaf(input);
-    const GPApproximation * gp_approximation = dynamic_cast<const GPApproximation *>(leaf->a);
-    if (gp_approximation == nullptr) {
+    std::shared_ptr<const GPApproximation> gp_approximation;
+    gp_approximation = std::dynamic_pointer_cast<const GPApproximation>(leaf->a);
+    if (!gp_approximation) {
       throw std::runtime_error("Found an approximation which is not a gaussian process");
     }
     double var = gp_approximation->gp.getVariance(input);
