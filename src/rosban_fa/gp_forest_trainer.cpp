@@ -2,10 +2,9 @@
 
 #include "rosban_fa/gp_forest.h"
 
-#include "rosban_regression_forests/approximations/approximation_type.h"
 #include "rosban_regression_forests/algorithms/extra_trees.h"
 
-using regression_forests::ApproximationType;
+using regression_forests::Approximation;
 using regression_forests::ExtraTrees;
 using regression_forests::TrainingSet;
 
@@ -35,7 +34,7 @@ GPForestTrainer::train(const Eigen::MatrixXd & inputs,
 
   ExtraTrees solver;
   solver.conf =  ExtraTrees::Config::generateAuto(limits, nb_samples,
-                                                  ApproximationType::GP);
+                                                  Approximation::ID::GP);
 
   // Updating nmin with respect to type
   switch(type)

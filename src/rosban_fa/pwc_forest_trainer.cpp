@@ -2,12 +2,11 @@
 
 #include "rosban_fa/pwc_forest.h"
 
-#include "rosban_regression_forests/approximations/approximation_type.h"
 #include "rosban_regression_forests/algorithms/extra_trees.h"
 
 #include "rosban_utils/xml_tools.h"
 
-using regression_forests::ApproximationType;
+using regression_forests::Approximation;
 using regression_forests::ExtraTrees;
 using regression_forests::TrainingSet;
 
@@ -27,7 +26,7 @@ PWCForestTrainer::train(const Eigen::MatrixXd & inputs,
   ExtraTrees solver;
   solver.conf =  ExtraTrees::Config::generateAuto(limits,
                                                   observations.rows(),
-                                                  ApproximationType::PWC);
+                                                  Approximation::ID::PWC);
 
   std::unique_ptr<PWCForest::Forests> forests(new PWCForest::Forests());
   for (int  output_dim = 0; output_dim < observations.cols(); output_dim++)
