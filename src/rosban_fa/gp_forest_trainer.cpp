@@ -49,7 +49,6 @@ GPForestTrainer::train(const Eigen::MatrixXd & inputs,
       solver.conf.n_min = std::log2(nb_samples);
       break;
   }
-  std::cout << "solver.conf.nb_threads: " << nb_threads << std::endl;
   solver.conf.nb_threads = nb_threads;
   solver.conf.gp_conf = autotune_conf;
 
