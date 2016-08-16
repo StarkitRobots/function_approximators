@@ -32,18 +32,19 @@ void ForestApproximator::predict(const Eigen::VectorXd & input,
   mean = Eigen::VectorXd::Zero(O);
   covar = Eigen::MatrixXd::Zero(O,O);
   Eigen::VectorXd vars = Eigen::VectorXd::Zero(O);
+  Forest::AggregationMethod aggregation_method = Forest::AggregationMethod::All;
   for (int output_dim = 0; output_dim < O; output_dim++)
   {
-    mean(output_dim) = (*forests)[output_dim]->getValue(input);
-    covar(output_dim, output_dim) = (*forests)[output_dim]->getVar(input);
+    mean(output_dim) = (*forests)[output_dim]->getValue(input, aggregation_method);
+    covar(output_dim, output_dim) = (*forests)[output_dim]->getVar(input, aggregation_method);
   }
 }
 
 void ForestApproximator::gradient(const Eigen::VectorXd & input,
-                         Eigen::VectorXd & gradient) const
+                                  Eigen::VectorXd & gradient) const
 {
-  (void) input;(void) gradient;
-  throw std::runtime_error("ForestApproximator::gradients: not implemented");
+  check1DOutput("ForestApproximator");
+  gradient = (*forests)[0]->getGradient(input);
 }
 
 void ForestApproximator::getMaximum(const Eigen::MatrixXd & limits,

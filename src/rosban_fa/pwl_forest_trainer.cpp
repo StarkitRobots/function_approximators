@@ -25,6 +25,7 @@ PWLForestTrainer::train(const Eigen::MatrixXd & inputs,
   solver.conf =  ExtraTrees::Config::generateAuto(limits,
                                                   observations.rows(),
                                                   Approximation::ID::PWL);
+  solver.conf.nb_threads = nb_threads;
 
   std::unique_ptr<PWLForest::Forests> forests(new PWLForest::Forests());
   for (int  output_dim = 0; output_dim < observations.cols(); output_dim++)

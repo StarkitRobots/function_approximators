@@ -19,6 +19,7 @@ class Trainer : public rosban_utils::Serializable
 {
 public:
 
+  Trainer();
   virtual ~Trainer();
 
   /// Train the function approximator with the provided set of N samples
@@ -32,11 +33,20 @@ public:
         const Eigen::MatrixXd & observations,
         const Eigen::MatrixXd & limits) const = 0;
 
+  /// Update the number of threads allowed for the trainer
+  void setNbThreads(int nb_threads);
+
+  virtual void to_xml(std::ostream &out) const override;
+  virtual void from_xml(TiXmlNode *node) override;
+
 protected:
   /// Throws an explicit logic_error if informations are not consistent
   void checkConsistency(const Eigen::MatrixXd & inputs,
                         const Eigen::MatrixXd & observations,
                         const Eigen::MatrixXd & limits) const;
+
+  /// The number of threads allowed to the trainer
+  int nb_threads;
 };
 
 }

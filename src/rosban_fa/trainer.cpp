@@ -6,8 +6,24 @@
 namespace rosban_fa
 {
 
+Trainer::Trainer() : nb_threads(1) {}
+
 Trainer::~Trainer() {}
 
+void Trainer::setNbThreads(int new_nb_threads)
+{
+  nb_threads = new_nb_threads;
+}
+
+void Trainer::to_xml(std::ostream &out) const
+{
+  rosban_utils::xml_tools::write<int>("nb_threads", nb_threads, out);
+}
+
+void Trainer::from_xml(TiXmlNode *node)
+{
+  rosban_utils::xml_tools::try_read<int>(node, "nb_threads", nb_threads);
+}
 
 void Trainer::checkConsistency(const Eigen::MatrixXd & inputs,
                                const Eigen::MatrixXd & observations,

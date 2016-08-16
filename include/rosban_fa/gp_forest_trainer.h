@@ -30,7 +30,6 @@ public:
 
 private:
   Type type;
-  int nb_threads;
 
   rosban_gp::RandomizedRProp::Config autotune_conf;
   rosban_gp::RandomizedRProp::Config ga_conf;
