@@ -18,6 +18,21 @@ ForestApproximator::ForestApproximator(std::unique_ptr<Forests> forests_,
 
 ForestApproximator::~ForestApproximator() {}
 
+void ForestApproximator::setForests(std::unique_ptr<Forests> new_forests)
+{
+  forests = std::move(new_forests);
+}
+
+void ForestApproximator::setMaxActionTiles(int new_mat)
+{
+  max_action_tiles = new_mat;
+}
+
+void ForestApproximator::setAggregationMethod(Forest::AggregationMethod new_am)
+{
+  aggregation_method = new_am;
+}
+
 int ForestApproximator::getOutputDim() const
 {
   if (!forests) return 0;
@@ -32,7 +47,6 @@ void ForestApproximator::predict(const Eigen::VectorXd & input,
   mean = Eigen::VectorXd::Zero(O);
   covar = Eigen::MatrixXd::Zero(O,O);
   Eigen::VectorXd vars = Eigen::VectorXd::Zero(O);
-  Forest::AggregationMethod aggregation_method = Forest::AggregationMethod::All;
   for (int output_dim = 0; output_dim < O; output_dim++)
   {
     mean(output_dim) = (*forests)[output_dim]->getValue(input, aggregation_method);
