@@ -32,6 +32,8 @@ private:
   int max_action_tiles;
   /// Method used to get values from the forest
   regression_forests::Forest::AggregationMethod aggregation_method;
+  /// Number of trees used for the approximator
+  int nb_trees;
 };
 
 }

@@ -15,7 +15,8 @@ namespace rosban_fa
 
 ForestTrainer::ForestTrainer()
   : max_action_tiles(2000),
-    aggregation_method(Forest::AggregationMethod::All)
+    aggregation_method(Forest::AggregationMethod::All),
+    nb_trees(25)
 {}
 
 ForestTrainer::~ForestTrainer() {}
@@ -31,6 +32,7 @@ ForestTrainer::train(const Eigen::MatrixXd & inputs,
                                                   observations.rows(),
                                                   getApproximationID());
   solver.conf.nb_threads = nb_threads;
+  solver.conf.nb_trees = nb_trees;
 
   std::unique_ptr<ForestApproximator::Forests> forests(new ForestApproximator::Forests());
   for (int  output_dim = 0; output_dim < observations.cols(); output_dim++)
@@ -61,6 +63,7 @@ void ForestTrainer::to_xml(std::ostream &out) const
   rosban_utils::xml_tools::write<int>("max_action_tiles", max_action_tiles, out);
   std::string am_str = regression_forests::aggregationMethod2Str(aggregation_method);
   rosban_utils::xml_tools::write<std::string>("aggregation_method", am_str, out);
+  rosban_utils::xml_tools::write<int>("nb_trees", nb_trees, out);
 }
 
 void ForestTrainer::from_xml(TiXmlNode *node)
@@ -69,6 +72,7 @@ void ForestTrainer::from_xml(TiXmlNode *node)
   std::string am_str;
   rosban_utils::xml_tools::try_read<std::string>(node, "aggregation_method", am_str);
   if (am_str != "") aggregation_method = regression_forests::loadAggregationMethod(am_str);
+  rosban_utils::xml_tools::try_read<int>(node, "nb_trees", nb_trees);
 }
 
 }
