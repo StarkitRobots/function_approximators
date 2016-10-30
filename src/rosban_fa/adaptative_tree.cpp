@@ -18,14 +18,20 @@ std::unique_ptr<FunctionApproximator> AdaptativeTree::train(RewardFunction rf)
     updateSamples();
     // 2. Create a tree and add it's root to Pending
     initTree();
-    
+    // 3. While there is still leaves pending for evaluation, split them
+    while(!pending_leaves.empty())
+    {
+      PendingLeaf leaf = pending_leaves.front();
+      pending_leaves.pop_front();
+      treatLeaf(leaf);
+    }
   }
 }
 
 void AdaptativeTree::updateSamples(std::default_random_engine * engine)
 {
   // On first generation get samples from random
-  if (processed_leaves.size() == 0) {
+  if (processed_leaves.empty()) {
     parameters_set = rosban_random::getUniformSamples(parameter_limits,
                                                       nb_samples,
                                                       engine);

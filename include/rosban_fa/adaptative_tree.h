@@ -33,6 +33,19 @@ public:
   /// - add an initialized PendingLeaf to pending_leaves
   void initTree();
 
+  /// Treat the pending leaf provided:
+  /// - Test multiple split options
+  ///   - If a split improves the cross-validation
+  ///     - Splits the node and add the two created leaves to the pending_leaves
+  ///   - If no split has been found improving cross-validation
+  ///     - Does not add any leaves to pending_leaves
+  void treatLeaf(PendingLeaf & leaf);
+
+  /// TODO:
+  /// - Require a little bit of thinking
+  /// - Eventually implement different options (squared_loss, etc)
+  double computeLoss();
+
 private:
   /// For leafs in process it is mandatory to keep track of the following information:
   /// - node: Link to the node in order to grow the tree
