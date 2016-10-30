@@ -30,6 +30,15 @@ public:
   OptimizerTrainer();
   virtual ~OptimizerTrainer();
 
+  /// Generate it's own sample to train on the given function
   virtual std::unique_ptr<FunctionApproximator>
   train(RewardFunction rf);
+
+private:
+
+  /// Parameters space
+  Eigen::MatrixXd parameters_limits;
+
+  /// Action space
+  Eigen::MatrixXd action_limits;
 };
