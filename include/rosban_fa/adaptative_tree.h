@@ -2,6 +2,14 @@
 
 #include "rosban_fa/optimizer_trainer.h"
 
+/// TODO: regression_forests::Tree are not appropriate, because they represent a function
+///       from R^n to R. Thus, a specific class has to be designed to handle trees of FA.
+///       Those trees could also use another split interface, more generic and more
+///       convenient (supporting multiple childs, returning vector of spaces/samples)
+///       this type of interface can support easily multiple splits such as grid split
+///       non-orthogonal splits are more complex since the resulting spaces are not
+///       hyperrectangles.
+
 /// This classes uses the following concepts:
 /// - A set of samples is used to build tree-based approximations
 /// - The set of samples can only be splitted on medians and is always splitted
@@ -24,14 +32,14 @@ public:
   train(RewardFunction rf);
 
   /// Generate a new set of samples:
-  /// - Using uniformous random if no previous samples existed
-  /// - Based on previous samples and splits if samples have been processed
-  void updateSamples(std::default_random_engine * engine);
+  /// - Using uniformous random for first generation
+  /// - Based on processed leaves on further generation
+  void generateParametersSet(std::default_random_engine * engine);
 
   /// Initialize the tree for the provide set of samples
   /// - update working_tree
   /// - add an initialized PendingLeaf to pending_leaves
-  void initTree();
+  void initTree(std::default_random_engine * engine);
 
   /// Treat the pending leaf provided:
   /// - Test multiple split options
@@ -39,7 +47,26 @@ public:
   ///     - Splits the node and add the two created leaves to the pending_leaves
   ///   - If no split has been found improving cross-validation
   ///     - Does not add any leaves to pending_leaves
-  void treatLeaf(PendingLeaf & leaf);
+  void treatLeaf(PendingLeaf & leaf, std::default_random_engine * engine);
+
+  /// Build a matrix containing the samples at the provided indices
+  void getSamplesMatrix(const std::vector<int> & indices);
+
+  /// Compute the split candidates from a Matrix in which:
+  /// - Lines are dimensions
+  /// - Each column is one of the samples
+  std::vector<regression_forests::OrthogonalSplit>
+  getSplitCandidates(const Eigen::MatrixXd & samples);
+
+  /// Build a cross-validation state for the given space and the given training_set_size
+  Eigen::MatrixXd getCrossValidationSet(const Eigen::MatrixXd & space,
+                                        int training_set_size,
+                                        std::default_random_engine * engine);
+
+  /// TODO:
+  double optimizeAction(const Eigen::MatrixXd & parameters_set,
+                        const Eigen::MatrixXd & space,
+                        std::default_random_engine * engine);
 
   /// TODO:
   /// - Require a little bit of thinking
@@ -49,13 +76,15 @@ public:
 private:
   /// For leafs in process it is mandatory to keep track of the following information:
   /// - node: Link to the node in order to grow the tree
-  /// - indices: The indices of parameters used to for the current node
+  /// - parameters_set: the set of parameters used for this leaf
   /// - space: The hyperrectangle used for current node
+  /// - loss:
   struct PendingLeaf
   {
     regression_forests::Node * node;
-    std::vector<int> indices;
+    Eigen::MatrixXd parameters_set;
     Eigen::MatrixXd space;
+    double loss;
   };
 
   /// For processed leafs, some informations are required
@@ -77,9 +106,6 @@ private:
 
   /// Leafs which have already been processed
   std::deque<ProcessedLeaf> processed_leaves;
-
-  /// The current set of parameters used to grow the tree
-  std::vector<Eigen::VectorXd> parameters_set;
 
   /// Number of generations used for training
   int nb_generations;

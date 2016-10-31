@@ -32,13 +32,26 @@ public:
 
   /// Generate it's own sample to train on the given function
   virtual std::unique_ptr<FunctionApproximator>
-  train(RewardFunction rf);
+  train(RewardFunction rf) = 0;
 
-private:
+  /// Update the space of parameters
+  void setParametersLimits(const Eigen::MatrixXd & new_limits);
+
+  /// Update the space of actions
+  void setActionsLimits(const Eigen::MatrixXd & new_limits);
+
+
+protected:
+
+  /// Number of dimensions for parameters
+  int getParametersDim() const;
+
+  /// Number of dimensions for actions
+  int getActionsDim() const;
 
   /// Parameters space
   Eigen::MatrixXd parameters_limits;
 
   /// Action space
-  Eigen::MatrixXd action_limits;
+  Eigen::MatrixXd actions_limits;
 };

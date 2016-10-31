@@ -1,5 +1,7 @@
 #include "rosban_fa/adaptative_tree.h"
 
+#include "rosban_regression_forests/tools/statistics.h"
+
 AdaptativeTree::AdaptiveTree()
   : nb_samples(100),
     cv_ratio(1.0)
@@ -14,11 +16,7 @@ std::unique_ptr<FunctionApproximator> AdaptativeTree::train(RewardFunction rf)
   // Several generations are used
   for (int generation = 0; generation < nb_generations; generation++)
   {
-    // 1. Update currently used samples
-    updateSamples();
-    // 2. Create a tree and add it's root to Pending
     initTree();
-    // 3. While there is still leaves pending for evaluation, split them
     while(!pending_leaves.empty())
     {
       PendingLeaf leaf = pending_leaves.front();
@@ -48,7 +46,7 @@ void AdaptativeTree::updateSamples(std::default_random_engine * engine)
   }
 }
 
-void AdaptativeTree::initTree()
+void AdaptativeTree::initTree(std::default_random_engine * engine)
 {
   // Checking if context is appropriate
   if (working_tree)
@@ -62,9 +60,98 @@ void AdaptativeTree::initTree()
   PendingLeaf root_leaf;
   root_leaf.node = working_tree->root;
   root_leaf.space = parameters_limits;
-  root_leaf.indices.resize(parameters_set.size());
+  root_leaf.parameters_set = generateParametersSet(engine);
   for (int id = 0; id < parameters_set.size(); i++) {
     root_leaf.indices[id] = id;
   }
-  pending_leaves.push_front(root_leaf);
+  pending_leaves.push_front(root_leaf, engine);
+}
+
+
+void AdaptativeTree::getSamplesMatrix(const std::vector<int> & indices)
+{
+  if (indices.size() == 0)
+    throw std::logic_error("AdaptativeTree::getSamplesMatrix: indices is empty");
+  Eigen::MatrixXd result(getParametersDim(), indices.size());
+  for (int r_idx = 0; r_idx < indices.size(); r_idx++)
+  {
+    result.col(r_idx) = parameters_set[indices[r_idx]];
+  }
+  return result;
+}
+
+std::vector<regression_forests::OrthogonalSplit>
+AdaptativeTree::getSplitCandidates(const Eigen::MatrixXd & samples)
+{
+  std::vector<regression_forests::OrthogonalSplit> result;
+  /// No sense to build up quartiles if there is less than 4 samples
+  if (samples.cols() < 4) return result;
+  /// Compute quartiles along every dimension
+  for (int dim = 0; dim < getParametersDim(); dim++)
+  {
+    std::vector<double> values;
+    for (int i = 0; i < samples.cols(); i++)
+    {
+      values.push_back(samples(dim,i));
+    }
+    /// TODO: handle cases with repeated values
+    std::vector<double> split_values = regression_forests::Statistics::getQuartiles(values);
+    for (double split_value : split_values)
+    {
+      result.push_back(OrthogonalSplit(dim, split_value));
+    }
+  }
+  return result;
+}
+
+void AdaptativeTree::treatLeaf(PendingLeaf & leaf, std::default_random_engine * engine)
+{
+  // Initialize properties
+  double best_loss = leaf.loss;
+  regression_forests::OrthogonalSplit * best_split = nullptr;
+  // Evaluate all splits can be used ?
+  for (const regression_forests::OrthogonalSplit & split : getSplitCandidates())
+  {
+    // Getting samples collections
+    Eigen::MatrixXd lower_samples, upper_samples;
+    split.splitEntries(samples, &lower_samples, &upper_samples);
+    // Getting spaces
+    Eigen::MatrixXd lower_space, upper_space;
+    split.splitSpace(leaf.space, lower_space, upper_space);
+    // Optimizing constant action for each space
+    // TODO: handle more methods with genericity
+    // - Ideally, optimizeAction should return a function approximator
+    // TODO: Use code factorization
+    Eigen::VectorXd lower_action = optimizeAction(lower_samples, lower_space, engine);
+    Eigen::VectorXd lower_cv_set = getCrossValidationSet(lower_space, lower_samples.size());
+    double lower_loss = computeLoss(lower_action, lower_space, engine);
+    Eigen::VectorXd upper_action = optimizeAction(upper_samples, upper_space, engine);
+    Eigen::VectorXd upper_cv_set = getCrossValidationSet(upper_space, upper_samples.size());
+    double upper_loss = computeLoss(upper_action, upper_space, engine);
+    // Establishing weights
+    // TODO: Validate this way of weighting
+    double lower_weight = lower_samples.size();
+    double upper_weight = upper_samples.size();
+    double split_loss;
+    split_loss = lower_loss * lower_weight + upper_loss * upper_weight;
+    split_loss /= (lower_weight + upper_weight);//Normalization
+    // If this split better than those previously met : remember it
+    if (split_loss < best_loss)
+    {
+      Eigen::VectorXd best_action
+    }
+  }
+}
+
+Eigen::MatrixXd AdaptativeTree::getCrossValidationTest(const Eigen::MatrixXd & space,
+                                                       int training_set_size,
+                                                       std::default_random_engine * engine)
+{
+  double cv_set_size = training_set_size * cv_ration;
+  return rosban_utils::getUniformSamplesMatrix(space, cv_set_size, engine);
+}
+
+double AdaptativeTree::computeLoss()
+{
+  ///TODO
 }
