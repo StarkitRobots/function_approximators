@@ -1,6 +1,9 @@
 #pragma once
 
 #include "rosban_fa/function_approximator.h"
+#include "rosban_fa/split.h"
+
+#include <memory>
 
 namespace rosban_fa
 {
@@ -11,11 +14,11 @@ namespace rosban_fa
 /// subset of the input space
 class FATree : public FunctionApproximator
 {
-
+public:
   FATree();
   virtual ~FATree();
 
-  //TODO: describe methods to set the split etc...
+  int getOutputDim() const override;
 
   virtual void predict(const Eigen::VectorXd & input,
                        Eigen::VectorXd & mean,
@@ -33,8 +36,12 @@ class FATree : public FunctionApproximator
   virtual int read(std::istream & in) override;
 
 protected:
+
+  /// Throws an explicit exception if content was not properly set
+  void checkConsistency(const std::string & caller_name) const;
+
   /// The input space is separated in several parts (eventually more than two)
-  Split split;
+  std::unique_ptr<Split> split;
   /// List of the childs which can be used for the tree
   std::vector<std::unique_ptr<FunctionApproximator>> childs;
 

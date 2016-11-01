@@ -1,4 +1,5 @@
 set(SOURCES
+  fa_tree.cpp
   forest_approximator.cpp
   forest_trainer.cpp
   function_approximator.cpp
@@ -13,6 +14,7 @@ set(SOURCES
   pwl_forest.cpp
   pwl_forest_trainer.cpp
   split.cpp
+  split_factory.cpp
   trainer.cpp
   trainer_factory.cpp
 )

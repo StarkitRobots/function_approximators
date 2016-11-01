@@ -70,11 +70,12 @@ public:
   enum ID : int
     {
       GP = 1,
-        GPForest = 2,
-        PWCForest = 3,
-        PWLForest = 4,
-        ForestApproximator = 5
-        };
+      GPForest = 2,
+      PWCForest = 3,
+      PWLForest = 4,
+      ForestApproximator = 5,
+      FATree = 6
+    };
 
 };
 
