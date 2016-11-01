@@ -138,7 +138,7 @@ void AdaptativeTree::treatLeaf(PendingLeaf & leaf, std::default_random_engine * 
     // If this split better than those previously met : remember it
     if (split_loss < best_loss)
     {
-      Eigen::VectorXd best_action
+      Eigen::VectorXd best_action 
     }
   }
 }

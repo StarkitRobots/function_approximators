@@ -7,10 +7,12 @@ set(SOURCES
   gp_trainer.cpp
   gp_forest.cpp
   gp_forest_trainer.cpp
+  orthogonal_split.cpp
   pwc_forest.cpp
   pwc_forest_trainer.cpp
   pwl_forest.cpp
   pwl_forest_trainer.cpp
+  split.cpp
   trainer.cpp
   trainer_factory.cpp
 )
