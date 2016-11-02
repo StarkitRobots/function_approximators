@@ -2,20 +2,6 @@
 
 #include "rosban_fa/optimizer_trainer.h"
 
-/// TODO:
-/// change algorithm: instead of replacing created approximators, do the following:
-/// - Use recursive algorithm
-/// -
-
-
-/// TODO: regression_forests::Tree are not appropriate, because they represent a function
-///       from R^n to R. Thus, a specific class has to be designed to handle trees of FA.
-///       Those trees could also use another split interface, more generic and more
-///       convenient (supporting multiple childs, returning vector of spaces/samples)
-///       this type of interface can support easily multiple splits such as grid split
-///       non-orthogonal splits are more complex since the resulting spaces are not
-///       hyperrectangles.
-
 /// This classes uses the following concepts:
 /// - A set of samples is used to build tree-based approximations
 /// - The set of samples can only be splitted on medians and is always splitted
@@ -43,9 +29,9 @@ public:
   void generateParametersSet(std::default_random_engine * engine);
 
   /// Initialize the tree for the provide set of samples
-  /// - update working_tree
-  /// - add an initialized PendingLeaf to pending_leaves
-  void initTree(std::default_random_engine * engine);
+  /// - generate the set of samples to be used for the generation
+  /// - use recursion to determine the complete FunctionApproximator
+  std::unique_ptr<FunctionApproximator> runGeneration(std::default_random_engine * engine);
 
   /// Treat the pending leaf provided:
   /// - Test multiple split options
@@ -63,9 +49,6 @@ public:
   std::unique_ptr<FunctionApproximator> buildApproximator(ApproximatorCandidate & candidate,
                                                           std::default_random_engine * engine);
 
-  /// Build a matrix containing the samples at the provided indices
-  void getSamplesMatrix(const std::vector<int> & indices);
-
   /// Compute the split candidates from a Matrix in which:
   /// - Lines are dimensions
   /// - Each column is one of the samples
@@ -76,40 +59,23 @@ public:
                                         int training_set_size,
                                         std::default_random_engine * engine);
 
-  /// TODO:
-  double optimizeAction(const Eigen::MatrixXd & parameters_set,
-                        const Eigen::MatrixXd & space,
-                        std::default_random_engine * engine);
+  /// TODO imple
+  std::unique_ptr<FunctionApproximator> optimizeAction(const Eigen::MatrixXd & parameters_set,
+                                                       std::default_random_engine * engine);
 
-  /// TODO:
-  /// - Require a little bit of thinking
-  /// - Eventually implement different options (squared_loss, etc)
-  double computeLoss();
+  /// Update the 'reward' field of the candidate, using his 'approximator'
+  /// and cross-validation
+  double updateReward(ApproximatorCandidate & candidate,
+                      std::default_random_engine * engine);
 
 private:
-  /// TODO:
+  /// TODO: describe
   struct ApproximatorCandidate
   {
     std::unique_ptr<FunctionApproximator> approximator;
     Eigen::MatrixXd parameters_set;
     Eigen::MatrixXd parameters_space;
-    double loss;
-  };
-
-
-  /// For leafs in process it is mandatory to keep track of the following information:
-  /// - parent: Direct parent of the specified leaf
-  /// - split_index: index of the current leaf among the childs of 'parent' Tree
-  /// - parameters_set: the set of parameters used for this leaf
-  /// - space: The hyperrectangle used for current node
-  /// - loss:
-  struct PendingLeaf
-  {
-    FATree * parent;
-    int split_index;
-    Eigen::MatrixXd parameters_set;
-    Eigen::MatrixXd space;
-    double loss;
+    double reward;
   };
 
   /// For processed leafs, some informations are required
@@ -122,12 +88,6 @@ private:
     double loss;
     int nb_samples;
   };
-
-  /// Current tree being built:
-  std::unique_ptr<regression_forests::Tree> working_tree;
-
-  /// Leafs currently being processed
-  std::deque<PendingLeaf> pending_leaves;
 
   /// Leafs which have already been processed
   std::deque<ProcessedLeaf> processed_leaves;
@@ -144,4 +104,8 @@ private:
   /// Number of samples used for cross_validation is nb samples used for
   /// training times cv_ratio
   double cv_ratio;
+
+  /// Number of evaluations required to estimate the average reward for a set:
+  /// (parameter, action)
+  int evaluation_trials;
 };

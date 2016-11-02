@@ -3,8 +3,10 @@
 #include "rosban_regression_forests/tools/statistics.h"
 
 AdaptativeTree::AdaptiveTree()
-  : nb_samples(100),
-    cv_ratio(1.0)
+  : nb_generations(1),
+    nb_samples(100),
+    cv_ratio(1.0),
+    evaluation_trials(10)
 {
 }
 
@@ -14,21 +16,16 @@ std::unique_ptr<FunctionApproximator>
 AdaptativeTree::train(RewardFunction rf, std::default_random_engine * engine)
 {
   std::unique_ptr<FunctionApproximator> result;
-  // Several generations are used
   for (int generation = 0; generation < nb_generations; generation++)
   {
-    initTree(engine);
-    while(!pending_leaves.empty())
-    {
-      PendingLeaf leaf = pending_leaves.front();
-      pending_leaves.pop_front();
-      treatLeaf(leaf);
-    }
+    result =  runGeneration(engine);
   }
+  return result;
 }
 
-void AdaptativeTree::updateSamples(std::default_random_engine * engine)
+void AdaptativeTree::generateParametersSet(std::default_random_engine * engine)
 {
+  Eigen::MatrixXd parameters_set;
   // On first generation get samples from random
   if (processed_leaves.empty()) {
     parameters_set = rosban_random::getUniformSamples(parameter_limits,
@@ -45,26 +42,22 @@ void AdaptativeTree::updateSamples(std::default_random_engine * engine)
     // - Use version 2 to generate the real samples and store them
     throw std::logic_error("AdaptativeTree::updateSamples: unimplemented part");
   }
+  return parameters_set;
 }
 
-void AdaptativeTree::initTree(std::default_random_engine * engine)
+std::unique_ptr<FunctionApproximator>
+AdaptativeTree::runGeneration(std::default_random_engine * engine)
 {
-  // Checking if context is appropriate
-  if (working_tree)
-    throw std::logic_error("AdaptativeTree::initTree: working_tree was not null");
-  if (pending_leaves.size() != 0)
-    throw std::logic_error("AdaptativeTree::initTree: pending_leaves was not empty");
-  // Initialize working_tree
-  working_tree.reset(new FATree());
-  // Setting up root_leaf
-  PendingLeaf root_leaf;
-  root_leaf.node = working_tree->root;
-  root_leaf.space = parameters_limits;
-  root_leaf.parameters_set = generateParametersSet(engine);
-  for (int id = 0; id < parameters_set.size(); i++) {
-    root_leaf.indices[id] = id;
-  }
-  pending_leaves.push_front(root_leaf, engine);
+  updateSamples(engine);
+  // Setting up first candidate
+  ApproximatorCandidate candidate;
+  candidate.parameters_set = generateParametersSet();
+  candidate.parameters_space = parameters_limits;
+  candidate.approximator = optimizeAction(candidate.parameters_set,
+                                          candidate.parameters_space,
+                                          engine);
+  updateReward(candidate);
+  return buildApproximator(candidate, engine);
 }
 
 std::unique_ptr<FunctionApproximator>
@@ -72,44 +65,44 @@ AdaptativeTree::buildApproximator(ApproximatorCandidate & candidate,
                                   std::default_random_engine * engine)
 {
   // Initializing variables
-  double best_loss = candidate.loss;
+  double best_reward = candidate.reward;
+  std::unique_ptr<Split> best_split;
   std::vector<ApproximatorCandidate> childs;
   // Getting splits
   std::vector<std::unique_ptr<Split>> split_candidates = getSplitCandidates(samples);
-  // Checking if a split improves loss criteria
+  // Checking if a split improves reward criteria
   for (size_t split_idx = 0; split_idx < split_candidates.size(); split_idx++)
   {
     // Stored data for evaluation of the split
     std::vector<Eigen::MatrixXd> spaces, samples;
-    std::vector<double> losses;
+    std::vector<double> rewards;
     std::vector<std::unique_ptr<FunctionApproximator> function_approximators;
-    // Separate elements and space with loss
+    // Separate elements and space with reward
     int nb_elements = split_candidates[split_idx]->getNbElements();
     samples = split_candidates[split_idx]->splitEntries(candidate.parameters_set);
     spaces = split_candidates[split_idx]->splitSpace(candidate.parameters_space);
-    // Estimate losses and function approximators for all elements of the split
-    double total_loss = 0;
+    // Estimate rewards and function approximators for all elements of the split
+    double total_reward = 0;
     double total_weight = 0;
     for (int elem_id = 0; elem_id < nb_elements; elem_id++)
     {
       // Computing values
       std::unique_ptr<FunctionApproximator> fa = optimizeAction(samples[elem_id]);
-      Eigen::MatrixXd cv_set = getCrossValidationSet(samples[elem_id], spaces[elem_id]);
-      double loss = computeLoss(fa, cv_set, engine);
+      double reward = computeReward(fa, cv_set, engine);
       // Storing values
       function_approximators.push_back(std::move(fa));
-      losses.push_back(loss);
+      rewards.push_back(reward);
       // Updating values
       // TODO: validate weighting method
       double weight = sampes[elem_id].size();
-      total_loss += loss * sampes[elem_id].size();
+      total_reward += reward * sampes[elem_id].size();
       total_weight += weight;
     }
-    double avg_split_loss = total_loss / total_weight;
+    double avg_split_reward = total_reward / total_weight;
     // If split is currently the best, store its internal data
-    if (avg_split_loss < best_loss)
+    if (avg_split_reward > best_reward)
     {
-      best_loss = avg_split_loss;
+      best_reward = avg_split_reward;
       childs.clear();
       childs.resize(nb_elements);
       for (int elem_id = 0; elem_id < nb_elements; elem_id++)
@@ -117,7 +110,7 @@ AdaptativeTree::buildApproximator(ApproximatorCandidate & candidate,
         childs[elem_id].approximator = std::move(function_approximators[elem_id]);
         childs[elem_id].parameters_set = samples[elem_id];
         childs[elem_id].parameters_space = spaces[elem_id];
-        childs[elem_id].loss = losses[elem_id];
+        childs[elem_id].reward = rewards[elem_id];
       }
     }
   }
@@ -125,28 +118,22 @@ AdaptativeTree::buildApproximator(ApproximatorCandidate & candidate,
   if (childs.size() == 0)
   {
     ProcessedLeaf leaf;
+    double custom_reward = 0;//TODO
     leaf.space = candidate.parameters_space;
-    leaf.loss = best_loss;
-    leaf.nb_samples = candidate.parameters_set;
+    leaf.loss = candidate.reward - custom_reward;
+    leaf.nb_samples = candidate.parameters_set.size();
     processed_leaves.push_back(leaf);
+    return std::move(candidate.approximator);
   }
   else
   {
-    //TODO: build a tree
+    std::vector<std::unique_ptr<FunctionApproximator>> childs_fa;
+    for (size_t child_id = 0; child_id < childs.size(); child_id++)
+    {
+      childs_fa.push_back(std::move(childs[child_id].approximator));
+    }
+    return std::unique_ptr<Tree>(new Tree(best_split, childs_fa));
   }
-}
-
-
-void AdaptativeTree::getSamplesMatrix(const std::vector<int> & indices)
-{
-  if (indices.size() == 0)
-    throw std::logic_error("AdaptativeTree::getSamplesMatrix: indices is empty");
-  Eigen::MatrixXd result(getParametersDim(), indices.size());
-  for (int r_idx = 0; r_idx < indices.size(); r_idx++)
-  {
-    result.col(r_idx) = parameters_set[indices[r_idx]];
-  }
-  return result;
 }
 
 std::vector<std::unique_ptr<Split>>
@@ -181,7 +168,35 @@ Eigen::MatrixXd AdaptativeTree::getCrossValidationTest(const Eigen::MatrixXd & s
   return rosban_utils::getUniformSamplesMatrix(space, cv_set_size, engine);
 }
 
-double AdaptativeTree::computeLoss()
+void AdaptativeTree::updateReward(ApproximatorCandidate & candidate,
+                                std::default_random_engine * engine)
 {
-  ///TODO
+  Eigen::MatrixXd cv_set = getCrossValidationSet(candidate.parameters_space,
+                                                 candidate.parameters_set.size(),
+                                                 engine);
+  double total_reward = 0;
+  for (int cv_idx = 0; cv_idx < cv_set.cols(); cv_idx++)
+  {
+    Eigen::VectorXd parameters = cv_set.col(cv_idx);
+    // Compare 'custom_action' (optimized for specific parameters)
+    // with 'fa_action' (optimized for a subset of the parameters space)
+    Eigen::VectorXd custom_action = blackbox_optimizer.train(reward_function,
+                                                             parameters,
+                                                             action_limits);
+    Eigen::VectorXd fa_action = candidate.approximator(parameters);
+    // Estimate rewards for both, 'custom' and 'fa'
+    double custom_reward(0), fa_reward(0);
+    for (int trial = 0; trial < evaluation_trials; trial++)
+    {
+      custom_reward = reward_function(custom_action, engine);
+      fa_reward = reward_function(fa_action, engine);
+    }
+    // Estimate reward
+    total_reward += (custom_reward - fa_reward) / evaluation_trials;
+  }
+  candidate.reward = total_reward / cv_set.cols();
+}
+
+double FunctionApproximator::computeCustomReward()
+{
 }
