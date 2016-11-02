@@ -2,6 +2,12 @@
 
 #include "rosban_fa/optimizer_trainer.h"
 
+/// TODO:
+/// change algorithm: instead of replacing created approximators, do the following:
+/// - Use recursive algorithm
+/// -
+
+
 /// TODO: regression_forests::Tree are not appropriate, because they represent a function
 ///       from R^n to R. Thus, a specific class has to be designed to handle trees of FA.
 ///       Those trees could also use another split interface, more generic and more
@@ -29,7 +35,7 @@ public:
   virtual ~AdaptativeTree();
 
   virtual std::unique_ptr<FunctionApproximator>
-  train(RewardFunction rf);
+  train(RewardFunction rf, std::default_random_engine * engine);
 
   /// Generate a new set of samples:
   /// - Using uniformous random for first generation
@@ -49,14 +55,21 @@ public:
   ///     - Does not add any leaves to pending_leaves
   void treatLeaf(PendingLeaf & leaf, std::default_random_engine * engine);
 
+
+  /// Use an initial guess with its own value and if splitting improves, then split it
+  /// - Add leafs created to processed leafs
+  /// - Return the function approximator chosen by candidate
+  /// - Might consume candidate.approximator
+  std::unique_ptr<FunctionApproximator> buildApproximator(ApproximatorCandidate & candidate,
+                                                          std::default_random_engine * engine);
+
   /// Build a matrix containing the samples at the provided indices
   void getSamplesMatrix(const std::vector<int> & indices);
 
   /// Compute the split candidates from a Matrix in which:
   /// - Lines are dimensions
   /// - Each column is one of the samples
-  std::vector<regression_forests::OrthogonalSplit>
-  getSplitCandidates(const Eigen::MatrixXd & samples);
+  std::vector<std::unique_ptr<Split>> getSplitCandidates(const Eigen::MatrixXd & samples);
 
   /// Build a cross-validation state for the given space and the given training_set_size
   Eigen::MatrixXd getCrossValidationSet(const Eigen::MatrixXd & space,
@@ -74,14 +87,26 @@ public:
   double computeLoss();
 
 private:
+  /// TODO:
+  struct ApproximatorCandidate
+  {
+    std::unique_ptr<FunctionApproximator> approximator;
+    Eigen::MatrixXd parameters_set;
+    Eigen::MatrixXd parameters_space;
+    double loss;
+  };
+
+
   /// For leafs in process it is mandatory to keep track of the following information:
-  /// - node: Link to the node in order to grow the tree
+  /// - parent: Direct parent of the specified leaf
+  /// - split_index: index of the current leaf among the childs of 'parent' Tree
   /// - parameters_set: the set of parameters used for this leaf
   /// - space: The hyperrectangle used for current node
   /// - loss:
   struct PendingLeaf
   {
-    regression_forests::Node * node;
+    FATree * parent;
+    int split_index;
     Eigen::MatrixXd parameters_set;
     Eigen::MatrixXd space;
     double loss;
@@ -98,7 +123,7 @@ private:
     int nb_samples;
   };
 
-  /// Current tree bieng built:
+  /// Current tree being built:
   std::unique_ptr<regression_forests::Tree> working_tree;
 
   /// Leafs currently being processed

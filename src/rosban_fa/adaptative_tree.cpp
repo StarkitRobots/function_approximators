@@ -10,13 +10,14 @@ AdaptativeTree::AdaptiveTree()
 
 AdaptativeTree::~AdaptativeTree() {}
 
-std::unique_ptr<FunctionApproximator> AdaptativeTree::train(RewardFunction rf)
+std::unique_ptr<FunctionApproximator>
+AdaptativeTree::train(RewardFunction rf, std::default_random_engine * engine)
 {
   std::unique_ptr<FunctionApproximator> result;
   // Several generations are used
   for (int generation = 0; generation < nb_generations; generation++)
   {
-    initTree();
+    initTree(engine);
     while(!pending_leaves.empty())
     {
       PendingLeaf leaf = pending_leaves.front();
@@ -54,8 +55,7 @@ void AdaptativeTree::initTree(std::default_random_engine * engine)
   if (pending_leaves.size() != 0)
     throw std::logic_error("AdaptativeTree::initTree: pending_leaves was not empty");
   // Initialize working_tree
-  working_tree.reset(new regression_forests::Tree());
-  working_tree->root = new regression_forests::Node();
+  working_tree.reset(new FATree());
   // Setting up root_leaf
   PendingLeaf root_leaf;
   root_leaf.node = working_tree->root;
@@ -65,6 +65,75 @@ void AdaptativeTree::initTree(std::default_random_engine * engine)
     root_leaf.indices[id] = id;
   }
   pending_leaves.push_front(root_leaf, engine);
+}
+
+std::unique_ptr<FunctionApproximator>
+AdaptativeTree::buildApproximator(ApproximatorCandidate & candidate,
+                                  std::default_random_engine * engine)
+{
+  // Initializing variables
+  double best_loss = candidate.loss;
+  std::vector<ApproximatorCandidate> childs;
+  // Getting splits
+  std::vector<std::unique_ptr<Split>> split_candidates = getSplitCandidates(samples);
+  // Checking if a split improves loss criteria
+  for (size_t split_idx = 0; split_idx < split_candidates.size(); split_idx++)
+  {
+    // Stored data for evaluation of the split
+    std::vector<Eigen::MatrixXd> spaces, samples;
+    std::vector<double> losses;
+    std::vector<std::unique_ptr<FunctionApproximator> function_approximators;
+    // Separate elements and space with loss
+    int nb_elements = split_candidates[split_idx]->getNbElements();
+    samples = split_candidates[split_idx]->splitEntries(candidate.parameters_set);
+    spaces = split_candidates[split_idx]->splitSpace(candidate.parameters_space);
+    // Estimate losses and function approximators for all elements of the split
+    double total_loss = 0;
+    double total_weight = 0;
+    for (int elem_id = 0; elem_id < nb_elements; elem_id++)
+    {
+      // Computing values
+      std::unique_ptr<FunctionApproximator> fa = optimizeAction(samples[elem_id]);
+      Eigen::MatrixXd cv_set = getCrossValidationSet(samples[elem_id], spaces[elem_id]);
+      double loss = computeLoss(fa, cv_set, engine);
+      // Storing values
+      function_approximators.push_back(std::move(fa));
+      losses.push_back(loss);
+      // Updating values
+      // TODO: validate weighting method
+      double weight = sampes[elem_id].size();
+      total_loss += loss * sampes[elem_id].size();
+      total_weight += weight;
+    }
+    double avg_split_loss = total_loss / total_weight;
+    // If split is currently the best, store its internal data
+    if (avg_split_loss < best_loss)
+    {
+      best_loss = avg_split_loss;
+      childs.clear();
+      childs.resize(nb_elements);
+      for (int elem_id = 0; elem_id < nb_elements; elem_id++)
+      {
+        childs[elem_id].approximator = std::move(function_approximators[elem_id]);
+        childs[elem_id].parameters_set = samples[elem_id];
+        childs[elem_id].parameters_space = spaces[elem_id];
+        childs[elem_id].loss = losses[elem_id];
+      }
+    }
+  }
+  // If no interesting split has been fonund
+  if (childs.size() == 0)
+  {
+    ProcessedLeaf leaf;
+    leaf.space = candidate.parameters_space;
+    leaf.loss = best_loss;
+    leaf.nb_samples = candidate.parameters_set;
+    processed_leaves.push_back(leaf);
+  }
+  else
+  {
+    //TODO: build a tree
+  }
 }
 
 
@@ -80,10 +149,10 @@ void AdaptativeTree::getSamplesMatrix(const std::vector<int> & indices)
   return result;
 }
 
-std::vector<regression_forests::OrthogonalSplit>
+std::vector<std::unique_ptr<Split>>
 AdaptativeTree::getSplitCandidates(const Eigen::MatrixXd & samples)
 {
-  std::vector<regression_forests::OrthogonalSplit> result;
+  std::vector<std::unique_ptr<Split>> result;
   /// No sense to build up quartiles if there is less than 4 samples
   if (samples.cols() < 4) return result;
   /// Compute quartiles along every dimension
@@ -98,49 +167,10 @@ AdaptativeTree::getSplitCandidates(const Eigen::MatrixXd & samples)
     std::vector<double> split_values = regression_forests::Statistics::getQuartiles(values);
     for (double split_value : split_values)
     {
-      result.push_back(OrthogonalSplit(dim, split_value));
+      result.push_back(std::unique_ptr<Split>(new OrthogonalSplit(dim, split_value)));
     }
   }
   return result;
-}
-
-void AdaptativeTree::treatLeaf(PendingLeaf & leaf, std::default_random_engine * engine)
-{
-  // Initialize properties
-  double best_loss = leaf.loss;
-  regression_forests::OrthogonalSplit * best_split = nullptr;
-  // Evaluate all splits can be used ?
-  for (const regression_forests::OrthogonalSplit & split : getSplitCandidates())
-  {
-    // Getting samples collections
-    Eigen::MatrixXd lower_samples, upper_samples;
-    split.splitEntries(samples, &lower_samples, &upper_samples);
-    // Getting spaces
-    Eigen::MatrixXd lower_space, upper_space;
-    split.splitSpace(leaf.space, lower_space, upper_space);
-    // Optimizing constant action for each space
-    // TODO: handle more methods with genericity
-    // - Ideally, optimizeAction should return a function approximator
-    // TODO: Use code factorization
-    Eigen::VectorXd lower_action = optimizeAction(lower_samples, lower_space, engine);
-    Eigen::VectorXd lower_cv_set = getCrossValidationSet(lower_space, lower_samples.size());
-    double lower_loss = computeLoss(lower_action, lower_space, engine);
-    Eigen::VectorXd upper_action = optimizeAction(upper_samples, upper_space, engine);
-    Eigen::VectorXd upper_cv_set = getCrossValidationSet(upper_space, upper_samples.size());
-    double upper_loss = computeLoss(upper_action, upper_space, engine);
-    // Establishing weights
-    // TODO: Validate this way of weighting
-    double lower_weight = lower_samples.size();
-    double upper_weight = upper_samples.size();
-    double split_loss;
-    split_loss = lower_loss * lower_weight + upper_loss * upper_weight;
-    split_loss /= (lower_weight + upper_weight);//Normalization
-    // If this split better than those previously met : remember it
-    if (split_loss < best_loss)
-    {
-      Eigen::VectorXd best_action 
-    }
-  }
 }
 
 Eigen::MatrixXd AdaptativeTree::getCrossValidationTest(const Eigen::MatrixXd & space,
