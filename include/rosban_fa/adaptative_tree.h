@@ -118,4 +118,8 @@ private:
   /// Number of evaluations required to estimate the average reward for a set:
   /// (parameter, action)
   int evaluation_trials;
+
+  /// Number of actions used to train the internal function approximators
+  /// TODO: replace by blackbox_optimizer
+  int nb_actions_used;
 };

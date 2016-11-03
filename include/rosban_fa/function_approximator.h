@@ -74,7 +74,8 @@ public:
       PWCForest = 3,
       PWLForest = 4,
       ForestApproximator = 5,
-      FATree = 6
+      FATree = 6,
+      Constant = 7
     };
 
 };

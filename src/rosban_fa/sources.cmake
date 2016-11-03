@@ -1,4 +1,5 @@
 set(SOURCES
+  constant_approximator.cpp
   fa_tree.cpp
   forest_approximator.cpp
   forest_trainer.cpp

@@ -222,14 +222,28 @@ FunctionApproximator::getEvaluationFunction(RewardFunction rf,
     }
 }
 
-//TODO replace by function optimizer
+//TODO replace by a blackbox optimizer eval_function
 std::unique_ptr<FunctionApproximator>
 FunctionApproximator::optimizeAction(RewardFunction rf,
                                      const Eigen::MatrixXd & training_set,
-                                     const Eigen::MatrixXd & action_limits,
                                      std::default_random_engine * engine)
 {
-  std::function<double(const Eigen::MatrixXd &)> 
+  EvaluationFunction eval_function = getEvaluationFunction(rf, training_set, engine);
+  std::vector<Eigen::VectorXd> candidate_actions;
+  candidate_actions = rosban_random::getUniformSamples(action_limits,
+                                                       nb_actions,
+                                                       engine);
+  // find best action among the candidates
+  double best_reward = std::numeric_limits<double>::lowest();
+  for (size_t action_id = 0; action_id < nb_actions; action_id++)
+  {
+    const Eigen::VectorXd & action = candidate_actions[action_id];
+    double action_reward = 0;
+    for (int trial = 0; trial < evaluation_trials; trial++)
+    {
+      action_reward += eval_function(action, engine);
+    }
+  }
 }
 
 }
