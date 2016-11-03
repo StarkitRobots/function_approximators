@@ -23,8 +23,8 @@
 class OptimizerTrainer : public rosban_utils::Serializable
 {
 public:
-  typedef std::function<double(Eigen::VectorXd parameters,
-                               Eigen::VectorXd actions,
+  typedef std::function<double(const Eigen::VectorXd & parameters,
+                               const Eigen::VectorXd & actions,
                                std::default_random_engine * engine)> RewardFunction;
 
   OptimizerTrainer();

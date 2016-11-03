@@ -16,7 +16,8 @@
 class AdaptativeTree : public rosban_fa::OptimizerTrainer
 {
 public:
-
+  typedef std::function<double(const FunctionApproximator & policy,
+                               std::default_random_engine * engine)> EvaluationFunction;
   AdaptativeTree();
   virtual ~AdaptativeTree();
 
@@ -67,6 +68,15 @@ public:
   /// and cross-validation
   double updateReward(ApproximatorCandidate & candidate,
                       std::default_random_engine * engine);
+
+  /// Compute the average reward for the given function approximator
+  double computeAverageReward(RewardFunction rf,
+                              const FunctionApproximator & fa,
+                              std::default_random_engine * engine);
+
+  /// Return a function
+  EvaluationFunction getEvaluationFunction(RewardFunction rf,
+                                           const Eigen::MatrixXd & training_set);
 
 private:
   /// TODO: describe

@@ -2,6 +2,9 @@
 
 #include "rosban_regression_forests/tools/statistics.h"
 
+namespace rosban_fa
+{
+
 AdaptativeTree::AdaptiveTree()
   : nb_generations(1),
     nb_samples(100),
@@ -177,26 +180,56 @@ void AdaptativeTree::updateReward(ApproximatorCandidate & candidate,
   double total_reward = 0;
   for (int cv_idx = 0; cv_idx < cv_set.cols(); cv_idx++)
   {
-    Eigen::VectorXd parameters = cv_set.col(cv_idx);
-    // Compare 'custom_action' (optimized for specific parameters)
-    // with 'fa_action' (optimized for a subset of the parameters space)
-    Eigen::VectorXd custom_action = blackbox_optimizer.train(reward_function,
-                                                             parameters,
-                                                             action_limits);
-    Eigen::VectorXd fa_action = candidate.approximator(parameters);
-    // Estimate rewards for both, 'custom' and 'fa'
-    double custom_reward(0), fa_reward(0);
-    for (int trial = 0; trial < evaluation_trials; trial++)
-    {
-      custom_reward = reward_function(custom_action, engine);
-      fa_reward = reward_function(fa_action, engine);
-    }
-    // Estimate reward
-    total_reward += (custom_reward - fa_reward) / evaluation_trials;
+    total_reward += computeAverageReward(rf,
+                                         candidate.approximator,
+                                         cv_set.col(cv_idx),
+                                         engine);
   }
   candidate.reward = total_reward / cv_set.cols();
 }
 
-double FunctionApproximator::computeCustomReward()
+double FunctionApproximator::computeAverageReward(RewardFunction rf,
+                                                  const FunctionApproximator & fa,
+                                                  const Eigen::VectorXd & parameters,
+                                                  std::default_random_engine * engine)
 {
+  double total_reward = 0;
+  for (int trial = 0; trial < evaluation_trials; trial++)
+  {
+    total_reward += rf(parameters, fa_action, engine);
+  }
+  return total_reward / evaluation_trials;
+}
+
+EvaluationFunction
+FunctionApproximator::getEvaluationFunction(RewardFunction rf,
+                                            const Eigen::MatrixXd & training_set)
+{
+  return
+    [training_set, action_limits, rf] (const FunctionApproximator & action,
+                                       std::default_random_engine * engine)
+    {
+      double reward = 0;
+      for (int col = 0; col < training_set.cols(); col++)
+      {
+        Eigen::VectorXd parameters = training_set.col(col);
+        Eigen::VectorXd action;
+        Eigen::MatrixXd covar;
+        policy.predict(parameters, action, covar);
+        reward += rf(parameters, action, engine);
+      }
+      return reward / training_set.cols();
+    }
+}
+
+//TODO replace by function optimizer
+std::unique_ptr<FunctionApproximator>
+FunctionApproximator::optimizeAction(RewardFunction rf,
+                                     const Eigen::MatrixXd & training_set,
+                                     const Eigen::MatrixXd & action_limits,
+                                     std::default_random_engine * engine)
+{
+  std::function<double(const Eigen::MatrixXd &)> 
+}
+
 }
