@@ -1,4 +1,5 @@
 set(SOURCES
+  adaptative_tree.cpp
   constant_approximator.cpp
   fa_tree.cpp
   forest_approximator.cpp
@@ -9,6 +10,7 @@ set(SOURCES
   gp_trainer.cpp
   gp_forest.cpp
   gp_forest_trainer.cpp
+  optimizer_trainer.cpp
   orthogonal_split.cpp
   pwc_forest.cpp
   pwc_forest_trainer.cpp

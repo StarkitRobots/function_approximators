@@ -1,5 +1,8 @@
 #include "rosban_fa/optimizer_trainer.h"
 
+namespace rosban_fa
+{
+
 OptimizerTrainer::OptimizerTrainer() {}
 
 OptimizerTrainer::~OptimizerTrainer() {}
@@ -16,10 +19,12 @@ void OptimizerTrainer::setActionsLimits(const Eigen::MatrixXd & new_limits)
 
 int OptimizerTrainer::getParametersDim() const
 {
-  retrn parameters_limits.rows();
+  return parameters_limits.rows();
 }
 
 int OptimizerTrainer::getActionsDim() const
 {
-  retrn actions_limits.rows();
+  return actions_limits.rows();
+}
+
 }

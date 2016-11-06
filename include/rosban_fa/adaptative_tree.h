@@ -1,6 +1,12 @@
 #pragma once
 
 #include "rosban_fa/optimizer_trainer.h"
+#include "rosban_fa/split.h"
+
+#include <deque>
+
+namespace rosban_fa
+{
 
 /// This classes uses the following concepts:
 /// - A set of samples is used to build tree-based approximations
@@ -13,73 +19,14 @@
 /// - Multiple generations can be used, in this case each generation is based on
 ///   the previous one and has more chance to optimize samples in areas where
 ///   the loss due to use of the approximator is expected to be the highest
-class AdaptativeTree : public rosban_fa::OptimizerTrainer
+class AdaptativeTree : public OptimizerTrainer
 {
 public:
-  typedef std::function<double(const FunctionApproximator & policy,
-                               std::default_random_engine * engine)> EvaluationFunction;
-  AdaptativeTree();
-  virtual ~AdaptativeTree();
-
-  virtual std::unique_ptr<FunctionApproximator>
-  train(RewardFunction rf, std::default_random_engine * engine);
-
-  /// Generate a new set of samples:
-  /// - Using uniformous random for first generation
-  /// - Based on processed leaves on further generation
-  void generateParametersSet(std::default_random_engine * engine);
-
-  /// Initialize the tree for the provide set of samples
-  /// - generate the set of samples to be used for the generation
-  /// - use recursion to determine the complete FunctionApproximator
-  std::unique_ptr<FunctionApproximator> runGeneration(std::default_random_engine * engine);
-
-  /// Treat the pending leaf provided:
-  /// - Test multiple split options
-  ///   - If a split improves the cross-validation
-  ///     - Splits the node and add the two created leaves to the pending_leaves
-  ///   - If no split has been found improving cross-validation
-  ///     - Does not add any leaves to pending_leaves
-  void treatLeaf(PendingLeaf & leaf, std::default_random_engine * engine);
-
-
-  /// Use an initial guess with its own value and if splitting improves, then split it
-  /// - Add leafs created to processed leafs
-  /// - Return the function approximator chosen by candidate
-  /// - Might consume candidate.approximator
-  std::unique_ptr<FunctionApproximator> buildApproximator(ApproximatorCandidate & candidate,
-                                                          std::default_random_engine * engine);
-
-  /// Compute the split candidates from a Matrix in which:
-  /// - Lines are dimensions
-  /// - Each column is one of the samples
-  std::vector<std::unique_ptr<Split>> getSplitCandidates(const Eigen::MatrixXd & samples);
-
-  /// Build a cross-validation state for the given space and the given training_set_size
-  Eigen::MatrixXd getCrossValidationSet(const Eigen::MatrixXd & space,
-                                        int training_set_size,
-                                        std::default_random_engine * engine);
-
-  /// TODO imple
-  std::unique_ptr<FunctionApproximator> optimizeAction(const Eigen::MatrixXd & parameters_set,
-                                                       std::default_random_engine * engine);
-
-  /// Update the 'reward' field of the candidate, using his 'approximator'
-  /// and cross-validation
-  double updateReward(ApproximatorCandidate & candidate,
-                      std::default_random_engine * engine);
-
-  /// Compute the average reward for the given function approximator
-  double computeAverageReward(RewardFunction rf,
-                              const FunctionApproximator & fa,
-                              std::default_random_engine * engine);
-
-  /// Return a function
-  EvaluationFunction getEvaluationFunction(RewardFunction rf,
-                                           const Eigen::MatrixXd & training_set);
-
-private:
-  /// TODO: describe
+  /// Candidate for approximations are composed of:
+  /// - approximator: The candidate for approximating this function
+  /// - parameters_set: The set of parameters used for training
+  /// - parameters_space: Which space is concerned by this approximator (used for cross-validation)
+  /// - reward: The expected reward for the Function Approximator over the given parameters_space
   struct ApproximatorCandidate
   {
     std::unique_ptr<FunctionApproximator> approximator;
@@ -99,6 +46,66 @@ private:
     int nb_samples;
   };
 
+
+  typedef std::function<double(const FunctionApproximator & policy,
+                               std::default_random_engine * engine)> EvaluationFunction;
+  AdaptativeTree();
+  virtual ~AdaptativeTree();
+
+  virtual std::unique_ptr<FunctionApproximator>
+  train(RewardFunction rf, std::default_random_engine * engine);
+
+  /// Generate a new set of samples:
+  /// - Using uniformous random for first generation
+  /// - Based on processed leaves on further generation
+  Eigen::MatrixXd generateParametersSet(std::default_random_engine * engine);
+
+  /// Initialize the tree for the provide set of samples
+  /// - generate the set of samples to be used for the generation
+  /// - use recursion to determine the complete FunctionApproximator
+  std::unique_ptr<FunctionApproximator> runGeneration(RewardFunction rf,
+                                                      std::default_random_engine * engine);
+
+  /// Use an initial guess with its own value and if splitting improves, then split it
+  /// - Add leafs created to processed leafs
+  /// - Return the function approximator chosen by candidate
+  /// - Might consume candidate.approximator
+  std::unique_ptr<FunctionApproximator> buildApproximator(RewardFunction rf,
+                                                          ApproximatorCandidate & candidate,
+                                                          std::default_random_engine * engine);
+
+  /// Compute the split candidates from a Matrix in which:
+  /// - Lines are dimensions
+  /// - Each column is one of the samples
+  std::vector<std::unique_ptr<Split>> getSplitCandidates(const Eigen::MatrixXd & samples);
+
+  /// Build a cross-validation state for the given space and the given training_set_size
+  Eigen::MatrixXd getCrossValidationSet(const Eigen::MatrixXd & space,
+                                        int training_set_size,
+                                        std::default_random_engine * engine);
+
+  /// TODO imple
+  std::unique_ptr<FunctionApproximator> optimizeAction(RewardFunction rf,
+                                                       const Eigen::MatrixXd & parameters_set,
+                                                       std::default_random_engine * engine);
+
+  /// Update the 'reward' field of the candidate, using his 'approximator'
+  /// and cross-validation
+  void updateReward(RewardFunction rf,
+                    ApproximatorCandidate & candidate,
+                    std::default_random_engine * engine);
+
+  /// Compute the average reward for the given function approximator
+  double computeAverageReward(RewardFunction rf,
+                              const FunctionApproximator & fa,
+                              const Eigen::VectorXd & parameters,
+                              std::default_random_engine * engine);
+
+  /// Return a function
+  EvaluationFunction getEvaluationFunction(RewardFunction rf,
+                                           const Eigen::MatrixXd & training_set);
+
+private:
   /// Leafs which have already been processed
   std::deque<ProcessedLeaf> processed_leaves;
 
@@ -123,3 +130,5 @@ private:
   /// TODO: replace by blackbox_optimizer
   int nb_actions_used;
 };
+
+}

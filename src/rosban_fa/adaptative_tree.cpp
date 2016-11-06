@@ -1,15 +1,22 @@
 #include "rosban_fa/adaptative_tree.h"
 
+#include "rosban_fa/constant_approximator.h"
+#include "rosban_fa/fa_tree.h"
+#include "rosban_fa/orthogonal_split.h"
+
 #include "rosban_regression_forests/tools/statistics.h"
+
+#include "rosban_random/tools.h"
 
 namespace rosban_fa
 {
 
-AdaptativeTree::AdaptiveTree()
+AdaptativeTree::AdaptativeTree()
   : nb_generations(1),
     nb_samples(100),
     cv_ratio(1.0),
-    evaluation_trials(10)
+    evaluation_trials(10),
+    nb_actions_used(50)
 {
 }
 
@@ -21,50 +28,58 @@ AdaptativeTree::train(RewardFunction rf, std::default_random_engine * engine)
   std::unique_ptr<FunctionApproximator> result;
   for (int generation = 0; generation < nb_generations; generation++)
   {
-    result =  runGeneration(engine);
+    result =  runGeneration(rf, engine);
   }
   return result;
 }
 
-void AdaptativeTree::generateParametersSet(std::default_random_engine * engine)
+Eigen::MatrixXd AdaptativeTree::generateParametersSet(std::default_random_engine * engine)
 {
   Eigen::MatrixXd parameters_set;
   // On first generation get samples from random
   if (processed_leaves.empty()) {
-    parameters_set = rosban_random::getUniformSamples(parameter_limits,
-                                                      nb_samples,
-                                                      engine);
+    parameters_set = rosban_random::getUniformSamplesMatrix(parameters_limits,
+                                                            nb_samples,
+                                                            engine);
   }
   else
   {
-    // TODO: implement function to draw a given number of samples from a weighted set
-    //       eventually propose two versions:
-    //       1. unordered vector
-    //       2. map of indices to count of samples
-    // then:
-    // - Use version 2 to generate the real samples and store them
-    throw std::logic_error("AdaptativeTree::updateSamples: unimplemented part");
+    // Computing weights
+    int nb_leaves = processed_leaves.size();
+    std::vector<double> weights(nb_leaves);
+    for (int i = 0; i < nb_leaves; i++)
+    {
+      weights[i] = 1.0;
+    }
+    // space_index -> nb_samples wished
+    std::map<int,int> space_occurences;
+    space_occurences = rosban_random::sampleWeightedIndicesMap(weights,
+                                                               nb_leaves,
+                                                               engine);
+    // Computing parameters set
+    parameters_set = Eigen::MatrixXd(parameters_limits.rows(), nb_samples);
   }
   return parameters_set;
 }
 
 std::unique_ptr<FunctionApproximator>
-AdaptativeTree::runGeneration(std::default_random_engine * engine)
+AdaptativeTree::runGeneration(RewardFunction rf,
+                              std::default_random_engine * engine)
 {
-  updateSamples(engine);
   // Setting up first candidate
   ApproximatorCandidate candidate;
-  candidate.parameters_set = generateParametersSet();
+  candidate.parameters_set = generateParametersSet(engine);
   candidate.parameters_space = parameters_limits;
-  candidate.approximator = optimizeAction(candidate.parameters_set,
-                                          candidate.parameters_space,
+  candidate.approximator = optimizeAction(rf,
+                                          candidate.parameters_set,
                                           engine);
-  updateReward(candidate);
-  return buildApproximator(candidate, engine);
+  updateReward(rf, candidate, engine);
+  return buildApproximator(rf, candidate, engine);
 }
 
 std::unique_ptr<FunctionApproximator>
-AdaptativeTree::buildApproximator(ApproximatorCandidate & candidate,
+AdaptativeTree::buildApproximator(RewardFunction rf,
+                                  ApproximatorCandidate & candidate,
                                   std::default_random_engine * engine)
 {
   // Initializing variables
@@ -72,14 +87,15 @@ AdaptativeTree::buildApproximator(ApproximatorCandidate & candidate,
   std::unique_ptr<Split> best_split;
   std::vector<ApproximatorCandidate> childs;
   // Getting splits
-  std::vector<std::unique_ptr<Split>> split_candidates = getSplitCandidates(samples);
+  std::vector<std::unique_ptr<Split>> split_candidates;
+  split_candidates = getSplitCandidates(candidate.parameters_set);
   // Checking if a split improves reward criteria
   for (size_t split_idx = 0; split_idx < split_candidates.size(); split_idx++)
   {
     // Stored data for evaluation of the split
     std::vector<Eigen::MatrixXd> spaces, samples;
     std::vector<double> rewards;
-    std::vector<std::unique_ptr<FunctionApproximator> function_approximators;
+    std::vector<std::unique_ptr<FunctionApproximator>> function_approximators;
     // Separate elements and space with reward
     int nb_elements = split_candidates[split_idx]->getNbElements();
     samples = split_candidates[split_idx]->splitEntries(candidate.parameters_set);
@@ -90,15 +106,18 @@ AdaptativeTree::buildApproximator(ApproximatorCandidate & candidate,
     for (int elem_id = 0; elem_id < nb_elements; elem_id++)
     {
       // Computing values
-      std::unique_ptr<FunctionApproximator> fa = optimizeAction(samples[elem_id]);
-      double reward = computeReward(fa, cv_set, engine);
+      ApproximatorCandidate current_candidate;
+      current_candidate.parameters_set = samples[elem_id];
+      current_candidate.parameters_space = spaces[elem_id];
+      current_candidate.approximator = optimizeAction(rf, samples[elem_id], engine);
+      updateReward(rf, current_candidate, engine);
       // Storing values
-      function_approximators.push_back(std::move(fa));
-      rewards.push_back(reward);
+      function_approximators.push_back(std::move(current_candidate.approximator));
+      rewards.push_back(current_candidate.reward);
       // Updating values
       // TODO: validate weighting method
-      double weight = sampes[elem_id].size();
-      total_reward += reward * sampes[elem_id].size();
+      double weight = samples[elem_id].size();
+      total_reward += current_candidate.reward * weight;
       total_weight += weight;
     }
     double avg_split_reward = total_reward / total_weight;
@@ -135,7 +154,7 @@ AdaptativeTree::buildApproximator(ApproximatorCandidate & candidate,
     {
       childs_fa.push_back(std::move(childs[child_id].approximator));
     }
-    return std::unique_ptr<Tree>(new Tree(best_split, childs_fa));
+    return std::unique_ptr<FunctionApproximator>(new FATree(std::move(best_split), childs_fa));
   }
 }
 
@@ -163,16 +182,17 @@ AdaptativeTree::getSplitCandidates(const Eigen::MatrixXd & samples)
   return result;
 }
 
-Eigen::MatrixXd AdaptativeTree::getCrossValidationTest(const Eigen::MatrixXd & space,
+Eigen::MatrixXd AdaptativeTree::getCrossValidationSet(const Eigen::MatrixXd & space,
                                                        int training_set_size,
                                                        std::default_random_engine * engine)
 {
-  double cv_set_size = training_set_size * cv_ration;
-  return rosban_utils::getUniformSamplesMatrix(space, cv_set_size, engine);
+  double cv_set_size = training_set_size * cv_ratio;
+  return rosban_random::getUniformSamplesMatrix(space, cv_set_size, engine);
 }
 
-void AdaptativeTree::updateReward(ApproximatorCandidate & candidate,
-                                std::default_random_engine * engine)
+void AdaptativeTree::updateReward(RewardFunction rf,
+                                  ApproximatorCandidate & candidate,
+                                  std::default_random_engine * engine)
 {
   Eigen::MatrixXd cv_set = getCrossValidationSet(candidate.parameters_space,
                                                  candidate.parameters_set.size(),
@@ -181,33 +201,36 @@ void AdaptativeTree::updateReward(ApproximatorCandidate & candidate,
   for (int cv_idx = 0; cv_idx < cv_set.cols(); cv_idx++)
   {
     total_reward += computeAverageReward(rf,
-                                         candidate.approximator,
+                                         *candidate.approximator,
                                          cv_set.col(cv_idx),
                                          engine);
   }
   candidate.reward = total_reward / cv_set.cols();
 }
 
-double FunctionApproximator::computeAverageReward(RewardFunction rf,
-                                                  const FunctionApproximator & fa,
-                                                  const Eigen::VectorXd & parameters,
-                                                  std::default_random_engine * engine)
+double AdaptativeTree::computeAverageReward(RewardFunction rf,
+                                            const FunctionApproximator & fa,
+                                            const Eigen::VectorXd & parameters,
+                                            std::default_random_engine * engine)
 {
   double total_reward = 0;
   for (int trial = 0; trial < evaluation_trials; trial++)
   {
+    Eigen::VectorXd fa_action;
+    Eigen::MatrixXd action_covar;
+    fa.predict(parameters, fa_action, action_covar);
     total_reward += rf(parameters, fa_action, engine);
   }
   return total_reward / evaluation_trials;
 }
 
-EvaluationFunction
-FunctionApproximator::getEvaluationFunction(RewardFunction rf,
-                                            const Eigen::MatrixXd & training_set)
+AdaptativeTree::EvaluationFunction
+AdaptativeTree::getEvaluationFunction(RewardFunction rf,
+                                      const Eigen::MatrixXd & training_set)
 {
   return
-    [training_set, action_limits, rf] (const FunctionApproximator & action,
-                                       std::default_random_engine * engine)
+    [training_set, rf] (const FunctionApproximator & policy,
+                        std::default_random_engine * engine)
     {
       double reward = 0;
       for (int col = 0; col < training_set.cols(); col++)
@@ -219,31 +242,40 @@ FunctionApproximator::getEvaluationFunction(RewardFunction rf,
         reward += rf(parameters, action, engine);
       }
       return reward / training_set.cols();
-    }
+    };
 }
 
 //TODO replace by a blackbox optimizer eval_function
 std::unique_ptr<FunctionApproximator>
-FunctionApproximator::optimizeAction(RewardFunction rf,
-                                     const Eigen::MatrixXd & training_set,
-                                     std::default_random_engine * engine)
+AdaptativeTree::optimizeAction(RewardFunction rf,
+                               const Eigen::MatrixXd & training_set,
+                               std::default_random_engine * engine)
 {
-  EvaluationFunction eval_function = getEvaluationFunction(rf, training_set, engine);
+  EvaluationFunction eval_function = getEvaluationFunction(rf, training_set);
   std::vector<Eigen::VectorXd> candidate_actions;
-  candidate_actions = rosban_random::getUniformSamples(action_limits,
-                                                       nb_actions,
+  candidate_actions = rosban_random::getUniformSamples(actions_limits,
+                                                       nb_actions_used,
                                                        engine);
   // find best action among the candidates
   double best_reward = std::numeric_limits<double>::lowest();
-  for (size_t action_id = 0; action_id < nb_actions; action_id++)
+  std::unique_ptr<FunctionApproximator> best_policy;
+  for (int action_id = 0; action_id < nb_actions_used; action_id++)
   {
-    const Eigen::VectorXd & action = candidate_actions[action_id];
+    std::unique_ptr<FunctionApproximator> policy;
+    policy.reset(new ConstantApproximator(candidate_actions[action_id]));
     double action_reward = 0;
     for (int trial = 0; trial < evaluation_trials; trial++)
     {
-      action_reward += eval_function(action, engine);
+      action_reward += eval_function(*policy, engine);
+    }
+    action_reward /= evaluation_trials;
+    if (action_reward > best_reward)
+    {
+      best_reward = action_reward;
+      best_policy = std::move(policy);
     }
   }
+  return best_policy;
 }
 
 }

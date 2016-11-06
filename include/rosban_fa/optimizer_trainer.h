@@ -1,11 +1,16 @@
 #pragma once
 
+#include "rosban_fa/function_approximator.h"
+
 #include "rosban_utils/serializable.h"
 
 #include <Eigen/Core>
 
 #include <functional>
 #include <memory>
+
+namespace rosban_fa
+{
 
 /// Optimizer trainers can be used to learn an approximation of the optimal
 /// policy for a function requiring a set of parameters (which are imposed) and
@@ -55,3 +60,5 @@ protected:
   /// Action space
   Eigen::MatrixXd actions_limits;
 };
+
+}

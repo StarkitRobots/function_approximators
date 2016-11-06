@@ -16,6 +16,9 @@ class FATree : public FunctionApproximator
 {
 public:
   FATree();
+  /// Transmit ownership and clear vector 'childs'
+  FATree(std::unique_ptr<Split> split,
+         std::vector<std::unique_ptr<FunctionApproximator>> & childs);
   virtual ~FATree();
 
   int getOutputDim() const override;

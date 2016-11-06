@@ -10,6 +10,19 @@ FATree::FATree()
 {
 }
 
+FATree::FATree(std::unique_ptr<Split> split_,
+               std::vector<std::unique_ptr<FunctionApproximator>> & childs_)
+{
+  split = std::move(split_);
+  childs.resize(childs_.size());
+  for (size_t child_id = 0; child_id < childs_.size(); child_id++)
+  {
+    childs[child_id] = std::move(childs_[child_id]);
+  }
+  childs_.clear();
+}
+
+
 FATree::~FATree()
 {
 }
