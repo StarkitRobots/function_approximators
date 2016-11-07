@@ -134,6 +134,7 @@ AdaptativeTree::buildApproximator(RewardFunction rf,
         childs[elem_id].parameters_space = spaces[elem_id];
         childs[elem_id].reward = rewards[elem_id];
       }
+      best_split = std::move(split_candidates[split_idx]);
     }
   }
   // If no interesting split has been fonund

@@ -9,7 +9,7 @@ std::vector<Eigen::MatrixXd> Split::splitEntries(const Eigen::MatrixXd & input) 
   int nb_separations = getNbElements();
   int input_dim = input.rows();
   // First pass to extract indices
-  std::vector<std::vector<int>> indices;
+  std::vector<std::vector<int>> indices(nb_separations);
   for (int col = 0; col < input.cols(); col++)
   {
     indices[getIndex(input.col(col))].push_back(col);

@@ -1,0 +1,9 @@
+<OptimizerTrainer>
+  <AdaptativeTree>
+    <nb_generations>5</nb_generations>
+    <nb_samples>100</nb_samples>
+    <evaluation_trials>20</evaluation_trials>
+    <nb_actions_used>20</nb_actions_used>
+    <cv_ratio>1.0</cv_ratio>
+  </AdaptativeTree>
+</OptimizerTrainer>
