@@ -76,6 +76,9 @@ target_link_libraries(rosban_fa ${catkin_LIBRARIES} ${EXTRA_LIBS})
 add_executable(test_fa_io src/test_io.cpp)
 target_link_libraries(test_fa_io rosban_fa ${DELEG_LIBRARIES}  )
 
+add_executable(test_optimizer_trainer src/test_optimizer_trainer.cpp)
+target_link_libraries(test_optimizer_trainer rosban_fa ${DELEG_LIBRARIES}  )
+
 if (rosban_viewer_FOUND)
   add_executable(viewer src/viewer.cpp)
   target_link_libraries(viewer rosban_fa ${DELEG_LIBRARIES}  )

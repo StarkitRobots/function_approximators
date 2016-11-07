@@ -105,6 +105,10 @@ public:
   EvaluationFunction getEvaluationFunction(RewardFunction rf,
                                            const Eigen::MatrixXd & training_set);
 
+  virtual std::string class_name() const;
+  virtual void to_xml(std::ostream &out) const override;
+  virtual void from_xml(TiXmlNode *node) override;
+
 private:
   /// Leafs which have already been processed
   std::deque<ProcessedLeaf> processed_leaves;

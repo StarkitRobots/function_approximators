@@ -37,7 +37,7 @@ public:
 
   /// Generate it's own sample to train on the given function
   virtual std::unique_ptr<FunctionApproximator>
-  train(RewardFunction rf) = 0;
+  train(RewardFunction rf, std::default_random_engine * engine) = 0;
 
   /// Update the space of parameters
   void setParametersLimits(const Eigen::MatrixXd & new_limits);

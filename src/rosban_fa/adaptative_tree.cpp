@@ -278,4 +278,27 @@ AdaptativeTree::optimizeAction(RewardFunction rf,
   return best_policy;
 }
 
+std::string AdaptativeTree::class_name() const
+{
+  return "AdaptativeTree";
+}
+
+void AdaptativeTree::to_xml(std::ostream &out) const
+{
+  rosban_utils::xml_tools::write<int>   ("nb_generations"   , nb_generations   , out);
+  rosban_utils::xml_tools::write<int>   ("nb_samples"       , nb_samples       , out);
+  rosban_utils::xml_tools::write<int>   ("evaluation_trials", evaluation_trials, out);
+  rosban_utils::xml_tools::write<int>   ("nb_actions_used"  , nb_actions_used  , out);
+  rosban_utils::xml_tools::write<double>("cv_ratio"         , cv_ratio         , out);
+}
+
+void AdaptativeTree::from_xml(TiXmlNode *node)
+{
+  rosban_utils::xml_tools::try_read<int>   (node, "nb_generations"   , nb_generations   );
+  rosban_utils::xml_tools::try_read<int>   (node, "nb_samples"       , nb_samples       );
+  rosban_utils::xml_tools::try_read<int>   (node, "evaluation_trials", evaluation_trials);
+  rosban_utils::xml_tools::try_read<int>   (node, "nb_actions_used"  , nb_actions_used  );
+  rosban_utils::xml_tools::try_read<double>(node, "cv_ratio"         , cv_ratio         );
+}
+
 }
