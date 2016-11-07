@@ -77,8 +77,6 @@ int FATree::writeInternal(std::ostream & out) const
 
 int FATree::read(std::istream & in)
 {
-  // Check after reading that consistency is ensured
-  checkConsistency("FATree::read");
   // Read split and then read childs
   int bytes_read = 0;
   bytes_read += SplitFactory().read(in, split);
@@ -87,6 +85,8 @@ int FATree::read(std::istream & in)
   {
     bytes_read += FunctionApproximatorFactory().read(in, childs[i]);
   }
+  // Check after reading that consistency is ensured
+  checkConsistency("FATree::read");
   return bytes_read;
 }
 

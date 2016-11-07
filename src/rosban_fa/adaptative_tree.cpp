@@ -153,7 +153,8 @@ AdaptativeTree::buildApproximator(RewardFunction rf,
     std::vector<std::unique_ptr<FunctionApproximator>> childs_fa;
     for (size_t child_id = 0; child_id < childs.size(); child_id++)
     {
-      childs_fa.push_back(std::move(childs[child_id].approximator));
+      // Try to split the child samples if it improves the results
+      childs_fa.push_back(buildApproximator(rf, childs[child_id], engine));
     }
     return std::unique_ptr<FunctionApproximator>(new FATree(std::move(best_split), childs_fa));
   }

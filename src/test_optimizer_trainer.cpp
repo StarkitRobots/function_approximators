@@ -75,5 +75,5 @@ int main(int argc, char ** argv)
     total_reward += pbb.reward(parameters, action, &engine);
   }
   double avg_reward = total_reward / nb_evaluations;
-  std::cout << "Average reward: " << avg_reward;
+  std::cout << "Average reward: " << avg_reward << std::endl;
 }
