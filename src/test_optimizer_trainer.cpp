@@ -17,7 +17,7 @@ struct ParametrizedBlackBox
 /// - parameters: initial position in the 'n' dimensional space
 /// - actions: wished movement (same limits as parameters)
 /// - noise: real movement is wished_movement * U(1 - noise_ratio, 1 + noise_ratio)
-struct ParametrizedBlackBox getContinuousBlackBox(int dim, double noise_ratio)
+struct ParametrizedBlackBox getContinuousBlackBox(int dim, double noise_ratio, double tol)
 {
   struct ParametrizedBlackBox result;
   result.parameters_limits = Eigen::MatrixXd(dim,2);
@@ -25,14 +25,38 @@ struct ParametrizedBlackBox getContinuousBlackBox(int dim, double noise_ratio)
   result.parameters_limits.col(1) = Eigen::VectorXd::Constant(dim,  1);
   result.actions_limits = result.parameters_limits;
   result.reward = 
-    [noise_ratio](const Eigen::VectorXd & parameters,
+    [noise_ratio, tol](const Eigen::VectorXd & parameters,
        const Eigen::VectorXd & actions,
        std::default_random_engine * engine)
     {
       std::uniform_real_distribution<double> noise_distrib(1 - noise_ratio, 1 + noise_ratio);
       double move_ratio = noise_distrib(*engine);
       Eigen::VectorXd final_pos = parameters + actions * move_ratio;
-      return -final_pos.squaredNorm();
+      double error = std::sqrt(final_pos.squaredNorm());
+      double extra_error = std::max(0.0,error - tol);
+      return -(extra_error * extra_error);
+    };
+  return result;
+}
+
+struct ParametrizedBlackBox getDiscreteBlackBox(int dim)
+{
+  struct ParametrizedBlackBox result;
+  result.parameters_limits = Eigen::MatrixXd(dim,2);
+  result.parameters_limits.col(0) = Eigen::VectorXd::Constant(dim, -1);
+  result.parameters_limits.col(1) = Eigen::VectorXd::Constant(dim,  1);
+  result.actions_limits = result.parameters_limits;
+  result.reward = 
+    [noise_ratio, tol](const Eigen::VectorXd & parameters,
+       const Eigen::VectorXd & actions,
+       std::default_random_engine * engine)
+    {
+      std::uniform_real_distribution<double> noise_distrib(1 - noise_ratio, 1 + noise_ratio);
+      double move_ratio = noise_distrib(*engine);
+      Eigen::VectorXd final_pos = parameters + actions * move_ratio;
+      double error = std::sqrt(final_pos.squaredNorm());
+      double extra_error = std::max(0.0,error - tol);
+      return -(extra_error * extra_error);
     };
   return result;
 }
@@ -52,7 +76,7 @@ int main(int argc, char ** argv)
   std::unique_ptr<OptimizerTrainer> optimizer_trainer;
   optimizer_trainer = OptimizerTrainerFactory().buildFromXmlFile(argv[1],"OptimizerTrainer");
   // Building pbb and customizing trainer
-  struct ParametrizedBlackBox pbb = getContinuousBlackBox(1, 0.05);
+  struct ParametrizedBlackBox pbb = getContinuousBlackBox(1, 0.05,1);
   optimizer_trainer->setParametersLimits(pbb.parameters_limits);
   optimizer_trainer->setActionsLimits(pbb.actions_limits);
   // Running optimizer trainer
