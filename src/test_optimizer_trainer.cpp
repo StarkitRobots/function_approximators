@@ -39,27 +39,28 @@ struct ParametrizedBlackBox getContinuousBlackBox(int dim, double noise_ratio, d
   return result;
 }
 
-struct ParametrizedBlackBox getDiscreteBlackBox(int dim)
-{
-  struct ParametrizedBlackBox result;
-  result.parameters_limits = Eigen::MatrixXd(dim,2);
-  result.parameters_limits.col(0) = Eigen::VectorXd::Constant(dim, -1);
-  result.parameters_limits.col(1) = Eigen::VectorXd::Constant(dim,  1);
-  result.actions_limits = result.parameters_limits;
-  result.reward = 
-    [noise_ratio, tol](const Eigen::VectorXd & parameters,
-       const Eigen::VectorXd & actions,
-       std::default_random_engine * engine)
-    {
-      std::uniform_real_distribution<double> noise_distrib(1 - noise_ratio, 1 + noise_ratio);
-      double move_ratio = noise_distrib(*engine);
-      Eigen::VectorXd final_pos = parameters + actions * move_ratio;
-      double error = std::sqrt(final_pos.squaredNorm());
-      double extra_error = std::max(0.0,error - tol);
-      return -(extra_error * extra_error);
-    };
-  return result;
-}
+// NOT WORKING YET
+//struct ParametrizedBlackBox getDiscreteBlackBox(int dim)
+//{
+//  struct ParametrizedBlackBox result;
+//  result.parameters_limits = Eigen::MatrixXd(dim,2);
+//  result.parameters_limits.col(0) = Eigen::VectorXd::Constant(dim, -1);
+//  result.parameters_limits.col(1) = Eigen::VectorXd::Constant(dim,  1);
+//  result.actions_limits = result.parameters_limits;
+//  result.reward = 
+//    [noise_ratio, tol](const Eigen::VectorXd & parameters,
+//       const Eigen::VectorXd & actions,
+//       std::default_random_engine * engine)
+//    {
+//      std::uniform_real_distribution<double> noise_distrib(1 - noise_ratio, 1 + noise_ratio);
+//      double move_ratio = noise_distrib(*engine);
+//      Eigen::VectorXd final_pos = parameters + actions * move_ratio;
+//      double error = std::sqrt(final_pos.squaredNorm());
+//      double extra_error = std::max(0.0,error - tol);
+//      return -(extra_error * extra_error);
+//    };
+//  return result;
+//}
 
 int main(int argc, char ** argv)
 {
