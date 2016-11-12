@@ -4,6 +4,8 @@
 
 #include <Eigen/Core>
 
+#include <vector>
+
 namespace rosban_fa
 {
 
