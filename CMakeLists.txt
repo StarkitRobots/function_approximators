@@ -5,9 +5,6 @@ find_package(catkin REQUIRED COMPONENTS
   rosban_regression_forests
 )
 
-find_package(PkgConfig)
-pkg_search_module(Eigen3 REQUIRED eigen3>=3.2.3)
-
 find_package(rosban_viewer)
 
 set(DELEG_INCLUDE_DIRS include ${catkin_INCLUDE_DIRS})
@@ -38,7 +35,6 @@ catkin_package(
 
 include_directories(
   ${DELEG_INCLUDE_DIRS}
-  ${EIGEN3_INCLUDE_DIR}
   ${catkin_INCLUDE_DIRS}
   )
 
