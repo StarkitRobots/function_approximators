@@ -8,6 +8,7 @@
 
 #include <functional>
 #include <memory>
+#include <random>
 
 namespace rosban_fa
 {
