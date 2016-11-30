@@ -3,6 +3,8 @@
 #include "rosban_fa/optimizer_trainer.h"
 #include "rosban_fa/split.h"
 
+#include "rosban_bbo/optimizer.h"
+
 #include <deque>
 
 namespace rosban_fa
@@ -130,9 +132,8 @@ private:
   /// (parameter, action)
   int evaluation_trials;
 
-  /// Number of actions used to train the internal function approximators
-  /// TODO: replace by blackbox_optimizer
-  int nb_actions_used;
+  /// The optimizer used to train parameters of the models
+  std::unique_ptr<rosban_bbo::Optimizer> model_optimizer;
 };
 
 }

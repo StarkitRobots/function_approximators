@@ -6,6 +6,8 @@
 
 #include "rosban_regression_forests/tools/statistics.h"
 
+#include "rosban_bbo/optimizer_factory.h"
+
 #include "rosban_random/tools.h"
 
 namespace rosban_fa
@@ -15,8 +17,7 @@ AdaptativeTree::AdaptativeTree()
   : nb_generations(1),
     nb_samples(100),
     cv_ratio(1.0),
-    evaluation_trials(10),
-    nb_actions_used(50)
+    evaluation_trials(10)
 {
 }
 
@@ -230,20 +231,23 @@ AdaptativeTree::EvaluationFunction
 AdaptativeTree::getEvaluationFunction(RewardFunction rf,
                                       const Eigen::MatrixXd & training_set)
 {
+  int nb_trials = evaluation_trials;
   return
-    [training_set, rf] (const FunctionApproximator & policy,
-                        std::default_random_engine * engine)
+    [training_set, rf, nb_trials] (const FunctionApproximator & policy,
+                                   std::default_random_engine * engine)
     {
       double reward = 0;
       for (int col = 0; col < training_set.cols(); col++)
       {
-        Eigen::VectorXd parameters = training_set.col(col);
-        Eigen::VectorXd action;
-        Eigen::MatrixXd covar;
-        policy.predict(parameters, action, covar);
-        reward += rf(parameters, action, engine);
+        for (int trial = 0; trial < nb_trials; trial++) {
+          Eigen::VectorXd parameters = training_set.col(col);
+          Eigen::VectorXd action;
+          Eigen::MatrixXd covar;
+          policy.predict(parameters, action, covar);
+          reward += rf(parameters, action, engine);
+        }
       }
-      return reward / training_set.cols();
+      return reward / (training_set.cols() * nb_trials);
     };
 }
 
@@ -253,31 +257,25 @@ AdaptativeTree::optimizeAction(RewardFunction rf,
                                const Eigen::MatrixXd & training_set,
                                std::default_random_engine * engine)
 {
-  EvaluationFunction eval_function = getEvaluationFunction(rf, training_set);
-  std::vector<Eigen::VectorXd> candidate_actions;
-  candidate_actions = rosban_random::getUniformSamples(actions_limits,
-                                                       nb_actions_used,
-                                                       engine);
-  // find best action among the candidates
-  double best_reward = std::numeric_limits<double>::lowest();
-  std::unique_ptr<FunctionApproximator> best_policy;
-  for (int action_id = 0; action_id < nb_actions_used; action_id++)
-  {
-    std::unique_ptr<FunctionApproximator> policy;
-    policy.reset(new ConstantApproximator(candidate_actions[action_id]));
-    double action_reward = 0;
-    for (int trial = 0; trial < evaluation_trials; trial++)
+  EvaluationFunction policy_evaluator = getEvaluationFunction(rf, training_set);
+
+  // Creating the reward function for constant models
+  rosban_bbo::Optimizer::RewardFunc constant_model_reward_func;
+  constant_model_reward_func = [policy_evaluator](const Eigen::VectorXd & parameters,
+                                                  std::default_random_engine * engine)
     {
-      action_reward += eval_function(*policy, engine);
-    }
-    action_reward /= evaluation_trials;
-    if (action_reward > best_reward)
-    {
-      best_reward = action_reward;
-      best_policy = std::move(policy);
-    }
+      //TODO: eventually need to care about extra parameters
+      ConstantApproximator policy(parameters);
+      return policy_evaluator(policy, engine);
+    };
+  // Ensuring a model optimizer is available
+  if (!model_optimizer) {
+    throw std::runtime_error("AdaptativeTree::optimizeAction: No model optimizer available");
   }
-  return best_policy;
+  // Training a constant model
+  model_optimizer->setLimits(actions_limits);
+  Eigen::VectorXd best_action = model_optimizer->train(constant_model_reward_func, engine);
+  return std::unique_ptr<FunctionApproximator>(new ConstantApproximator(best_action));
 }
 
 std::string AdaptativeTree::class_name() const
@@ -290,7 +288,6 @@ void AdaptativeTree::to_xml(std::ostream &out) const
   rosban_utils::xml_tools::write<int>   ("nb_generations"   , nb_generations   , out);
   rosban_utils::xml_tools::write<int>   ("nb_samples"       , nb_samples       , out);
   rosban_utils::xml_tools::write<int>   ("evaluation_trials", evaluation_trials, out);
-  rosban_utils::xml_tools::write<int>   ("nb_actions_used"  , nb_actions_used  , out);
   rosban_utils::xml_tools::write<double>("cv_ratio"         , cv_ratio         , out);
 }
 
@@ -299,8 +296,8 @@ void AdaptativeTree::from_xml(TiXmlNode *node)
   rosban_utils::xml_tools::try_read<int>   (node, "nb_generations"   , nb_generations   );
   rosban_utils::xml_tools::try_read<int>   (node, "nb_samples"       , nb_samples       );
   rosban_utils::xml_tools::try_read<int>   (node, "evaluation_trials", evaluation_trials);
-  rosban_utils::xml_tools::try_read<int>   (node, "nb_actions_used"  , nb_actions_used  );
   rosban_utils::xml_tools::try_read<double>(node, "cv_ratio"         , cv_ratio         );
+  rosban_bbo::OptimizerFactory().tryRead(node,"model_optimizer", model_optimizer);
 }
 
 }
