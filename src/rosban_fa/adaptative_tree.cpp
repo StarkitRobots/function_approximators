@@ -103,6 +103,15 @@ AdaptativeTree::buildApproximator(RewardFunction rf,
     int nb_elements = split_candidates[split_idx]->getNbElements();
     samples = split_candidates[split_idx]->splitEntries(candidate.parameters_set);
     spaces = split_candidates[split_idx]->splitSpace(candidate.parameters_space);
+    // If a split would result on getting one of the space empty, refuse it
+    bool creates_empty_spaces = false;
+    for (const Eigen::MatrixXd & samples_set : samples) {
+      if (samples_set.cols() == 0) {
+        creates_empty_spaces = true;
+        break;
+      }
+    }
+    if (creates_empty_spaces) continue;
     // Estimate rewards and function approximators for all elements of the split
     double total_reward = 0;
     double total_weight = 0;
@@ -339,6 +348,11 @@ AdaptativeTree::optimizeLinearPolicy(EvaluationFunction policy_evaluator,
   // Training a constant model
   model_optimizer->setLimits(linear_parameters_space);
   Eigen::VectorXd best_action = model_optimizer->train(linear_model_reward_func, engine);
+  if (best_action.rows() == 0)
+  {
+    std::cout << "Parameters space: " << std::endl
+              << linear_parameters_space << std::endl;
+  }
   return std::unique_ptr<FunctionApproximator>
     (new LinearApproximator(parameter_dims, action_dims, best_action));
 }

@@ -4,6 +4,9 @@
 
 #include <iostream>
 
+#include <fenv.h>
+
+
 using namespace rosban_fa;
 
 struct ParametrizedBlackBox
@@ -64,6 +67,8 @@ struct ParametrizedBlackBox getContinuousBlackBox(int dim, double noise_ratio, d
 
 int main(int argc, char ** argv)
 {
+  feenableexcept(FE_DIVBYZERO| FE_INVALID | FE_OVERFLOW);
+
   // Checking parameters
   if (argc < 2)
   {
@@ -77,7 +82,7 @@ int main(int argc, char ** argv)
   std::unique_ptr<OptimizerTrainer> optimizer_trainer;
   optimizer_trainer = OptimizerTrainerFactory().buildFromXmlFile(argv[1],"OptimizerTrainer");
   // Building pbb and customizing trainer
-  struct ParametrizedBlackBox pbb = getContinuousBlackBox(1, 0.05,0.1);
+  struct ParametrizedBlackBox pbb = getContinuousBlackBox(2, 0.05,0.1);
   optimizer_trainer->setParametersLimits(pbb.parameters_limits);
   optimizer_trainer->setActionsLimits(pbb.actions_limits);
   // Running optimizer trainer
