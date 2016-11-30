@@ -86,10 +86,21 @@ public:
                                         int training_set_size,
                                         std::default_random_engine * engine);
 
-  /// TODO imple
   std::unique_ptr<FunctionApproximator> optimizeAction(RewardFunction rf,
                                                        const Eigen::MatrixXd & parameters_set,
+                                                       const Eigen::MatrixXd & parameters_space,
                                                        std::default_random_engine * engine);
+
+  /// Return an optimized constant policy 
+  std::unique_ptr<FunctionApproximator>
+  optimizeConstantPolicy(EvaluationFunction policy_evaluator,
+                         std::default_random_engine * engine);
+    
+  /// Return an optimized linear policy
+  std::unique_ptr<FunctionApproximator>
+  optimizeLinearPolicy(EvaluationFunction policy_evaluator,
+                       const Eigen::MatrixXd & parameters_space,
+                       std::default_random_engine * engine);
 
   /// Update the 'reward' field of the candidate, using his 'approximator'
   /// and cross-validation

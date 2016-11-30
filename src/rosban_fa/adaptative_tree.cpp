@@ -2,6 +2,7 @@
 
 #include "rosban_fa/constant_approximator.h"
 #include "rosban_fa/fa_tree.h"
+#include "rosban_fa/linear_approximator.h"
 #include "rosban_fa/orthogonal_split.h"
 
 #include "rosban_regression_forests/tools/statistics.h"
@@ -73,6 +74,7 @@ AdaptativeTree::runGeneration(RewardFunction rf,
   candidate.parameters_space = parameters_limits;
   candidate.approximator = optimizeAction(rf,
                                           candidate.parameters_set,
+                                          candidate.parameters_space,
                                           engine);
   updateReward(rf, candidate, engine);
   return buildApproximator(rf, candidate, engine);
@@ -110,7 +112,8 @@ AdaptativeTree::buildApproximator(RewardFunction rf,
       ApproximatorCandidate current_candidate;
       current_candidate.parameters_set = samples[elem_id];
       current_candidate.parameters_space = spaces[elem_id];
-      current_candidate.approximator = optimizeAction(rf, samples[elem_id], engine);
+      current_candidate.approximator = optimizeAction(rf, samples[elem_id],
+                                                      spaces[elem_id], engine);
       updateReward(rf, current_candidate, engine);
       // Storing values
       function_approximators.push_back(std::move(current_candidate.approximator));
@@ -251,32 +254,95 @@ AdaptativeTree::getEvaluationFunction(RewardFunction rf,
     };
 }
 
-//TODO replace by a blackbox optimizer eval_function
 std::unique_ptr<FunctionApproximator>
 AdaptativeTree::optimizeAction(RewardFunction rf,
                                const Eigen::MatrixXd & training_set,
+                               const Eigen::MatrixXd & parameters_space,
                                std::default_random_engine * engine)
 {
   EvaluationFunction policy_evaluator = getEvaluationFunction(rf, training_set);
+  // Computing linear and constant policies
+  std::unique_ptr<FunctionApproximator> best_constant_policy, best_linear_policy;
+  best_constant_policy = optimizeConstantPolicy(policy_evaluator, engine);
+  best_linear_policy = optimizeLinearPolicy(policy_evaluator, parameters_space, engine);
+  // Evaluation of both policies
+  double constant_score = policy_evaluator(*best_constant_policy, engine);
+  double linear_score = policy_evaluator(*best_linear_policy, engine);
+  // Returning the best one
+  if (linear_score > constant_score)
+    return std::move(best_linear_policy);
+  return std::move(best_constant_policy);
+}
+
+std::unique_ptr<FunctionApproximator>
+AdaptativeTree::optimizeConstantPolicy(EvaluationFunction policy_evaluator,
+                                       std::default_random_engine * engine)
+{
+  if (!model_optimizer) {
+    throw std::runtime_error("AdaptativeTree::optimizeConstantPolicy: No model optimizer available");
+  }
 
   // Creating the reward function for constant models
   rosban_bbo::Optimizer::RewardFunc constant_model_reward_func;
   constant_model_reward_func = [policy_evaluator](const Eigen::VectorXd & parameters,
                                                   std::default_random_engine * engine)
     {
-      //TODO: eventually need to care about extra parameters
       ConstantApproximator policy(parameters);
       return policy_evaluator(policy, engine);
     };
-  // Ensuring a model optimizer is available
-  if (!model_optimizer) {
-    throw std::runtime_error("AdaptativeTree::optimizeAction: No model optimizer available");
-  }
   // Training a constant model
   model_optimizer->setLimits(actions_limits);
   Eigen::VectorXd best_action = model_optimizer->train(constant_model_reward_func, engine);
   return std::unique_ptr<FunctionApproximator>(new ConstantApproximator(best_action));
 }
+
+std::unique_ptr<FunctionApproximator>
+AdaptativeTree::optimizeLinearPolicy(EvaluationFunction policy_evaluator,
+                                     const Eigen::MatrixXd & parameters_space,
+                                     std::default_random_engine * engine)
+{
+  if (!model_optimizer) {
+    throw std::runtime_error("AdaptativeTree::optimizeLinearPolicy: No model optimizer available");
+  }
+
+  int parameter_dims = getParametersDim();
+  int action_dims = getActionsDim();
+
+  // Creating linear parameters space
+  Eigen::MatrixXd linear_parameters_space((parameter_dims +1) * action_dims,2);
+  // Bias Limits
+  linear_parameters_space.block(0,0,action_dims, 2) = actions_limits;
+  // Coeffs Limits
+  // For each parameter, it might at most make the output vary from min to max in given space
+  for (int action_dim = 0; action_dim < action_dims; action_dim++) {
+    double action_amplitude = actions_limits(action_dim,1) - actions_limits(action_dim,0);
+    for (int parameter_dim = 0; parameter_dim < parameter_dims; parameter_dim++) {
+      double param_min = parameters_limits(parameter_dim,0);
+      double param_max = parameters_limits(parameter_dim,1);
+      double parameter_amplitude = param_max - param_min;
+      int index = action_dim + action_dims * (1 + parameter_dim);
+      double max_coeff = action_amplitude / parameter_amplitude;
+      linear_parameters_space(index, 0) = -max_coeff;
+      linear_parameters_space(index, 1) =  max_coeff;
+    }
+  }
+
+  // Creating the reward function for linear models
+  rosban_bbo::Optimizer::RewardFunc linear_model_reward_func;
+  linear_model_reward_func =
+    [policy_evaluator, action_dims, parameter_dims]
+    (const Eigen::VectorXd & parameters, std::default_random_engine * engine)
+    {
+      LinearApproximator policy(parameter_dims, action_dims, parameters);
+      return policy_evaluator(policy, engine);
+    };
+  // Training a constant model
+  model_optimizer->setLimits(linear_parameters_space);
+  Eigen::VectorXd best_action = model_optimizer->train(linear_model_reward_func, engine);
+  return std::unique_ptr<FunctionApproximator>
+    (new LinearApproximator(parameter_dims, action_dims, best_action));
+}
+
 
 std::string AdaptativeTree::class_name() const
 {

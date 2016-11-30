@@ -5,6 +5,7 @@
 #include "rosban_fa/forest_approximator.h"
 #include "rosban_fa/gp.h"
 #include "rosban_fa/gp_forest.h"
+#include "rosban_fa/linear_approximator.h"
 #include "rosban_fa/pwc_forest.h"
 #include "rosban_fa/pwl_forest.h"
 
@@ -27,6 +28,8 @@ FunctionApproximatorFactory::FunctionApproximatorFactory()
                   []() { return std::unique_ptr<FunctionApproximator>(new FATree); });
   registerBuilder(FunctionApproximator::Constant,
                   []() { return std::unique_ptr<FunctionApproximator>(new ConstantApproximator); });
+  registerBuilder(FunctionApproximator::Linear,
+                  []() { return std::unique_ptr<FunctionApproximator>(new LinearApproximator); });
 }
 
 }

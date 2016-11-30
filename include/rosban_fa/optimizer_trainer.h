@@ -46,7 +46,6 @@ public:
   /// Update the space of actions
   void setActionsLimits(const Eigen::MatrixXd & new_limits);
 
-
 protected:
 
   /// Number of dimensions for parameters
