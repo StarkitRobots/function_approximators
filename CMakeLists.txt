@@ -12,7 +12,6 @@ pkg_search_module(Eigen3 REQUIRED eigen3>=3.2.3)
 find_package(rosban_viewer)
 
 set(DELEG_INCLUDE_DIRS include ${catkin_INCLUDE_DIRS})
-set(DELEG_LIBRARIES ${catkin_LIBRARIES})
 
 # Warning: Need to clean build in order to create the viewer if it was not
 #          available during the first build
@@ -29,7 +28,7 @@ set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -std=c++11")
 
 catkin_package(
   INCLUDE_DIRS ${DELEG_INCLUDE_DIRS}
-  LIBRARIES ${DELEG_LIBRARIES}
+  LIBRARIES rosban_fa
   CATKIN_DEPENDS rosban_regression_forests rosban_bbo
 )
 
