@@ -326,9 +326,11 @@ AdaptativeTree::optimizeLinearPolicy(EvaluationFunction policy_evaluator,
   for (int action_dim = 0; action_dim < action_dims; action_dim++) {
     double action_amplitude = actions_limits(action_dim,1) - actions_limits(action_dim,0);
     for (int parameter_dim = 0; parameter_dim < parameter_dims; parameter_dim++) {
-      double param_min = parameters_limits(parameter_dim,0);
-      double param_max = parameters_limits(parameter_dim,1);
-      double parameter_amplitude = param_max - param_min;
+      double param_min = parameters_space(parameter_dim,0);
+      double param_max = parameters_space(parameter_dim,1);
+      // Avoiding numerical issues
+      double parameter_amplitude = std::max(param_max - param_min,
+                                            std::pow(10,-6));
       int index = action_dim + action_dims * (1 + parameter_dim);
       double max_coeff = action_amplitude / parameter_amplitude;
       linear_parameters_space(index, 0) = -max_coeff;

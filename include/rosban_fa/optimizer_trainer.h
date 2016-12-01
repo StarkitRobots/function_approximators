@@ -46,6 +46,9 @@ public:
   /// Update the space of actions
   void setActionsLimits(const Eigen::MatrixXd & new_limits);
 
+  /// Choose the number of threads allowed for the optimizer
+  void setNbThreads(int nb_threads);
+
 protected:
 
   /// Number of dimensions for parameters
@@ -59,6 +62,9 @@ protected:
 
   /// Action space
   Eigen::MatrixXd actions_limits;
+
+  /// Number of threads allowed to the optimizer
+  int nb_threads;
 };
 
 }

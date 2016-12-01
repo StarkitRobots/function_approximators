@@ -17,6 +17,11 @@ void OptimizerTrainer::setActionsLimits(const Eigen::MatrixXd & new_limits)
   actions_limits = new_limits;
 }
 
+void OptimizerTrainer::setNbThreads(int nb_threads_)
+{
+  nb_threads = nb_threads_;
+}
+
 int OptimizerTrainer::getParametersDim() const
 {
   return parameters_limits.rows();
