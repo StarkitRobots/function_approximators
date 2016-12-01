@@ -4,6 +4,7 @@
 #include "rosban_fa/fa_tree.h"
 #include "rosban_fa/linear_approximator.h"
 #include "rosban_fa/orthogonal_split.h"
+#include "rosban_fa/point_split.h"
 
 #include "rosban_regression_forests/tools/statistics.h"
 
@@ -179,7 +180,8 @@ AdaptativeTree::getSplitCandidates(const Eigen::MatrixXd & samples)
   std::vector<std::unique_ptr<Split>> result;
   /// No sense to build up quartiles if there is less than 4 samples
   if (samples.cols() < 4) return result;
-  /// Compute quartiles along every dimension
+  /// Compute quartiles along every dimension (and storing median point)
+  Eigen::VectorXd median_point = Eigen::VectorXd(getParametersDim());
   for (int dim = 0; dim < getParametersDim(); dim++)
   {
     std::vector<double> values;
@@ -187,12 +189,17 @@ AdaptativeTree::getSplitCandidates(const Eigen::MatrixXd & samples)
     {
       values.push_back(samples(dim,i));
     }
-    /// TODO: handle cases with repeated values
     std::vector<double> split_values = regression_forests::Statistics::getQuartiles(values);
     for (double split_value : split_values)
     {
       result.push_back(std::unique_ptr<Split>(new OrthogonalSplit(dim, split_value)));
     }
+    // Storing median point
+    median_point(dim) = split_values[1];
+  }
+  // If number of points is high enough, also add the possibility to split on the median
+  if (samples.cols() >= std::pow(2, getParametersDim())) {
+    result.push_back(std::unique_ptr<Split>(new PointSplit(median_point)));
   }
   return result;
 }

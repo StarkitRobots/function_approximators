@@ -14,6 +14,7 @@ set(SOURCES
   optimizer_trainer.cpp
   optimizer_trainer_factory.cpp
   orthogonal_split.cpp
+  point_split.cpp
   pwc_forest.cpp
   pwc_forest_trainer.cpp
   pwl_forest.cpp

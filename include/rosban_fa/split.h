@@ -12,14 +12,14 @@ namespace rosban_fa
 /// This interface do not require to cut the space on which the split is applied
 /// because it is not mandatory for splits (e.g. orthogonal split only require
 /// to store the dimension id and the value to be valid)
-/// TODO: add inheritance to split in order to ensure that it is binary serializable
 class Split : public rosban_utils::StreamSerializable
 {
 public:
 
   enum ID : int
     {
-      Orthogonal = 1
+      Orthogonal = 1,
+      Point = 2
     };
 
 
