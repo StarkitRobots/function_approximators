@@ -40,7 +40,7 @@ Eigen::MatrixXd AdaptativeTree::generateParametersSet(std::default_random_engine
 {
   Eigen::MatrixXd parameters_set;
   // On first generation get samples from random
-  if (processed_leaves.empty()) {
+  if (true) {//processed_leaves.empty()) {
     parameters_set = rosban_random::getUniformSamplesMatrix(parameters_limits,
                                                             nb_samples,
                                                             engine);
