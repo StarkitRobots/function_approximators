@@ -298,12 +298,10 @@ AdaptativeTree::getEvaluationFunction(RewardFunction rf,
     (const FunctionApproximator & policy,
      std::default_random_engine * engine)
     {
-      std::cout << "Running task on " << threads_used << "threads" << std::endl;
       std::vector<double> rewards(training_set.cols());
       rosban_utils::MultiCore::StochasticTask eval_task =
         [&] (int start_idx, int end_idx, std::default_random_engine * engine)
         {
-          std::cout << "From" << start_idx << " to " << end_idx << std::endl;
           for (int col = start_idx; col < end_idx; col++) {
             const Eigen::VectorXd & parameters = training_set.col(col);
             Eigen::VectorXd action;
