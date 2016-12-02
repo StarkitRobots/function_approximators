@@ -12,6 +12,8 @@
 
 #include "rosban_random/tools.h"
 
+#include "rosban_utils/multi_core.h"
+
 namespace rosban_fa
 {
 
@@ -290,22 +292,42 @@ AdaptativeTree::getEvaluationFunction(RewardFunction rf,
                                       const Eigen::MatrixXd & training_set)
 {
   int nb_trials = evaluation_trials;
+  int threads_used = std::min(nb_threads, (int)training_set.cols());
   return
-    [training_set, rf, nb_trials] (const FunctionApproximator & policy,
-                                   std::default_random_engine * engine)
+    [training_set, rf, nb_trials, threads_used]
+    (const FunctionApproximator & policy,
+     std::default_random_engine * engine)
     {
-      double reward = 0;
-      for (int col = 0; col < training_set.cols(); col++)
-      {
-        for (int trial = 0; trial < nb_trials; trial++) {
-          Eigen::VectorXd parameters = training_set.col(col);
-          Eigen::VectorXd action;
-          Eigen::MatrixXd covar;
-          policy.predict(parameters, action, covar);
-          reward += rf(parameters, action, engine);
-        }
+      std::cout << "Running task on " << threads_used << "threads" << std::endl;
+      std::vector<double> rewards(training_set.cols());
+      rosban_utils::MultiCore::StochasticTask eval_task =
+        [&] (int start_idx, int end_idx, std::default_random_engine * engine)
+        {
+          std::cout << "From" << start_idx << " to " << end_idx << std::endl;
+          for (int col = start_idx; col < end_idx; col++) {
+            const Eigen::VectorXd & parameters = training_set.col(col);
+            Eigen::VectorXd action;
+            Eigen::MatrixXd covar;
+            policy.predict(parameters, action, covar);
+            double col_reward = 0;
+            for (int trial = 0; trial < nb_trials; trial++) {
+              col_reward += rf(parameters, action, engine);
+            }
+            rewards[col] = col_reward;
+          }
+        };
+      // getting engines
+      std::vector<std::default_random_engine> engines;
+      engines = rosban_random::getRandomEngines(threads_used, engine);
+      rosban_utils::MultiCore::runParallelStochasticTask(eval_task,
+                                                         training_set.cols(),
+                                                         &engines);
+      // Summing rewards
+      double total_reward = 0;
+      for (double reward : rewards) {
+        total_reward += reward;
       }
-      return reward / (training_set.cols() * nb_trials);
+      return total_reward / (training_set.cols() * nb_trials);
     };
 }
 
