@@ -37,6 +37,8 @@ public:
   /// Return the hyperrectangles corresponding to the subspaces of the given
   /// space as defined by the getIndex function
   virtual std::vector<Eigen::MatrixXd> splitSpace(const Eigen::MatrixXd & space) const = 0;
+
+  virtual std::string toString() const = 0;
 };
 
 }

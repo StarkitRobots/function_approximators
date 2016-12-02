@@ -57,11 +57,30 @@ Eigen::MatrixXd AdaptativeTree::generateParametersSet(std::default_random_engine
     // space_index -> nb_samples wished
     std::map<int,int> space_occurences;
     space_occurences = rosban_random::sampleWeightedIndicesMap(weights,
-                                                               nb_leaves,
+                                                               nb_samples,
                                                                engine);
     // Computing parameters set
-    parameters_set = Eigen::MatrixXd(parameters_limits.rows(), nb_samples);
+    int param_dims = parameters_limits.rows();
+    parameters_set = Eigen::MatrixXd(param_dims, nb_samples);
+    int sample_id = 0;
+    for (size_t leaf_id = 0; leaf_id < processed_leaves.size(); leaf_id++) {
+      const ProcessedLeaf & leaf = processed_leaves[leaf_id];
+      int leaf_nb_samples = space_occurences[leaf_id];
+      // Drawing samples for this leaf
+      Eigen::MatrixXd leaf_samples;
+      leaf_samples = rosban_random::getUniformSamplesMatrix(leaf.space,
+                                                            leaf_nb_samples,
+                                                            engine);
+//      std::cout << "Placing " << leaf_nb_samples << " samples from "
+//                << sample_id << std::endl;
+      // Affecting samples
+      parameters_set.block(0, sample_id,
+                           param_dims, leaf_nb_samples) = leaf_samples;
+      sample_id += leaf_nb_samples;
+    }
   }
+//  std::cout << "Parameters set: " << std::endl
+//            << parameters_set.transpose() << std::endl;
   return parameters_set;
 }
 
@@ -93,17 +112,26 @@ AdaptativeTree::buildApproximator(RewardFunction rf,
   // Getting splits
   std::vector<std::unique_ptr<Split>> split_candidates;
   split_candidates = getSplitCandidates(candidate.parameters_set);
+
+  // Debug time:
+//  std::cout << "### buildApproximator ###" << std::endl
+//            << "space:" << std::endl
+//            << candidate.parameters_space << std::endl
+//            << "nb_samples: " << candidate.parameters_set.cols() << std::endl;
+
   // Checking if a split improves reward criteria
   for (size_t split_idx = 0; split_idx < split_candidates.size(); split_idx++)
   {
+    std::unique_ptr<Split> current_split = std::move(split_candidates[split_idx]);
+//    std::cout << "\tSplit: " << current_split->toString() << std::endl;
     // Stored data for evaluation of the split
     std::vector<Eigen::MatrixXd> spaces, samples;
     std::vector<double> rewards;
     std::vector<std::unique_ptr<FunctionApproximator>> function_approximators;
     // Separate elements and space with reward
-    int nb_elements = split_candidates[split_idx]->getNbElements();
-    samples = split_candidates[split_idx]->splitEntries(candidate.parameters_set);
-    spaces = split_candidates[split_idx]->splitSpace(candidate.parameters_space);
+    int nb_elements = current_split->getNbElements();
+    samples = current_split->splitEntries(candidate.parameters_set);
+    spaces = current_split->splitSpace(candidate.parameters_space);
     // If a split would result on getting one of the space empty, refuse it
     bool creates_empty_spaces = false;
     for (const Eigen::MatrixXd & samples_set : samples) {
@@ -112,7 +140,10 @@ AdaptativeTree::buildApproximator(RewardFunction rf,
         break;
       }
     }
-    if (creates_empty_spaces) continue;
+    if (creates_empty_spaces) {
+//      std::cout << "\t-> split is creating empty spaces: canceled" << std::endl;
+      continue;
+    }
     // Estimate rewards and function approximators for all elements of the split
     double total_reward = 0;
     double total_weight = 0;
@@ -133,11 +164,17 @@ AdaptativeTree::buildApproximator(RewardFunction rf,
       double weight = samples[elem_id].size();
       total_reward += current_candidate.reward * weight;
       total_weight += weight;
+//      std::cout << "\t# Elem " << elem_id << std::endl;
+//      std::cout << "\t\tSpace:" << std::endl;
+//      std::cout << current_candidate.parameters_space << std::endl;
+//      std::cout << "\t\tAvg Reward: " << current_candidate.reward << std::endl;
+//      std::cout << "\t\tWeight: " << weight << std::endl;
     }
     double avg_split_reward = total_reward / total_weight;
     // If split is currently the best, store its internal data
     if (avg_split_reward > best_reward)
     {
+//      std::cout << "\t\t<- Best split found yet" << std::endl;
       best_reward = avg_split_reward;
       childs.clear();
       childs.resize(nb_elements);
@@ -148,12 +185,13 @@ AdaptativeTree::buildApproximator(RewardFunction rf,
         childs[elem_id].parameters_space = spaces[elem_id];
         childs[elem_id].reward = rewards[elem_id];
       }
-      best_split = std::move(split_candidates[split_idx]);
+      best_split = std::move(current_split);
     }
   }
   // If no interesting split has been fonund
   if (childs.size() == 0)
   {
+//    std::cout << "\tNo interesting split has been found" << std::endl;
     ProcessedLeaf leaf;
     double custom_reward = 0;//TODO
     leaf.space = candidate.parameters_space;
@@ -164,6 +202,7 @@ AdaptativeTree::buildApproximator(RewardFunction rf,
   }
   else
   {
+//    std::cout << "\tAn interesting split has been found: going deeper" << std::endl;
     std::vector<std::unique_ptr<FunctionApproximator>> childs_fa;
     for (size_t child_id = 0; child_id < childs.size(); child_id++)
     {

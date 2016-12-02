@@ -28,6 +28,8 @@ public:
   virtual int writeInternal(std::ostream & out) const override;
   virtual int read(std::istream & in) override;
 
+  virtual std::string toString() const override;
+
   int dim;
   double val;
 };

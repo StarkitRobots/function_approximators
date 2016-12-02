@@ -20,6 +20,8 @@ public:
 
   virtual std::vector<Eigen::MatrixXd> splitSpace(const Eigen::MatrixXd & space) const;
 
+  virtual std::string toString() const override;
+
   // Stream Serialization
   virtual int getClassID() const override;
   virtual int writeInternal(std::ostream & out) const override;

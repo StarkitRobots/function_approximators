@@ -71,6 +71,12 @@ std::vector<Eigen::MatrixXd> PointSplit::splitSpace(const Eigen::MatrixXd & spac
   return result;
 }
 
+std::string PointSplit::toString() const
+{
+  std::ostringstream oss;
+  oss << "(PointSplit: point= " << split_point.transpose() << ")";
+  return oss.str();
+}
 
 int PointSplit::getClassID() const
 {

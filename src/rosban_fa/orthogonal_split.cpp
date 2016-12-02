@@ -47,6 +47,13 @@ std::vector<Eigen::MatrixXd> OrthogonalSplit::splitSpace(const Eigen::MatrixXd &
   return result;
 }
 
+std::string OrthogonalSplit::toString() const
+{
+  std::ostringstream oss;
+  oss << "(OrthogonalSplit: dim= " << dim << " | val = " << val << ")";
+  return oss.str();
+}
+
 
 int OrthogonalSplit::getClassID() const
 {

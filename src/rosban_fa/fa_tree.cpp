@@ -96,7 +96,7 @@ void FATree::checkConsistency(const std::string & caller_name) const
     throw std::logic_error(caller_name + ": split has not been set");
   if (childs.size() == 0)
     throw std::logic_error(caller_name + ": no childs found");
-  if (childs.size() != split->getNbElements())
+  if ((int)childs.size() != split->getNbElements())
   {
     std::ostringstream oss;
     oss << caller_name << ": number of childs do no match split expected elements ("
