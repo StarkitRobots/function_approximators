@@ -70,4 +70,10 @@ int ConstantApproximator::read(std::istream & in)
   return bytes_read;
 }
 
+std::string ConstantApproximator::toString() const {
+  std::ostringstream oss;
+  oss << "(ConstantApproximator| avg: " << average.transpose() << " )";
+  return oss.str();
+}
+
 }

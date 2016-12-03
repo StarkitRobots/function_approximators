@@ -99,4 +99,15 @@ int LinearApproximator::read(std::istream & in)
   return bytes_read;
 }
 
+std::string LinearApproximator::toString() const {
+  std::ostringstream oss;
+  oss << "(LinearApproximator| bias: " << bias.transpose() << " | coeffs: ";
+  for (int row = 0; row < coeffs.rows(); row++) {
+    oss << coeffs.row(row);
+    if (row != coeffs.rows() - 1) oss << "; ";
+  }
+  oss << ")";
+  return oss.str();
+}
+
 }

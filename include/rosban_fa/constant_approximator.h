@@ -32,6 +32,8 @@ public:
   virtual int writeInternal(std::ostream & out) const override;
   virtual int read(std::istream & in) override;
 
+  virtual std::string toString() const override;
+
 protected:
 
   /// Approximation is a constant

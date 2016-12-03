@@ -193,7 +193,8 @@ AdaptativeTree::buildApproximator(RewardFunction rf,
   // If no interesting split has been fonund
   if (childs.size() == 0)
   {
-//    std::cout << "\tNo interesting split has been found" << std::endl;
+    std::cout << "### A leaf has been reached" << std::endl;
+    print(candidate, std::cout);
     ProcessedLeaf leaf;
     double custom_reward = 0;//TODO
     leaf.space = candidate.parameters_space;
@@ -413,12 +414,14 @@ AdaptativeTree::optimizeLinearPolicy(EvaluationFunction policy_evaluator,
       LinearApproximator policy(parameter_dims, action_dims, parameters);
       return policy_evaluator(policy, engine);
     };
-  // Training a constant model
+  // Training a linear model
   model_optimizer->setLimits(linear_parameters_space);
   Eigen::VectorXd best_action = model_optimizer->train(linear_model_reward_func, engine);
-  if (best_action.rows() == 0)
+  if (false)//(true) //best_action.rows() == 0)
   {
     std::cout << "Parameters space: " << std::endl
+              << parameters_space << std::endl;
+    std::cout << "Liner parameters space: " << std::endl
               << linear_parameters_space << std::endl;
   }
   return std::unique_ptr<FunctionApproximator>
@@ -447,5 +450,15 @@ void AdaptativeTree::from_xml(TiXmlNode *node)
   rosban_utils::xml_tools::try_read<double>(node, "cv_ratio"         , cv_ratio         );
   rosban_bbo::OptimizerFactory().tryRead(node,"model_optimizer", model_optimizer);
 }
+
+void AdaptativeTree::print(const ApproximatorCandidate & candidate,
+                           std::ostream & out) {
+  out << "approximator: " << candidate.approximator->toString() << std::endl
+      << "parameters_set_size: " << candidate.parameters_set.cols() << std::endl
+      << "parameters_space: " << std::endl
+      << candidate.parameters_space.transpose() << std::endl
+      << "reward: " << candidate.reward << std::endl;
+}
+
 
 }

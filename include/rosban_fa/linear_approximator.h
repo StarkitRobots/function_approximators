@@ -40,6 +40,8 @@ public:
   virtual int writeInternal(std::ostream & out) const override;
   virtual int read(std::istream & in) override;
 
+  virtual std::string toString() const override;
+
 protected:
 
   /// bias: B in Y = A*X + B

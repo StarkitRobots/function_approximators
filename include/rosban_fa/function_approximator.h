@@ -59,6 +59,10 @@ public:
   /// If not overriden, this method will launch an exception with the name of the class
   virtual void debugPrediction(const Eigen::VectorXd & input, std::ostream & out) const;
 
+  /// Convert the function approximator to a string, default behavior only shows
+  /// the identifier of the class
+  virtual std::string toString() const;
+
 protected:
 
   /// Throws an explicit error message if the output is not 1D

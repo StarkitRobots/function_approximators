@@ -123,6 +123,10 @@ public:
   virtual void from_xml(TiXmlNode *node) override;
 
 private:
+
+  static void print(const ApproximatorCandidate & candidate, std::ostream & out);
+
+
   /// Leafs which have already been processed
   std::deque<ProcessedLeaf> processed_leaves;
 

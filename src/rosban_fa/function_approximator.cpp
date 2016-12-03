@@ -65,4 +65,10 @@ void FunctionApproximator::check1DOutput(const std::string & caller_name) const
   }
 }
 
+std::string FunctionApproximator::toString() const {
+  std::ostringstream oss;
+  oss << "(FunctionApproximator: classID=" << getClassID() << "| internal: unimplemented)";
+  return oss.str();
+}
+
 }
