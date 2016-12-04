@@ -21,7 +21,8 @@ AdaptativeTree::AdaptativeTree()
   : nb_generations(1),
     nb_samples(100),
     cv_ratio(1.0),
-    evaluation_trials(10)
+    evaluation_trials(10),
+    nb_samples_treated(0)
 {
 }
 
@@ -31,8 +32,9 @@ std::unique_ptr<FunctionApproximator>
 AdaptativeTree::train(RewardFunction rf, std::default_random_engine * engine)
 {
   std::unique_ptr<FunctionApproximator> result;
-  for (int generation = 0; generation < nb_generations; generation++)
+  for (int generation = 1; generation <= nb_generations; generation++)
   {
+    std::cout << "Generation " << generation << "/" << nb_generations << std::endl;
     result =  runGeneration(rf, engine);
   }
   return result;
@@ -42,7 +44,7 @@ Eigen::MatrixXd AdaptativeTree::generateParametersSet(std::default_random_engine
 {
   Eigen::MatrixXd parameters_set;
   // On first generation get samples from random
-  if (true) {//processed_leaves.empty()) {
+  if (processed_leaves.empty()) {
     parameters_set = rosban_random::getUniformSamplesMatrix(parameters_limits,
                                                             nb_samples,
                                                             engine);
@@ -90,6 +92,8 @@ std::unique_ptr<FunctionApproximator>
 AdaptativeTree::runGeneration(RewardFunction rf,
                               std::default_random_engine * engine)
 {
+  // Reset number of samples trained, valid only for generation
+  nb_samples_treated = 0;
   // Setting up first candidate
   ApproximatorCandidate candidate;
   candidate.parameters_set = generateParametersSet(engine);
@@ -194,7 +198,10 @@ AdaptativeTree::buildApproximator(RewardFunction rf,
   if (childs.size() == 0)
   {
     std::cout << "### A leaf has been reached" << std::endl;
+    nb_samples_treated += candidate.parameters_set.cols();
     print(candidate, std::cout);
+    std::cout << "Samples treated: " << nb_samples_treated << "/" 
+              << nb_samples << std::endl;
     ProcessedLeaf leaf;
     double custom_reward = 0;//TODO
     leaf.space = candidate.parameters_space;

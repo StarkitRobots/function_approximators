@@ -149,6 +149,9 @@ private:
 
   /// The optimizer used to train parameters of the models
   std::unique_ptr<rosban_bbo::Optimizer> model_optimizer;
+
+  /// Variable stored to make debugging easier
+  int nb_samples_treated;
 };
 
 }
