@@ -155,6 +155,14 @@ private:
 
   /// Variable stored to make debugging easier
   int nb_samples_treated;
+
+  /// How much talkative is the process ?
+  /// 0: Silent
+  /// 1: Progress (Print a header for each generation and number of leafs treated)
+  /// 2: Results  (Print a summary of each chosen candidate)
+  /// 3: Detailed (Print a header for split candidates and their associated scores)
+  /// TODO: create a 4th level (would probably help)
+  int verbosity;
 };
 
 }

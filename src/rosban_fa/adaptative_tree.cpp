@@ -22,7 +22,8 @@ AdaptativeTree::AdaptativeTree()
     nb_samples(100),
     cv_ratio(1.0),
     evaluation_trials(10),
-    nb_samples_treated(0)
+    nb_samples_treated(0),
+    verbosity(2)
 {
 }
 
@@ -34,7 +35,10 @@ AdaptativeTree::train(RewardFunction rf, std::default_random_engine * engine)
   std::unique_ptr<FunctionApproximator> result;
   for (int generation = 1; generation <= nb_generations; generation++)
   {
-    std::cout << "Generation " << generation << "/" << nb_generations << std::endl;
+    if (verbosity >= 1) {
+      std::cout << "Generation " << generation << "/" << nb_generations
+                << std::endl;
+    }
     result =  runGeneration(rf, engine);
   }
   return result;
@@ -79,16 +83,12 @@ Eigen::MatrixXd AdaptativeTree::generateParametersSet(std::default_random_engine
       leaf_samples = rosban_random::getUniformSamplesMatrix(leaf.space,
                                                             leaf_nb_samples,
                                                             engine);
-//      std::cout << "Placing " << leaf_nb_samples << " samples from "
-//                << sample_id << std::endl;
       // Affecting samples
       parameters_set.block(0, sample_id,
                            param_dims, leaf_nb_samples) = leaf_samples;
       sample_id += leaf_nb_samples;
     }
   }
-//  std::cout << "Parameters set: " << std::endl
-//            << parameters_set.transpose() << std::endl;
   return parameters_set;
 }
 
@@ -123,17 +123,20 @@ AdaptativeTree::buildApproximator(RewardFunction rf,
   std::vector<std::unique_ptr<Split>> split_candidates;
   split_candidates = getSplitCandidates(candidate.parameters_set);
 
-  // Debug time:
-//  std::cout << "### buildApproximator ###" << std::endl
-//            << "space:" << std::endl
-//            << candidate.parameters_space << std::endl
-//            << "nb_samples: " << candidate.parameters_set.cols() << std::endl;
+  if (verbosity >= 3) {
+    std::cout << "buildApproximator:"
+              << "space:" << std::endl
+              << candidate.parameters_space.transpose() << std::endl
+              << "nb_samples: " << candidate.parameters_set.cols() << std::endl;
+  }
 
   // Checking if a split improves reward criteria
   for (size_t split_idx = 0; split_idx < split_candidates.size(); split_idx++)
   {
     std::unique_ptr<Split> current_split = std::move(split_candidates[split_idx]);
-//    std::cout << "\tSplit: " << current_split->toString() << std::endl;
+    if (verbosity >= 3) {
+      std::cout << "\tEvaluating split: " << current_split->toString() << std::endl;
+    }
     // Stored data for evaluation of the split
     std::vector<Eigen::MatrixXd> spaces, samples;
     std::vector<double> rewards;
@@ -151,7 +154,9 @@ AdaptativeTree::buildApproximator(RewardFunction rf,
       }
     }
     if (creates_empty_spaces) {
-//      std::cout << "\t-> split is creating empty spaces: canceled" << std::endl;
+      if (verbosity >= 3) {
+        std::cout << "\t-> Creating empty spaces: refused" << std::endl;
+      }
       continue;
     }
     // Estimate rewards and function approximators for all elements of the split
@@ -159,10 +164,16 @@ AdaptativeTree::buildApproximator(RewardFunction rf,
     double total_weight = 0;
     for (int elem_id = 0; elem_id < nb_elements; elem_id++)
     {
-      // Computing values
+      // Initializing candidate
       ApproximatorCandidate current_candidate;
       current_candidate.parameters_set = samples[elem_id];
       current_candidate.parameters_space = spaces[elem_id];
+      if (verbosity >= 3) {
+        std::cout << "\t# Elem " << (elem_id+1) << "/" << nb_elements << std::endl;
+        std::cout << "\t\tSpace:" << std::endl
+                  << current_candidate.parameters_space.transpose() << std::endl;
+      }
+      // Optimizing action
       current_candidate.approximator = optimizeAction(rf, samples[elem_id],
                                                       spaces[elem_id], engine);
       updateReward(rf, current_candidate, engine);
@@ -174,17 +185,18 @@ AdaptativeTree::buildApproximator(RewardFunction rf,
       double weight = samples[elem_id].size();
       total_reward += current_candidate.reward * weight;
       total_weight += weight;
-//      std::cout << "\t# Elem " << elem_id << std::endl;
-//      std::cout << "\t\tSpace:" << std::endl;
-//      std::cout << current_candidate.parameters_space << std::endl;
-//      std::cout << "\t\tAvg Reward: " << current_candidate.reward << std::endl;
-//      std::cout << "\t\tWeight: " << weight << std::endl;
+      if (verbosity >= 3) {
+        std::cout << "\t\tAvg Reward: " << current_candidate.reward << std::endl;
+        std::cout << "\t\tWeight: " << weight << std::endl;
+      }
     }
     double avg_split_reward = total_reward / total_weight;
     // If split is currently the best, store its internal data
     if (avg_split_reward > best_reward)
     {
-//      std::cout << "\t\t<- Best split found yet" << std::endl;
+      if (verbosity >= 3) {
+        std::cout << "\t\t<- Best split found yet" << std::endl;
+      }
       best_reward = avg_split_reward;
       childs.clear();
       childs.resize(nb_elements);
@@ -201,11 +213,15 @@ AdaptativeTree::buildApproximator(RewardFunction rf,
   // If no interesting split has been fonund
   if (childs.size() == 0)
   {
-    std::cout << "### A leaf has been reached" << std::endl;
-    nb_samples_treated += candidate.parameters_set.cols();
-    print(candidate, std::cout);
-    std::cout << "Samples treated: " << nb_samples_treated << "/" 
-              << nb_samples << std::endl;
+    if (verbosity >= 2) {
+      std::cout << "Leaf reached" << std::endl;
+      nb_samples_treated += candidate.parameters_set.cols();
+      print(candidate, std::cout);
+    }
+    if (verbosity >= 1) {
+      std::cout << "Samples treated: " << nb_samples_treated << "/" 
+                << nb_samples << std::endl;
+    }
     ProcessedLeaf leaf;
     double custom_reward = 0;//TODO
     leaf.space = candidate.parameters_space;
@@ -428,8 +444,7 @@ AdaptativeTree::optimizeLinearPolicy(EvaluationFunction policy_evaluator,
   // Training a linear model
   model_optimizer->setLimits(linear_parameters_space);
   Eigen::VectorXd best_action = model_optimizer->train(linear_model_reward_func, engine);
-  if (false)//(true) //best_action.rows() == 0)
-  {
+  if (false) {
     std::cout << "Parameters space: " << std::endl
               << parameters_space << std::endl;
     std::cout << "Liner parameters space: " << std::endl
@@ -450,6 +465,7 @@ void AdaptativeTree::to_xml(std::ostream &out) const
   rosban_utils::xml_tools::write<int>   ("nb_generations"   , nb_generations   , out);
   rosban_utils::xml_tools::write<int>   ("nb_samples"       , nb_samples       , out);
   rosban_utils::xml_tools::write<int>   ("evaluation_trials", evaluation_trials, out);
+  rosban_utils::xml_tools::write<int>   ("verbosity"        , verbosity        , out);
   rosban_utils::xml_tools::write<double>("cv_ratio"         , cv_ratio         , out);
 }
 
@@ -458,6 +474,7 @@ void AdaptativeTree::from_xml(TiXmlNode *node)
   rosban_utils::xml_tools::try_read<int>   (node, "nb_generations"   , nb_generations   );
   rosban_utils::xml_tools::try_read<int>   (node, "nb_samples"       , nb_samples       );
   rosban_utils::xml_tools::try_read<int>   (node, "evaluation_trials", evaluation_trials);
+  rosban_utils::xml_tools::try_read<int>   (node, "verbosity"        , verbosity        );
   rosban_utils::xml_tools::try_read<double>(node, "cv_ratio"         , cv_ratio         );
   rosban_bbo::OptimizerFactory().tryRead(node,"model_optimizer", model_optimizer);
 }
