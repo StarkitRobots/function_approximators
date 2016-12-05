@@ -439,13 +439,16 @@ AdaptativeTree::optimizeLinearPolicy(EvaluationFunction policy_evaluator,
     }
   }
 
+  Eigen::VectorXd params_center;
+  params_center = (parameters_space.col(1) + parameters_space.col(0)) / 2;
+
   // Creating the reward function for linear models
   rosban_bbo::Optimizer::RewardFunc linear_model_reward_func;
   linear_model_reward_func =
-    [policy_evaluator, action_dims, parameter_dims]
+    [policy_evaluator, action_dims, parameter_dims, params_center]
     (const Eigen::VectorXd & parameters, std::default_random_engine * engine)
     {
-      LinearApproximator policy(parameter_dims, action_dims, parameters);
+      LinearApproximator policy(parameter_dims, action_dims, parameters, params_center);
       return policy_evaluator(policy, engine);
     };
   // Training a linear model
@@ -458,7 +461,7 @@ AdaptativeTree::optimizeLinearPolicy(EvaluationFunction policy_evaluator,
               << linear_parameters_space << std::endl;
   }
   return std::unique_ptr<FunctionApproximator>
-    (new LinearApproximator(parameter_dims, action_dims, best_action));
+    (new LinearApproximator(parameter_dims, action_dims, best_action, params_center));
 }
 
 

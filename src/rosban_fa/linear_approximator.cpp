@@ -32,6 +32,24 @@ LinearApproximator::LinearApproximator(int input_dim,
   }
 }
 
+LinearApproximator::LinearApproximator(int input_dim,
+                                       int output_dim,
+                                       const Eigen::VectorXd & parameters,
+                                       const Eigen::VectorXd & center)
+  : LinearApproximator(input_dim, output_dim, parameters)
+{
+  if (input_dim != center.rows()) {
+    std::ostringstream oss;
+    oss << "LinearApproximator::LinearApproximator"
+        << "(int,int,const Eigen::VectorXd &,const Eigen::VectorXd &): "
+        << "center has " << parameters.rows() << " rows, expected: "
+        << input_dim;
+    throw std::runtime_error(oss.str());
+  }
+  bias = bias - coeffs * center;
+}
+
+
 LinearApproximator::~LinearApproximator()
 {
 }

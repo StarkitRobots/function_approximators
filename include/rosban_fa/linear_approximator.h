@@ -6,7 +6,7 @@ namespace rosban_fa
 {
 
 /// This class implements approximation of a function with a linear model
-/// prediction = A*X + B
+/// prediction = A*(X-O) + B
 class LinearApproximator : public FunctionApproximator
 {
 public:
@@ -20,6 +20,14 @@ public:
   /// Throws a runtime_error if the number of parameters is not appropriate
   LinearApproximator(int input_dim, int output_dim,
                      const Eigen::VectorXd & parameters);
+
+  /// In this constructor, an additional parameter specifies the center position
+  /// used for expressing the parameters.
+  /// Y = bias + A * (X-center)
+  /// bias is directly corrected using coeffients from A
+  LinearApproximator(int input_dim, int output_dim,
+                     const Eigen::VectorXd & parameters,
+                     const Eigen::VectorXd & center);
 
   virtual ~LinearApproximator();
 
