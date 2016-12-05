@@ -57,6 +57,9 @@ public:
   virtual std::unique_ptr<FunctionApproximator>
   train(RewardFunction rf, std::default_random_engine * engine);
 
+  /// Reset all internal memory of the algorithm
+  virtual void reset() override;
+
   /// Generate a new set of samples:
   /// - Using uniformous random for first generation
   /// - Based on processed leaves on further generation

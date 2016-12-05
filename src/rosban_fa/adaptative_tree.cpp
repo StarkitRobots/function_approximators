@@ -40,6 +40,10 @@ AdaptativeTree::train(RewardFunction rf, std::default_random_engine * engine)
   return result;
 }
 
+void AdaptativeTree::reset() {
+  processed_leaves.clear();
+}
+
 Eigen::MatrixXd AdaptativeTree::generateParametersSet(std::default_random_engine * engine)
 {
   Eigen::MatrixXd parameters_set;

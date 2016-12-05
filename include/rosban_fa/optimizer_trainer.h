@@ -40,6 +40,9 @@ public:
   virtual std::unique_ptr<FunctionApproximator>
   train(RewardFunction rf, std::default_random_engine * engine) = 0;
 
+  /// Reset internal memory
+  virtual void reset();
+
   /// Update the space of parameters
   void setParametersLimits(const Eigen::MatrixXd & new_limits);
 

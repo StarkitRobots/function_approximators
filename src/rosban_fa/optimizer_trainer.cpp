@@ -7,6 +7,8 @@ OptimizerTrainer::OptimizerTrainer() {}
 
 OptimizerTrainer::~OptimizerTrainer() {}
 
+void OptimizerTrainer::reset() {}
+
 void OptimizerTrainer::setParametersLimits(const Eigen::MatrixXd & new_limits)
 {
   parameters_limits = new_limits;
