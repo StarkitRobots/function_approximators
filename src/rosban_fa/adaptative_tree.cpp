@@ -182,7 +182,7 @@ AdaptativeTree::buildApproximator(RewardFunction rf,
       rewards.push_back(current_candidate.reward);
       // Updating values
       // TODO: validate weighting method
-      double weight = samples[elem_id].size();
+      double weight = samples[elem_id].cols();
       total_reward += current_candidate.reward * weight;
       total_weight += weight;
       if (verbosity >= 3) {
@@ -364,17 +364,24 @@ AdaptativeTree::optimizeAction(RewardFunction rf,
                                std::default_random_engine * engine)
 {
   EvaluationFunction policy_evaluator = getEvaluationFunction(rf, training_set);
-  // Computing linear and constant policies
-  std::unique_ptr<FunctionApproximator> best_constant_policy, best_linear_policy;
-  best_constant_policy = optimizeConstantPolicy(policy_evaluator, engine);
-  best_linear_policy = optimizeLinearPolicy(policy_evaluator, parameters_space, engine);
-  // Evaluation of both policies
-  double constant_score = policy_evaluator(*best_constant_policy, engine);
-  double linear_score = policy_evaluator(*best_linear_policy, engine);
-  // Returning the best one
-  if (linear_score > constant_score)
-    return std::move(best_linear_policy);
-  return std::move(best_constant_policy);
+  std::unique_ptr<FunctionApproximator> constant_policy;
+  // Default is constant policy:
+  constant_policy = optimizeConstantPolicy(policy_evaluator, engine);
+  double constant_score = policy_evaluator(*constant_policy, engine);
+  // Train linear model if there is no risk of underconstrained learning
+  // - number of observations is: |A| * nb_samples
+  // - number of parameters is  : |A| * (param_dims + 1)
+  if (training_set.cols() >= (getParametersDim() + 1)) {
+    std::unique_ptr<FunctionApproximator> linear_policy;
+    linear_policy = optimizeLinearPolicy(policy_evaluator, parameters_space, engine);
+    double linear_score = policy_evaluator(*linear_policy, engine);
+    // Returning linear if it is better
+    if (linear_score > constant_score) {
+      return std::move(linear_policy);
+    }
+  }
+  // If we failed to train a linear model or if constant model was more suited
+  return std::move(constant_policy);
 }
 
 std::unique_ptr<FunctionApproximator>
