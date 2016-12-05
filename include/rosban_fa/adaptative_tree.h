@@ -89,10 +89,11 @@ public:
                                         int training_set_size,
                                         std::default_random_engine * engine);
 
-  std::unique_ptr<FunctionApproximator> optimizeAction(RewardFunction rf,
-                                                       const Eigen::MatrixXd & parameters_set,
-                                                       const Eigen::MatrixXd & parameters_space,
-                                                       std::default_random_engine * engine);
+  /// Update the candidate by training a model for its training state
+  /// and training space
+  void updateAction(RewardFunction rf,
+                    ApproximatorCandidate & candidate,
+                    std::default_random_engine * engine);
 
   /// Return an optimized constant policy 
   std::unique_ptr<FunctionApproximator>

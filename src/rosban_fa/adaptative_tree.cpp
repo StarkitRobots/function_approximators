@@ -102,10 +102,7 @@ AdaptativeTree::runGeneration(RewardFunction rf,
   ApproximatorCandidate candidate;
   candidate.parameters_set = generateParametersSet(engine);
   candidate.parameters_space = parameters_limits;
-  candidate.approximator = optimizeAction(rf,
-                                          candidate.parameters_set,
-                                          candidate.parameters_space,
-                                          engine);
+  updateAction(rf, candidate, engine);
   updateReward(rf, candidate, engine);
   return buildApproximator(rf, candidate, engine);
 }
@@ -174,8 +171,7 @@ AdaptativeTree::buildApproximator(RewardFunction rf,
                   << current_candidate.parameters_space.transpose() << std::endl;
       }
       // Optimizing action
-      current_candidate.approximator = optimizeAction(rf, samples[elem_id],
-                                                      spaces[elem_id], engine);
+      updateAction(rf, current_candidate, engine);
       updateReward(rf, current_candidate, engine);
       // Storing values
       function_approximators.push_back(std::move(current_candidate.approximator));
@@ -357,12 +353,12 @@ AdaptativeTree::getEvaluationFunction(RewardFunction rf,
     };
 }
 
-std::unique_ptr<FunctionApproximator>
-AdaptativeTree::optimizeAction(RewardFunction rf,
-                               const Eigen::MatrixXd & training_set,
-                               const Eigen::MatrixXd & parameters_space,
-                               std::default_random_engine * engine)
+void AdaptativeTree::updateAction(RewardFunction rf,
+                                  ApproximatorCandidate & candidate,
+                                  std::default_random_engine * engine)
 {
+  const Eigen::MatrixXd & training_set = candidate.parameters_set;
+  const Eigen::MatrixXd & parameters_space = candidate.parameters_space;
   EvaluationFunction policy_evaluator = getEvaluationFunction(rf, training_set);
   std::unique_ptr<FunctionApproximator> constant_policy;
   // Default is constant policy:
@@ -377,11 +373,12 @@ AdaptativeTree::optimizeAction(RewardFunction rf,
     double linear_score = policy_evaluator(*linear_policy, engine);
     // Returning linear if it is better
     if (linear_score > constant_score) {
-      return std::move(linear_policy);
+      candidate.approximator = std::move(linear_policy);
+      return;
     }
   }
   // If we failed to train a linear model or if constant model was more suited
-  return std::move(constant_policy);
+  candidate.approximator = std::move(constant_policy);
 }
 
 std::unique_ptr<FunctionApproximator>
