@@ -123,6 +123,8 @@ AdaptativeTree::buildApproximator(RewardFunction rf,
                                   ApproximatorCandidate & candidate,
                                   std::default_random_engine * engine)
 {
+  TimeStamp build_approximator_start = TimeStamp::now();
+
   // Initializing variables
   double best_reward = candidate.reward;
   std::unique_ptr<Split> best_split;
@@ -140,24 +142,22 @@ AdaptativeTree::buildApproximator(RewardFunction rf,
               << std::endl;
   }
 
-  int nb_samples = candidate.parameters_set.cols();
+  int candidate_samples = candidate.parameters_set.cols();
 
   if (verbosity >= 3) {
-    std::cout << "buildApproximator:"
+    std::cout << "buildApproximator:" << std::endl
               << "space:" << std::endl
               << candidate.parameters_space.transpose() << std::endl
-              << "nb_samples: " << nb_samples << std::endl;
+              << "candidate_samples: " << candidate_samples << std::endl;
   }
 
   // Checking if a split improves reward criteria
   for (size_t split_idx = 0; split_idx < split_candidates.size(); split_idx++)
   {
-    TimeStamp split_start = TimeStamp::now();
     std::unique_ptr<Split> current_split = std::move(split_candidates[split_idx]);
     if (verbosity >= 3) {
       std::cout << "\tEvaluating split: " << current_split->toString() << std::endl;
     }
-    int split_class_id = current_split->getClassID();
     // Stored data for evaluation of the split
     std::vector<Eigen::MatrixXd> spaces, samples;
     std::vector<double> rewards;
@@ -180,11 +180,6 @@ AdaptativeTree::buildApproximator(RewardFunction rf,
         if (verbosity >= 3) {
           std::cout << "\t-> Creating empty spaces: refused" << std::endl;
         }
-        double elapsed = diffSec(split_start, TimeStamp::now());
-        std::cout << "buildApproximator:"
-                  << split_class_id << ","
-                  << nb_samples << ","
-                  << elapsed << std::endl;
         continue;
       }
     }
@@ -245,24 +240,24 @@ AdaptativeTree::buildApproximator(RewardFunction rf,
       }
       best_split = std::move(current_split);
     }
-    double elapsed = diffSec(split_start, TimeStamp::now());
-    std::cout << "buildApproximator:"
-              << split_class_id << ","
-              << nb_samples << ","
-              << elapsed << std::endl;
   }
   // If no interesting split has been fonund
-  if (childs.size() == 0)
-  {
+  if (childs.size() == 0) {
+    // Debug print
+    double elapsed = diffSec(build_approximator_start, TimeStamp::now());
+    std::cout << "buildApproximator:"
+              << nb_samples << ","
+              << elapsed << std::endl;
     if (verbosity >= 2) {
       std::cout << "Leaf reached at depth " << candidate.depth << std::endl;
       nb_samples_treated += candidate.parameters_set.cols();
       print(candidate, std::cout);
     }
-    if (verbosity >= 1) {
+    if (verbosity >= 1 && reuse_samples) {
       std::cout << "Samples treated: " << nb_samples_treated << "/" 
                 << nb_samples << std::endl;
     }
+    // filling processed_leaves
     ProcessedLeaf leaf;
     double custom_reward = 0;//TODO
     leaf.space = candidate.parameters_space;
@@ -271,9 +266,9 @@ AdaptativeTree::buildApproximator(RewardFunction rf,
     processed_leaves.push_back(leaf);
     return std::move(candidate.approximator);
   }
-  else
-  {
-//    std::cout << "\tAn interesting split has been found: going deeper" << std::endl;
+  // If an interesting split has been found, then become a node with
+  // function_approximators as childs
+  else {
     std::vector<std::unique_ptr<FunctionApproximator>> childs_fa;
     for (size_t child_id = 0; child_id < childs.size(); child_id++)
     {
