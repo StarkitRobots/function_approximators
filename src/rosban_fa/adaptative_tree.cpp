@@ -13,6 +13,9 @@
 #include "rosban_random/tools.h"
 
 #include "rosban_utils/multi_core.h"
+#include "rosban_utils/time_stamp.h"
+
+using rosban_utils::TimeStamp;
 
 namespace rosban_fa
 {
@@ -23,7 +26,10 @@ AdaptativeTree::AdaptativeTree()
     cv_ratio(1.0),
     evaluation_trials(10),
     nb_samples_treated(0),
-    verbosity(2)
+    verbosity(2),
+    reuse_samples(true),
+    use_point_splits(false),
+    max_depth(-1)
 {
 }
 
@@ -32,6 +38,10 @@ AdaptativeTree::~AdaptativeTree() {}
 std::unique_ptr<FunctionApproximator>
 AdaptativeTree::train(RewardFunction rf, std::default_random_engine * engine)
 {
+  if (max_depth < 0 && !reuse_samples) {
+    std::cout << "WARNING: no max_depth and not reusing samples!!!!"
+              << " This might lead to infinite loop" << std::endl;
+  }
   std::unique_ptr<FunctionApproximator> result;
   for (int generation = 1; generation <= nb_generations; generation++)
   {
@@ -102,6 +112,7 @@ AdaptativeTree::runGeneration(RewardFunction rf,
   ApproximatorCandidate candidate;
   candidate.parameters_set = generateParametersSet(engine);
   candidate.parameters_space = parameters_limits;
+  candidate.depth = 0;
   updateAction(rf, candidate, engine);
   updateReward(rf, candidate, engine);
   return buildApproximator(rf, candidate, engine);
@@ -117,44 +128,72 @@ AdaptativeTree::buildApproximator(RewardFunction rf,
   std::unique_ptr<Split> best_split;
   std::vector<ApproximatorCandidate> childs;
   // Getting splits
+  TimeStamp split_candidate_start = TimeStamp::now();
   std::vector<std::unique_ptr<Split>> split_candidates;
-  split_candidates = getSplitCandidates(candidate.parameters_set);
+
+  // Disabling candidates if above max_depth
+  if (max_depth < 0 || max_depth > candidate.depth) { 
+    split_candidates = getSplitCandidates(candidate.parameters_set);
+    TimeStamp split_candidate_end = TimeStamp::now();
+    std::cout << "Time spent to get split candidates: "
+              << diffSec(split_candidate_start, split_candidate_end) << " s"
+              << std::endl;
+  }
+
+  int nb_samples = candidate.parameters_set.cols();
 
   if (verbosity >= 3) {
     std::cout << "buildApproximator:"
               << "space:" << std::endl
               << candidate.parameters_space.transpose() << std::endl
-              << "nb_samples: " << candidate.parameters_set.cols() << std::endl;
+              << "nb_samples: " << nb_samples << std::endl;
   }
 
   // Checking if a split improves reward criteria
   for (size_t split_idx = 0; split_idx < split_candidates.size(); split_idx++)
   {
+    TimeStamp split_start = TimeStamp::now();
     std::unique_ptr<Split> current_split = std::move(split_candidates[split_idx]);
     if (verbosity >= 3) {
       std::cout << "\tEvaluating split: " << current_split->toString() << std::endl;
     }
+    int split_class_id = current_split->getClassID();
     // Stored data for evaluation of the split
     std::vector<Eigen::MatrixXd> spaces, samples;
     std::vector<double> rewards;
     std::vector<std::unique_ptr<FunctionApproximator>> function_approximators;
     // Separate elements and space with reward
     int nb_elements = current_split->getNbElements();
-    samples = current_split->splitEntries(candidate.parameters_set);
     spaces = current_split->splitSpace(candidate.parameters_space);
-    // If a split would result on getting one of the space empty, refuse it
-    bool creates_empty_spaces = false;
-    for (const Eigen::MatrixXd & samples_set : samples) {
-      if (samples_set.cols() == 0) {
-        creates_empty_spaces = true;
-        break;
+    // If samples are generated once for every generation, distribute them
+    if (reuse_samples) {
+      samples = current_split->splitEntries(candidate.parameters_set);
+      // If a split would result on getting one of the space empty, refuse it
+      bool creates_empty_spaces = false;
+      for (const Eigen::MatrixXd & samples_set : samples) {
+        if (samples_set.cols() == 0) {
+          creates_empty_spaces = true;
+          break;
+        }
+      }
+      if (creates_empty_spaces) {
+        if (verbosity >= 3) {
+          std::cout << "\t-> Creating empty spaces: refused" << std::endl;
+        }
+        double elapsed = diffSec(split_start, TimeStamp::now());
+        std::cout << "buildApproximator:"
+                  << split_class_id << ","
+                  << nb_samples << ","
+                  << elapsed << std::endl;
+        continue;
       }
     }
-    if (creates_empty_spaces) {
-      if (verbosity >= 3) {
-        std::cout << "\t-> Creating empty spaces: refused" << std::endl;
+    else {
+      for (size_t elem_id = 0; elem_id < spaces.size(); elem_id++) {
+        samples.push_back(rosban_random::getUniformSamplesMatrix(parameters_limits,
+                                                                 nb_samples,
+                                                                 engine));
       }
-      continue;
     }
     // Estimate rewards and function approximators for all elements of the split
     double total_reward = 0;
@@ -202,15 +241,21 @@ AdaptativeTree::buildApproximator(RewardFunction rf,
         childs[elem_id].parameters_set = samples[elem_id];
         childs[elem_id].parameters_space = spaces[elem_id];
         childs[elem_id].reward = rewards[elem_id];
+        childs[elem_id].depth = candidate.depth + 1;
       }
       best_split = std::move(current_split);
     }
+    double elapsed = diffSec(split_start, TimeStamp::now());
+    std::cout << "buildApproximator:"
+              << split_class_id << ","
+              << nb_samples << ","
+              << elapsed << std::endl;
   }
   // If no interesting split has been fonund
   if (childs.size() == 0)
   {
     if (verbosity >= 2) {
-      std::cout << "Leaf reached" << std::endl;
+      std::cout << "Leaf reached at depth " << candidate.depth << std::endl;
       nb_samples_treated += candidate.parameters_set.cols();
       print(candidate, std::cout);
     }
@@ -263,7 +308,7 @@ AdaptativeTree::getSplitCandidates(const Eigen::MatrixXd & samples)
     median_point(dim) = split_values[1];
   }
   // If number of points is high enough, also add the possibility to split on the median
-  if (samples.cols() >= std::pow(2, getParametersDim())) {
+  if (use_point_splits && samples.cols() >= std::pow(2, getParametersDim())) {
     result.push_back(std::unique_ptr<Split>(new PointSplit(median_point)));
   }
   return result;
@@ -362,8 +407,13 @@ void AdaptativeTree::updateAction(RewardFunction rf,
   EvaluationFunction policy_evaluator = getEvaluationFunction(rf, training_set);
   std::unique_ptr<FunctionApproximator> constant_policy;
   // Default is constant policy:
+  TimeStamp constant_start = TimeStamp::now();
   constant_policy = optimizeConstantPolicy(policy_evaluator, engine);
   double constant_score = policy_evaluator(*constant_policy, engine);
+  TimeStamp constant_end = TimeStamp::now();
+  std::cout << "updateAction:ConstantTrain,"
+            << training_set.cols() << ","
+            << diffSec(constant_start, constant_end) << std::endl;
   // Train linear model if there is no risk of underconstrained learning
   // - number of observations is: |A| * nb_samples
   // - number of parameters is  : |A| * (param_dims + 1)
@@ -371,6 +421,10 @@ void AdaptativeTree::updateAction(RewardFunction rf,
     std::unique_ptr<FunctionApproximator> linear_policy;
     linear_policy = optimizeLinearPolicy(policy_evaluator, parameters_space, engine);
     double linear_score = policy_evaluator(*linear_policy, engine);
+    TimeStamp linear_end = TimeStamp::now();
+    std::cout << "updateAction:LinearTrain,"
+              << training_set.cols() << ","
+              << diffSec(constant_end, linear_end) << std::endl;
     // Returning linear if it is better
     if (linear_score > constant_score) {
       candidate.approximator = std::move(linear_policy);
@@ -473,6 +527,9 @@ void AdaptativeTree::to_xml(std::ostream &out) const
   rosban_utils::xml_tools::write<int>   ("nb_samples"       , nb_samples       , out);
   rosban_utils::xml_tools::write<int>   ("evaluation_trials", evaluation_trials, out);
   rosban_utils::xml_tools::write<int>   ("verbosity"        , verbosity        , out);
+  rosban_utils::xml_tools::write<int>   ("max_depth"        , max_depth        , out);
+  rosban_utils::xml_tools::write<bool>  ("reuse_samples"    , reuse_samples    , out);
+  rosban_utils::xml_tools::write<bool>  ("use_point_splits" , use_point_splits , out);
   rosban_utils::xml_tools::write<double>("cv_ratio"         , cv_ratio         , out);
 }
 
@@ -482,8 +539,11 @@ void AdaptativeTree::from_xml(TiXmlNode *node)
   rosban_utils::xml_tools::try_read<int>   (node, "nb_samples"       , nb_samples       );
   rosban_utils::xml_tools::try_read<int>   (node, "evaluation_trials", evaluation_trials);
   rosban_utils::xml_tools::try_read<int>   (node, "verbosity"        , verbosity        );
+  rosban_utils::xml_tools::try_read<int>   (node, "max_depth"        , max_depth        );
+  rosban_utils::xml_tools::try_read<bool>  (node, "reuse_samples"    , reuse_samples    );
+  rosban_utils::xml_tools::try_read<bool>  (node, "use_point_splits" , use_point_splits );
   rosban_utils::xml_tools::try_read<double>(node, "cv_ratio"         , cv_ratio         );
-  rosban_bbo::OptimizerFactory().tryRead(node,"model_optimizer", model_optimizer);
+  rosban_bbo::OptimizerFactory().tryRead   (node,"model_optimizer", model_optimizer);
 }
 
 void AdaptativeTree::print(const ApproximatorCandidate & candidate,

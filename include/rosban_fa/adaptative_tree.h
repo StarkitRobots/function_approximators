@@ -35,6 +35,7 @@ public:
     Eigen::MatrixXd parameters_set;
     Eigen::MatrixXd parameters_space;
     double reward;
+    int depth;
   };
 
   /// For processed leafs, some informations are required
@@ -164,6 +165,16 @@ private:
   /// 3: Detailed (Print a header for split candidates and their associated scores)
   /// TODO: create a 4th level (would probably help)
   int verbosity;
+
+  /// Are the training samples generated once for every generation (true) or are
+  /// they renewed for each split test?
+  bool reuse_samples;
+
+  /// Are points splits allowed (2^n child with n= parametersDim)
+  bool use_point_splits;
+
+  /// Maximal depth (negative value means infinite)
+  int max_depth;
 };
 
 }
