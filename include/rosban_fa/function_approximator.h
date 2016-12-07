@@ -19,7 +19,10 @@ public:
   virtual ~FunctionApproximator();
 
   /// Return the output dimension of the function approximator
-  virtual int getOutputDim() const = 0; 
+  virtual int getOutputDim() const = 0;
+
+  // Return the predicted output for the given input
+  Eigen::VectorXd predict(const Eigen::VectorXd & input) const; 
 
   /// Default implementation computes the prediction with variance and
   /// discard the variance information

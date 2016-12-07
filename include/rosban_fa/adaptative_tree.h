@@ -94,17 +94,22 @@ public:
   /// and training space
   void updateAction(RewardFunction rf,
                     ApproximatorCandidate & candidate,
+                    const Eigen::VectorXd & guess,
                     std::default_random_engine * engine);
 
-  /// Return an optimized constant policy 
+  /// Return an optimized constant policy
+  /// guess is the action currently guessed to be optimal
   std::unique_ptr<FunctionApproximator>
   optimizeConstantPolicy(EvaluationFunction policy_evaluator,
+                         const Eigen::VectorXd & guess,
                          std::default_random_engine * engine);
     
   /// Return an optimized linear policy
+  /// guess is the action currently guessed to be optimal
   std::unique_ptr<FunctionApproximator>
   optimizeLinearPolicy(EvaluationFunction policy_evaluator,
                        const Eigen::MatrixXd & parameters_space,
+                       const Eigen::VectorXd & guess,
                        std::default_random_engine * engine);
 
   /// Update the 'reward' field of the candidate, using his 'approximator'
@@ -183,6 +188,12 @@ private:
   ///        at a 'edge' and the maximal at the opposite 'edge' (only one
   ///        dimension changed)
   bool narrow_linear_slope;
+
+  /// When constant model is trained, does it uses guess if provided
+  bool constant_uses_guess;
+
+  /// When linear model is trained, does it uses guess if provided
+  bool linear_uses_guess;
 };
 
 }

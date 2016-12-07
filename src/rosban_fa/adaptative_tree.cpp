@@ -30,7 +30,9 @@ AdaptativeTree::AdaptativeTree()
     reuse_samples(true),
     use_point_splits(false),
     max_depth(-1),
-    narrow_linear_slope(false)
+    narrow_linear_slope(false),
+    constant_uses_guess(false),
+    linear_uses_guess(false)
 {
 }
 
@@ -114,7 +116,8 @@ AdaptativeTree::runGeneration(RewardFunction rf,
   candidate.parameters_set = generateParametersSet(engine);
   candidate.parameters_space = parameters_limits;
   candidate.depth = 0;
-  updateAction(rf, candidate, engine);
+  Eigen::VectorXd guess;// No specific guess on first node
+  updateAction(rf, candidate, guess, engine);
   updateReward(rf, candidate, engine);
   return buildApproximator(rf, candidate, engine);
 }
@@ -200,13 +203,16 @@ AdaptativeTree::buildApproximator(RewardFunction rf,
       ApproximatorCandidate current_candidate;
       current_candidate.parameters_set = samples[elem_id];
       current_candidate.parameters_space = spaces[elem_id];
+      // Guess the action using the splitted node evaluation
+      Eigen::VectorXd space_center = (spaces[elem_id].col(0) + spaces[elem_id].col(1)) / 2;
+      Eigen::VectorXd guessed_action = candidate.approximator->predict(space_center);
       if (verbosity >= 3) {
         std::cout << "\t# Elem " << (elem_id+1) << "/" << nb_elements << std::endl;
         std::cout << "\t\tSpace:" << std::endl
                   << current_candidate.parameters_space.transpose() << std::endl;
       }
       // Optimizing action
-      updateAction(rf, current_candidate, engine);
+      updateAction(rf, current_candidate, guessed_action, engine);
       updateReward(rf, current_candidate, engine);
       // Storing values
       function_approximators.push_back(std::move(current_candidate.approximator));
@@ -396,15 +402,17 @@ AdaptativeTree::getEvaluationFunction(RewardFunction rf,
 
 void AdaptativeTree::updateAction(RewardFunction rf,
                                   ApproximatorCandidate & candidate,
+                                  const Eigen::VectorXd & guess,
                                   std::default_random_engine * engine)
 {
   const Eigen::MatrixXd & training_set = candidate.parameters_set;
   const Eigen::MatrixXd & parameters_space = candidate.parameters_space;
+  Eigen::VectorXd space_center = (parameters_space.col(0) + parameters_space.col(1)) / 2;
   EvaluationFunction policy_evaluator = getEvaluationFunction(rf, training_set);
   std::unique_ptr<FunctionApproximator> constant_policy;
   // Default is constant policy:
   TimeStamp constant_start = TimeStamp::now();
-  constant_policy = optimizeConstantPolicy(policy_evaluator, engine);
+  constant_policy = optimizeConstantPolicy(policy_evaluator, guess, engine);
   double constant_score = policy_evaluator(*constant_policy, engine);
   TimeStamp constant_end = TimeStamp::now();
   std::cout << "updateAction:ConstantTrain,"
@@ -415,7 +423,10 @@ void AdaptativeTree::updateAction(RewardFunction rf,
   // - number of parameters is  : |A| * (param_dims + 1)
   if (training_set.cols() >= (getParametersDim() + 1)) {
     std::unique_ptr<FunctionApproximator> linear_policy;
-    linear_policy = optimizeLinearPolicy(policy_evaluator, parameters_space, engine);
+    linear_policy = optimizeLinearPolicy(policy_evaluator,
+                                         parameters_space,
+                                         constant_policy->predict(space_center),
+                                         engine);
     double linear_score = policy_evaluator(*linear_policy, engine);
     TimeStamp linear_end = TimeStamp::now();
     std::cout << "updateAction:LinearTrain,"
@@ -433,6 +444,7 @@ void AdaptativeTree::updateAction(RewardFunction rf,
 
 std::unique_ptr<FunctionApproximator>
 AdaptativeTree::optimizeConstantPolicy(EvaluationFunction policy_evaluator,
+                                       const Eigen::VectorXd & initial_guess,
                                        std::default_random_engine * engine)
 {
   if (!model_optimizer) {
@@ -447,15 +459,29 @@ AdaptativeTree::optimizeConstantPolicy(EvaluationFunction policy_evaluator,
       ConstantApproximator policy(parameters);
       return policy_evaluator(policy, engine);
     };
+
+  Eigen::VectorXd init_params = initial_guess;
+  // If guess is forbidden or has not been provided, use the center of the action space
+  if (!constant_uses_guess || init_params.rows() < 1) {
+    init_params = (actions_limits.col(0) + actions_limits.col(1)) / 2;
+  }
+
+  if (verbosity >= 3) {
+    std::cout << "training a constant model with initial guess: "
+              << init_params.transpose() << std::endl;
+  }
+
   // Training a constant model
   model_optimizer->setLimits(actions_limits);
-  Eigen::VectorXd best_action = model_optimizer->train(constant_model_reward_func, engine);
+  Eigen::VectorXd best_action = model_optimizer->train(constant_model_reward_func,
+                                                       init_params, engine);
   return std::unique_ptr<FunctionApproximator>(new ConstantApproximator(best_action));
 }
 
 std::unique_ptr<FunctionApproximator>
 AdaptativeTree::optimizeLinearPolicy(EvaluationFunction policy_evaluator,
                                      const Eigen::MatrixXd & parameters_space,
+                                     const Eigen::VectorXd & guess,
                                      std::default_random_engine * engine)
 {
   if (!model_optimizer) {
@@ -465,8 +491,21 @@ AdaptativeTree::optimizeLinearPolicy(EvaluationFunction policy_evaluator,
   int parameter_dims = getParametersDim();
   int action_dims = getActionsDim();
 
+  int training_dims = (parameter_dims +1) * action_dims;
+  // Initial parameters
+  Eigen::VectorXd initial_params = Eigen::VectorXd::Zero(training_dims);
+  // Uses of guess can be enabled or disabled
+  if (linear_uses_guess) {
+    // Set the bias according to the guess
+    initial_params.segment(0,action_dims) = guess;
+  }
+  else {
+    // Simply use center of action space
+    initial_params.segment(0,action_dims) = (actions_limits.col(0) + actions_limits.col(1)) / 2;
+  }
+
   // Creating linear parameters space
-  Eigen::MatrixXd linear_parameters_space((parameter_dims +1) * action_dims,2);
+  Eigen::MatrixXd linear_parameters_space(training_dims,2);
   // Bias Limits
   linear_parameters_space.block(0,0,action_dims, 2) = actions_limits;
   // Coeffs Limits
@@ -503,15 +542,19 @@ AdaptativeTree::optimizeLinearPolicy(EvaluationFunction policy_evaluator,
       LinearApproximator policy(parameter_dims, action_dims, parameters, params_center);
       return policy_evaluator(policy, engine);
     };
+
+  if (verbosity >= 3) {
+    std::cout << "training a linear model with initial guess: "
+              << initial_params.transpose() << std::endl
+              << "Linear parameters space: " << std::endl
+              << linear_parameters_space.transpose() << std::endl;
+  }
+
   // Training a linear model
   model_optimizer->setLimits(linear_parameters_space);
-  Eigen::VectorXd best_action = model_optimizer->train(linear_model_reward_func, engine);
-  if (false) {
-    std::cout << "Parameters space: " << std::endl
-              << parameters_space << std::endl;
-    std::cout << "Liner parameters space: " << std::endl
-              << linear_parameters_space << std::endl;
-  }
+  Eigen::VectorXd best_action = model_optimizer->train(linear_model_reward_func,
+                                                       initial_params,
+                                                       engine);
   return std::unique_ptr<FunctionApproximator>
     (new LinearApproximator(parameter_dims, action_dims, best_action, params_center));
 }
@@ -532,6 +575,8 @@ void AdaptativeTree::to_xml(std::ostream &out) const
   rosban_utils::xml_tools::write<bool>  ("reuse_samples"      , reuse_samples      , out);
   rosban_utils::xml_tools::write<bool>  ("use_point_splits"   , use_point_splits   , out);
   rosban_utils::xml_tools::write<bool>  ("narrow_linear_slope", narrow_linear_slope, out);
+  rosban_utils::xml_tools::write<bool>  ("constant_uses_guess", constant_uses_guess, out);
+  rosban_utils::xml_tools::write<bool>  ("linear_uses_guess"  , linear_uses_guess  , out);
   rosban_utils::xml_tools::write<double>("cv_ratio"           , cv_ratio           , out);
 }
 
@@ -545,6 +590,8 @@ void AdaptativeTree::from_xml(TiXmlNode *node)
   rosban_utils::xml_tools::try_read<bool>  (node, "reuse_samples"      , reuse_samples      );
   rosban_utils::xml_tools::try_read<bool>  (node, "use_point_splits"   , use_point_splits   );
   rosban_utils::xml_tools::try_read<bool>  (node, "narrow_linear_slope", narrow_linear_slope);
+  rosban_utils::xml_tools::try_read<bool>  (node, "constant_uses_guess", constant_uses_guess);
+  rosban_utils::xml_tools::try_read<bool>  (node, "linear_uses_guess"  , linear_uses_guess  );
   rosban_utils::xml_tools::try_read<double>(node, "cv_ratio"           , cv_ratio           );
   rosban_bbo::OptimizerFactory().tryRead   (node,"model_optimizer", model_optimizer);
 }
