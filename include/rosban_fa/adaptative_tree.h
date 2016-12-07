@@ -175,6 +175,14 @@ private:
 
   /// Maximal depth (negative value means infinite)
   int max_depth;
+
+  /// Amplitude of linear coefficients:
+  /// true : For each hyperrectangle, it is possible to have the minimal action
+  ///        at a corner and the maximal action at another
+  /// false: For each hyperrectangle, it is possible to have the minimal action
+  ///        at a 'edge' and the maximal at the opposite 'edge' (only one
+  ///        dimension changed)
+  bool narrow_linear_slope;
 };
 
 }

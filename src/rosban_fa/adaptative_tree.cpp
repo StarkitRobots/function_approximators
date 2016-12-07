@@ -29,7 +29,8 @@ AdaptativeTree::AdaptativeTree()
     verbosity(2),
     reuse_samples(true),
     use_point_splits(false),
-    max_depth(-1)
+    max_depth(-1),
+    narrow_linear_slope(false)
 {
 }
 
@@ -480,6 +481,11 @@ AdaptativeTree::optimizeLinearPolicy(EvaluationFunction policy_evaluator,
                                             std::pow(10,-6));
       int index = action_dim + action_dims * (1 + parameter_dim);
       double max_coeff = action_amplitude / parameter_amplitude;
+      // If narrow_linear_slope is activated, then coefficients have to be combined
+      // to make the output vary from min to max actions
+      if (narrow_linear_slope) {
+        max_coeff /= parameter_dims;
+      }
       linear_parameters_space(index, 0) = -max_coeff;
       linear_parameters_space(index, 1) =  max_coeff;
     }
@@ -518,26 +524,28 @@ std::string AdaptativeTree::class_name() const
 
 void AdaptativeTree::to_xml(std::ostream &out) const
 {
-  rosban_utils::xml_tools::write<int>   ("nb_generations"   , nb_generations   , out);
-  rosban_utils::xml_tools::write<int>   ("nb_samples"       , nb_samples       , out);
-  rosban_utils::xml_tools::write<int>   ("evaluation_trials", evaluation_trials, out);
-  rosban_utils::xml_tools::write<int>   ("verbosity"        , verbosity        , out);
-  rosban_utils::xml_tools::write<int>   ("max_depth"        , max_depth        , out);
-  rosban_utils::xml_tools::write<bool>  ("reuse_samples"    , reuse_samples    , out);
-  rosban_utils::xml_tools::write<bool>  ("use_point_splits" , use_point_splits , out);
-  rosban_utils::xml_tools::write<double>("cv_ratio"         , cv_ratio         , out);
+  rosban_utils::xml_tools::write<int>   ("nb_generations"     , nb_generations     , out);
+  rosban_utils::xml_tools::write<int>   ("nb_samples"         , nb_samples         , out);
+  rosban_utils::xml_tools::write<int>   ("evaluation_trials"  , evaluation_trials  , out);
+  rosban_utils::xml_tools::write<int>   ("verbosity"          , verbosity          , out);
+  rosban_utils::xml_tools::write<int>   ("max_depth"          , max_depth          , out);
+  rosban_utils::xml_tools::write<bool>  ("reuse_samples"      , reuse_samples      , out);
+  rosban_utils::xml_tools::write<bool>  ("use_point_splits"   , use_point_splits   , out);
+  rosban_utils::xml_tools::write<bool>  ("narrow_linear_slope", narrow_linear_slope, out);
+  rosban_utils::xml_tools::write<double>("cv_ratio"           , cv_ratio           , out);
 }
 
 void AdaptativeTree::from_xml(TiXmlNode *node)
 {
-  rosban_utils::xml_tools::try_read<int>   (node, "nb_generations"   , nb_generations   );
-  rosban_utils::xml_tools::try_read<int>   (node, "nb_samples"       , nb_samples       );
-  rosban_utils::xml_tools::try_read<int>   (node, "evaluation_trials", evaluation_trials);
-  rosban_utils::xml_tools::try_read<int>   (node, "verbosity"        , verbosity        );
-  rosban_utils::xml_tools::try_read<int>   (node, "max_depth"        , max_depth        );
-  rosban_utils::xml_tools::try_read<bool>  (node, "reuse_samples"    , reuse_samples    );
-  rosban_utils::xml_tools::try_read<bool>  (node, "use_point_splits" , use_point_splits );
-  rosban_utils::xml_tools::try_read<double>(node, "cv_ratio"         , cv_ratio         );
+  rosban_utils::xml_tools::try_read<int>   (node, "nb_generations"     , nb_generations     );
+  rosban_utils::xml_tools::try_read<int>   (node, "nb_samples"         , nb_samples         );
+  rosban_utils::xml_tools::try_read<int>   (node, "evaluation_trials"  , evaluation_trials  );
+  rosban_utils::xml_tools::try_read<int>   (node, "verbosity"          , verbosity          );
+  rosban_utils::xml_tools::try_read<int>   (node, "max_depth"          , max_depth          );
+  rosban_utils::xml_tools::try_read<bool>  (node, "reuse_samples"      , reuse_samples      );
+  rosban_utils::xml_tools::try_read<bool>  (node, "use_point_splits"   , use_point_splits   );
+  rosban_utils::xml_tools::try_read<bool>  (node, "narrow_linear_slope", narrow_linear_slope);
+  rosban_utils::xml_tools::try_read<double>(node, "cv_ratio"           , cv_ratio           );
   rosban_bbo::OptimizerFactory().tryRead   (node,"model_optimizer", model_optimizer);
 }
 
