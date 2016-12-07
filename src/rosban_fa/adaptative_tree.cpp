@@ -185,7 +185,7 @@ AdaptativeTree::buildApproximator(RewardFunction rf,
     }
     else {
       for (size_t elem_id = 0; elem_id < spaces.size(); elem_id++) {
-        samples.push_back(rosban_random::getUniformSamplesMatrix(parameters_limits,
+        samples.push_back(rosban_random::getUniformSamplesMatrix(spaces[elem_id],
                                                                  nb_samples,
                                                                  engine));
       }
