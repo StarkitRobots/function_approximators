@@ -2,6 +2,7 @@ set(SOURCES
   adaptative_tree.cpp
   constant_approximator.cpp
   fa_tree.cpp
+  fake_split.cpp
   forest_approximator.cpp
   forest_trainer.cpp
   function_approximator.cpp

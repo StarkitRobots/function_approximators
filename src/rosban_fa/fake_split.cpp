@@ -5,13 +5,14 @@
 namespace rosban_fa
 {
 
-FakeSplit::FakeSplit() : {}
+FakeSplit::FakeSplit() {}
 
 int FakeSplit::getNbElements() const {
   return 1;
 }
 
 int FakeSplit::getIndex(const Eigen::VectorXd & input) const {
+  (void) input;
   return 0;
 }
 
@@ -32,6 +33,7 @@ int FakeSplit::getClassID() const {
 int FakeSplit::writeInternal(std::ostream & out) const {
   // Nothing needs to be written
   (void) out;
+  return 0;
 }
 
 int FakeSplit::read(std::istream & in) {

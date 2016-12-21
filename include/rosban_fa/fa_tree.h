@@ -23,6 +23,14 @@ public:
 
   int getOutputDim() const override;
 
+  /// Retrieve the elemental function approximator used at this point
+  const FunctionApproximator &
+  getLeafApproximator(const Eigen::VectorXd & point) const;
+
+  /// Retrieve the parent node of the function approximator used at this point
+  const FunctionApproximator &
+  getPreLeafApproximator(const Eigen::VectorXd & point) const;
+
   virtual void predict(const Eigen::VectorXd & input,
                        Eigen::VectorXd & mean,
                        Eigen::MatrixXd & covar) const override;
