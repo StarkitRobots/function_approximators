@@ -1,5 +1,6 @@
 #include "rosban_fa/split_factory.h"
 
+#include "rosban_fa/fake_split.h"
 #include "rosban_fa/orthogonal_split.h"
 #include "rosban_fa/point_split.h"
 
@@ -12,6 +13,8 @@ SplitFactory::SplitFactory()
                   []() { return std::unique_ptr<Split>(new OrthogonalSplit); });
   registerBuilder(Split::Point,
                   []() { return std::unique_ptr<Split>(new PointSplit); });
+  registerBuilder(Split::Fake,
+                  []() { return std::unique_ptr<Split>(new FakeSplit); });
 }
 
 }

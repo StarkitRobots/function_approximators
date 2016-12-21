@@ -19,7 +19,8 @@ public:
   enum ID : int
     {
       Orthogonal = 1,
-      Point = 2
+      Point = 2,
+      Fake = 3
     };
 
 
