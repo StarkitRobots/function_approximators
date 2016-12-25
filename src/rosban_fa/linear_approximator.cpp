@@ -136,7 +136,7 @@ LinearApproximator::getParametersSpace(const Eigen::MatrixXd & input_limits,
   // Storing number of dimensions
   int input_dims = input_limits.rows();
   int output_dims = output_limits.rows();
-  int training_dims = (output_dims+1) * input_dims;
+  int training_dims = output_dims * (input_dims + 1);
   
   Eigen::MatrixXd linear_parameters_space(training_dims,2);
   // Bias Limits

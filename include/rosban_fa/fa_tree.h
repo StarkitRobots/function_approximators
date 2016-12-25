@@ -33,6 +33,9 @@ public:
   const FunctionApproximator &
   getPreLeafApproximator(const Eigen::VectorXd & point) const;
 
+  void replaceApproximator(const Eigen::VectorXd & point,
+                           std::unique_ptr<FunctionApproximator> fa);
+
   /// Copy current FATree and replace the functionApproximator at 'point' by fa,
   /// then return the resulting FATree
   std::unique_ptr<FATree> copyAndReplaceLeaf(const Eigen::VectorXd & point,

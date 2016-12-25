@@ -28,7 +28,13 @@ FATree::~FATree()
 }
 
 std::unique_ptr<FATree> FATree::clone() const {
-  throw std::logic_error("FATree::clone not implemented");
+  //TODO: implement something more appropriate (real clone template for both:
+  //      split and function_approximator)
+  std::string tmp_path("/tmp/fa_tree_clone.data");
+  this->save(tmp_path);
+  std::unique_ptr<FunctionApproximator> ptr;
+  FunctionApproximatorFactory().loadFromFile(tmp_path, ptr);
+  return std::unique_ptr<FATree>(static_cast<FATree*>(ptr.release()));
 }
 
 int FATree::getOutputDim() const
@@ -37,12 +43,25 @@ int FATree::getOutputDim() const
   return childs[0]->getOutputDim();
 }
 
+void FATree::replaceApproximator(const Eigen::VectorXd & point,
+                                 std::unique_ptr<FunctionApproximator> fa) {
+  int index = split->getIndex(point);
+  // If 'child' is a tree, then replace at next level
+  FATree * child_node = dynamic_cast<FATree*>(childs[index].get());
+  if (child_node) {
+    child_node->replaceApproximator(point,std::move(fa));
+  }
+  else {
+    childs[index] = std::move(fa);
+  }
+}
+
 std::unique_ptr<FATree>
 FATree::copyAndReplaceLeaf(const Eigen::VectorXd & point,
                            std::unique_ptr<FunctionApproximator> fa) const {
-  (void) point;
-  (void) fa;
-  throw std::logic_error("FATree::copyAndReplaceLeaf: not implemented");
+  std::unique_ptr<FATree> copy = clone();
+  copy->replaceApproximator(point,std::move(fa));
+  return std::move(copy);
 }
 
 
