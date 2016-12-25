@@ -43,6 +43,19 @@ int FATree::getOutputDim() const
   return childs[0]->getOutputDim();
 }
 
+const FunctionApproximator &
+FATree::getLeafApproximator(const Eigen::VectorXd & point) const {
+  int index = split->getIndex(point);
+  // If 'child' is a tree, then replace at next level
+  FATree * child_node = dynamic_cast<FATree*>(childs[index].get());
+  if (child_node) {
+    return child_node->getLeafApproximator(point);
+  }
+  else {
+    return *(childs[index]);
+  }
+}
+
 void FATree::replaceApproximator(const Eigen::VectorXd & point,
                                  std::unique_ptr<FunctionApproximator> fa) {
   int index = split->getIndex(point);
