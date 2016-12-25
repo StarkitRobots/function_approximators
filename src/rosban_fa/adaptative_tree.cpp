@@ -493,43 +493,21 @@ AdaptativeTree::optimizeLinearPolicy(EvaluationFunction policy_evaluator,
 
   int training_dims = (parameter_dims +1) * action_dims;
   // Initial parameters
-  Eigen::VectorXd initial_params = Eigen::VectorXd::Zero(training_dims);
+  Eigen::VectorXd initial_params;
+  initial_params = LinearApproximator::getDefaultParameters(parameters_limits,
+                                                            actions_limits);
   // Uses of guess can be enabled or disabled
   if (linear_uses_guess) {
     // Set the bias according to the guess
     initial_params.segment(0,action_dims) = guess;
   }
-  else {
-    // Simply use center of action space
-    initial_params.segment(0,action_dims) = (actions_limits.col(0) + actions_limits.col(1)) / 2;
-  }
 
   // Creating linear parameters space
-  Eigen::MatrixXd linear_parameters_space(training_dims,2);
-  // Bias Limits
-  linear_parameters_space.block(0,0,action_dims, 2) = actions_limits;
-  // Coeffs Limits
-  // For each parameter, it might at most make the output vary from min to max in given space
-  for (int action_dim = 0; action_dim < action_dims; action_dim++) {
-    double action_amplitude = actions_limits(action_dim,1) - actions_limits(action_dim,0);
-    for (int parameter_dim = 0; parameter_dim < parameter_dims; parameter_dim++) {
-      double param_min = parameters_space(parameter_dim,0);
-      double param_max = parameters_space(parameter_dim,1);
-      // Avoiding numerical issues
-      double parameter_amplitude = std::max(param_max - param_min,
-                                            std::pow(10,-6));
-      int index = action_dim + action_dims * (1 + parameter_dim);
-      double max_coeff = action_amplitude / parameter_amplitude;
-      // If narrow_linear_slope is activated, then coefficients have to be combined
-      // to make the output vary from min to max actions
-      if (narrow_linear_slope) {
-        max_coeff /= parameter_dims;
-      }
-      linear_parameters_space(index, 0) = -max_coeff;
-      linear_parameters_space(index, 1) =  max_coeff;
-    }
-  }
-
+  Eigen::MatrixXd linear_parameters_space;
+  linear_parameters_space = LinearApproximator::getParametersSpace(parameters_limits,
+                                                                   actions_limits,
+                                                                   narrow_linear_slope);
+  // Getting center
   Eigen::VectorXd params_center;
   params_center = (parameters_space.col(1) + parameters_space.col(0)) / 2;
 

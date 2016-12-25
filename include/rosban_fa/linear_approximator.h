@@ -50,6 +50,26 @@ public:
 
   virtual std::string toString() const override;
 
+  /// Return the parameters limits for the given limits.
+  /// Those parameters are based on use of the constructor which include the
+  /// center of the input space.
+  /// Provided limits are chosen to ensure the following properties:
+  /// - When narrow_slope is true:
+  ///   - It is possible that inside input_limits, min and max of output limits
+  ///     are predicted, but then both values necessarily appears on 'corners' of
+  ///     the hyperrectangle
+  /// - When narrow_slope is false:
+  ///   - Same as when narrow_slope is true except extremum values can appear on
+  ///     opposite 'borders' (i.e. only 1 dimension has changed)
+  static Eigen::MatrixXd getParametersSpace(const Eigen::MatrixXd & input_limits,
+                                            const Eigen::MatrixXd & output_limits,
+                                            bool narrow_slope);
+
+  /// Return default parameters which can be used as an initial guess for a
+  /// black-box optimizer given the provided limits 
+  static Eigen::VectorXd getDefaultParameters(const Eigen::MatrixXd & input_limits,
+                                              const Eigen::MatrixXd & output_limits);
+
 protected:
 
   /// bias: B in Y = A*X + B

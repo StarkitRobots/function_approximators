@@ -128,4 +128,56 @@ std::string LinearApproximator::toString() const {
   return oss.str();
 }
 
+
+Eigen::MatrixXd
+LinearApproximator::getParametersSpace(const Eigen::MatrixXd & input_limits,
+                                       const Eigen::MatrixXd & output_limits,
+                                       bool narrow_slope) {
+  // Storing number of dimensions
+  int input_dims = input_limits.rows();
+  int output_dims = output_limits.rows();
+  int training_dims = (output_dims+1) * input_dims;
+  
+  Eigen::MatrixXd linear_parameters_space(training_dims,2);
+  // Bias Limits
+  linear_parameters_space.block(0,0,output_dims, 2) = output_limits;
+  // Coeffs Limits
+  // For each parameter, it might at most make the output vary from min to max in given space
+  for (int output_dim = 0; output_dim < output_dims; output_dim++) {
+    double output_amplitude = output_limits(output_dim,1) - output_limits(output_dim,0);
+    for (int input_dim = 0; input_dim < input_dims; input_dim++) {
+      int index = output_dim + output_dims * (1 + input_dim);
+      double input_min = input_limits(input_dim,0);
+      double input_max = input_limits(input_dim,1);
+      // Avoiding numerical issues
+      double input_amplitude = std::max(input_max - input_min,
+                                        std::pow(10,-12));
+      double max_coeff = output_amplitude / input_amplitude;
+      // If narrow_slope is activated, then coefficients have to be combined
+      // to make the output vary from min to max output
+      if (narrow_slope) {
+        max_coeff /= input_dims;
+      }
+      linear_parameters_space(index, 0) = -max_coeff;
+      linear_parameters_space(index, 1) =  max_coeff;
+    }
+  }
+  return linear_parameters_space;
+}
+
+Eigen::VectorXd
+LinearApproximator::getDefaultParameters(const Eigen::MatrixXd & input_limits,
+                                         const Eigen::MatrixXd & output_limits) {
+  // Storing number of dimensions
+  int input_dims = input_limits.rows();
+  int output_dims = output_limits.rows();
+  int training_dims = (input_dims+1) * output_dims;
+  // Default slopes are 0
+  Eigen::VectorXd initial_params = Eigen::VectorXd::Zero(training_dims);
+  // Default bias is middle of output limits
+  initial_params.segment(0,output_dims) = (output_limits.col(0) + output_limits.col(1)) / 2;
+  
+  return initial_params;
+}
+
 }
