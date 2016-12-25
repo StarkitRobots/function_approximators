@@ -21,6 +21,8 @@ public:
          std::vector<std::unique_ptr<FunctionApproximator>> & childs);
   virtual ~FATree();
 
+  std::unique_ptr<FATree> clone() const;
+
   int getOutputDim() const override;
 
   /// Retrieve the elemental function approximator used at this point
@@ -30,6 +32,11 @@ public:
   /// Retrieve the parent node of the function approximator used at this point
   const FunctionApproximator &
   getPreLeafApproximator(const Eigen::VectorXd & point) const;
+
+  /// Copy current FATree and replace the functionApproximator at 'point' by fa,
+  /// then return the resulting FATree
+  std::unique_ptr<FATree> copyAndReplaceLeaf(const Eigen::VectorXd & point,
+                                             std::unique_ptr<FunctionApproximator> fa) const;
 
   virtual void predict(const Eigen::VectorXd & input,
                        Eigen::VectorXd & mean,

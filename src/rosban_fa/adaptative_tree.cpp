@@ -491,7 +491,6 @@ AdaptativeTree::optimizeLinearPolicy(EvaluationFunction policy_evaluator,
   int parameter_dims = getParametersDim();
   int action_dims = getActionsDim();
 
-  int training_dims = (parameter_dims +1) * action_dims;
   // Initial parameters
   Eigen::VectorXd initial_params;
   initial_params = LinearApproximator::getDefaultParameters(parameters_limits,

@@ -27,11 +27,24 @@ FATree::~FATree()
 {
 }
 
+std::unique_ptr<FATree> FATree::clone() const {
+  throw std::logic_error("FATree::clone not implemented");
+}
+
 int FATree::getOutputDim() const
 {
   checkConsistency("FATree::getOutputDim");
   return childs[0]->getOutputDim();
 }
+
+std::unique_ptr<FATree>
+FATree::copyAndReplaceLeaf(const Eigen::VectorXd & point,
+                           std::unique_ptr<FunctionApproximator> fa) const {
+  (void) point;
+  (void) fa;
+  throw std::logic_error("FATree::copyAndReplaceLeaf: not implemented");
+}
+
 
 void FATree::predict(const Eigen::VectorXd & input,
                      Eigen::VectorXd & mean,
