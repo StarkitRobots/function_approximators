@@ -24,6 +24,7 @@ public:
       Fake = 3
     };
 
+  virtual std::unique_ptr<Split> clone() const = 0;
 
   /// Return the total number of elements of the chosen split
   virtual int getNbElements() const = 0;

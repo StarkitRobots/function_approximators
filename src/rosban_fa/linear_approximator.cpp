@@ -54,6 +54,10 @@ LinearApproximator::~LinearApproximator()
 {
 }
 
+std::unique_ptr<FunctionApproximator> LinearApproximator::clone() const {
+  return std::unique_ptr<FunctionApproximator>(new LinearApproximator(bias, coeffs));
+}
+
 int LinearApproximator::getOutputDim() const
 {
   return bias.rows();

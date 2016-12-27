@@ -4,6 +4,8 @@
 
 #include <Eigen/Core>
 
+#include <memory>
+
 namespace rosban_fa
 {
 
@@ -17,6 +19,8 @@ class FunctionApproximator : public rosban_utils::StreamSerializable
 public:
 
   virtual ~FunctionApproximator();
+
+  virtual std::unique_ptr<FunctionApproximator> clone() const = 0;
 
   /// Return the output dimension of the function approximator
   virtual int getOutputDim() const = 0;

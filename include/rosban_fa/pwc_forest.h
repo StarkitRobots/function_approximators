@@ -14,6 +14,8 @@ public:
 
   virtual ~PWCForest();
 
+  virtual std::unique_ptr<FunctionApproximator> clone() const override;
+
   virtual int getClassID() const override;
 };
 

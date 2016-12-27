@@ -27,14 +27,16 @@ FATree::~FATree()
 {
 }
 
-std::unique_ptr<FATree> FATree::clone() const {
-  //TODO: implement something more appropriate (real clone template for both:
-  //      split and function_approximator)
-  std::string tmp_path("/tmp/fa_tree_clone.data");
-  this->save(tmp_path);
-  std::unique_ptr<FunctionApproximator> ptr;
-  FunctionApproximatorFactory().loadFromFile(tmp_path, ptr);
-  return std::unique_ptr<FATree>(static_cast<FATree*>(ptr.release()));
+std::unique_ptr<FunctionApproximator> FATree::clone() const {
+  int nb_childs = split->getNbElements();
+  std::unique_ptr<Split> split_copy = split->clone();
+  std::vector<std::unique_ptr<FunctionApproximator>> childs_copy(nb_childs);
+  for (int i = 0; i < nb_childs; i++) {
+    childs_copy[i] = childs[i]->clone();
+  }
+  std::unique_ptr<FunctionApproximator> copy(new FATree(std::move(split_copy),
+                                                        childs_copy));
+  return std::move(copy);
 }
 
 int FATree::getOutputDim() const
@@ -72,7 +74,8 @@ void FATree::replaceApproximator(const Eigen::VectorXd & point,
 std::unique_ptr<FATree>
 FATree::copyAndReplaceLeaf(const Eigen::VectorXd & point,
                            std::unique_ptr<FunctionApproximator> fa) const {
-  std::unique_ptr<FATree> copy = clone();
+  // clone and cast clone to FATree
+  std::unique_ptr<FATree> copy(static_cast<FATree *>(clone().release()));
   copy->replaceApproximator(point,std::move(fa));
   return std::move(copy);
 }

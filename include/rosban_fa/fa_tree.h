@@ -21,7 +21,7 @@ public:
          std::vector<std::unique_ptr<FunctionApproximator>> & childs);
   virtual ~FATree();
 
-  std::unique_ptr<FATree> clone() const;
+  virtual std::unique_ptr<FunctionApproximator> clone() const override;
 
   int getOutputDim() const override;
 

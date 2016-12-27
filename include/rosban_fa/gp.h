@@ -20,6 +20,8 @@ public:
 
   virtual ~GP();
 
+  virtual std::unique_ptr<FunctionApproximator> clone() const override;
+
   virtual int getOutputDim() const override;
 
   virtual void predict(const Eigen::VectorXd & inputs,

@@ -18,6 +18,10 @@ ForestApproximator::ForestApproximator(std::unique_ptr<Forests> forests_,
 
 ForestApproximator::~ForestApproximator() {}
 
+std::unique_ptr<FunctionApproximator> ForestApproximator::clone() const {
+  throw std::logic_error("ForestApproximator::clone: not implemented");
+}
+
 void ForestApproximator::setForests(std::unique_ptr<Forests> new_forests)
 {
   forests = std::move(new_forests);

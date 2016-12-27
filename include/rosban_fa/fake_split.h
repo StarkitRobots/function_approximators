@@ -13,6 +13,8 @@ public:
 
   FakeSplit();
 
+  virtual std::unique_ptr<Split> clone() const override;
+
   virtual int getNbElements() const override;
 
   virtual int getIndex(const Eigen::VectorXd & input) const override;

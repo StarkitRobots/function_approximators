@@ -12,6 +12,10 @@ PWLForest::PWLForest(std::unique_ptr<Forests> forests_,
 
 PWLForest::~PWLForest() {}
 
+std::unique_ptr<FunctionApproximator> PWLForest::clone() const {
+  throw std::logic_error("PWLForest::clone: not implemented");
+}
+
 int PWLForest::getClassID() const
 {
   return FunctionApproximator::PWLForest;

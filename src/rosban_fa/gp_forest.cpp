@@ -28,6 +28,10 @@ GPForest::GPForest(std::unique_ptr<Forests> forests_,
 
 GPForest::~GPForest() {}
 
+std::unique_ptr<FunctionApproximator> GPForest::clone() const {
+  throw std::logic_error("GPForest::clone: not implemented");
+}
+
 void GPForest::predict(const Eigen::VectorXd & input,
                              Eigen::VectorXd & mean,
                              Eigen::MatrixXd & covar) const

@@ -14,6 +14,10 @@ OrthogonalSplit::OrthogonalSplit(int dim_, double val_)
 {
 }
 
+std::unique_ptr<Split> OrthogonalSplit::clone() const {
+  return std::unique_ptr<Split>(new OrthogonalSplit(dim, val));
+}
+
 int OrthogonalSplit::getNbElements() const
 {
   return 2;

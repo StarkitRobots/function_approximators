@@ -14,6 +14,10 @@ PointSplit::PointSplit(const Eigen::VectorXd & point)
 {
 }
 
+std::unique_ptr<Split> PointSplit::clone() const {
+  return std::unique_ptr<Split>(new PointSplit(split_point));
+}
+
 int PointSplit::getNbElements() const
 {
   return std::pow(2, split_point.rows());

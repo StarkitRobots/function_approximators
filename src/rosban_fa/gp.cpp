@@ -25,6 +25,10 @@ GP::GP(std::unique_ptr<std::vector<rosban_gp::GaussianProcess>> gps_,
 
 GP::~GP() {}
 
+std::unique_ptr<FunctionApproximator> GP::clone() const {
+  throw std::logic_error("GP::clone: not implemented");
+}
+
 int GP::getOutputDim() const
 {
   if (!gps) return 0;

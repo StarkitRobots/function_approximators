@@ -16,6 +16,10 @@ ConstantApproximator::~ConstantApproximator()
 {
 }
 
+std::unique_ptr<FunctionApproximator> ConstantApproximator::clone() const {
+  return std::unique_ptr<FunctionApproximator>(new ConstantApproximator(average));
+}
+
 int ConstantApproximator::getOutputDim() const
 {
   return average.rows();

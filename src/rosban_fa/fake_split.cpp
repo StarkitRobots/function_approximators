@@ -7,6 +7,10 @@ namespace rosban_fa
 
 FakeSplit::FakeSplit() {}
 
+std::unique_ptr<Split> FakeSplit::clone() const {
+  return std::unique_ptr<Split>(new FakeSplit());
+}
+
 int FakeSplit::getNbElements() const {
   return 1;
 }

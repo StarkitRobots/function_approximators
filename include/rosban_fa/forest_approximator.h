@@ -19,6 +19,8 @@ public:
 
   virtual ~ForestApproximator();
 
+  virtual std::unique_ptr<FunctionApproximator> clone() const override;
+
   void setForests(std::unique_ptr<Forests> forests);
   void setMaxActionTiles(int max_action_tiles);
   void setAggregationMethod(regression_forests::Forest::AggregationMethod aggregation_method);

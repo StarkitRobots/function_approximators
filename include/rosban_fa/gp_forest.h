@@ -19,6 +19,8 @@ public:
 
   virtual ~GPForest();
 
+  virtual std::unique_ptr<FunctionApproximator> clone() const override;
+
   virtual void predict(const Eigen::VectorXd & input,
                        Eigen::VectorXd & means,
                        Eigen::MatrixXd & covar) const override;
