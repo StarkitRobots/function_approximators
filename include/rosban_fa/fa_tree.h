@@ -21,6 +21,8 @@ public:
          std::vector<std::unique_ptr<FunctionApproximator>> & childs);
   virtual ~FATree();
 
+  const Split & getSplit() const;
+
   virtual std::unique_ptr<FunctionApproximator> clone() const override;
 
   int getOutputDim() const override;
@@ -29,8 +31,8 @@ public:
   const FunctionApproximator &
   getLeafApproximator(const Eigen::VectorXd & point) const;
 
-  /// Retrieve the parent node of the function approximator used at this point
-  const FunctionApproximator &
+  /// Retrieve the first parent node of the function approximator used at this point
+  const FATree &
   getPreLeafApproximator(const Eigen::VectorXd & point) const;
 
   void replaceApproximator(const Eigen::VectorXd & point,
@@ -55,6 +57,8 @@ public:
   virtual int getClassID() const override;
   virtual int writeInternal(std::ostream & out) const override;
   virtual int read(std::istream & in) override;
+
+  virtual std::string toString() const override;
 
 protected:
 

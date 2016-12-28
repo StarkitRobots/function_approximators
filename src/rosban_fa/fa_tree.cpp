@@ -27,6 +27,10 @@ FATree::~FATree()
 {
 }
 
+const Split & FATree::getSplit() const {
+  return *split;
+}
+
 std::unique_ptr<FunctionApproximator> FATree::clone() const {
   int nb_childs = split->getNbElements();
   std::unique_ptr<Split> split_copy = split->clone();
@@ -48,7 +52,7 @@ int FATree::getOutputDim() const
 const FunctionApproximator &
 FATree::getLeafApproximator(const Eigen::VectorXd & point) const {
   int index = split->getIndex(point);
-  // If 'child' is a tree, then replace at next level
+  // If 'child' is a tree, then dig deeper
   FATree * child_node = dynamic_cast<FATree*>(childs[index].get());
   if (child_node) {
     return child_node->getLeafApproximator(point);
@@ -57,6 +61,20 @@ FATree::getLeafApproximator(const Eigen::VectorXd & point) const {
     return *(childs[index]);
   }
 }
+
+const FATree &
+FATree::getPreLeafApproximator(const Eigen::VectorXd & point) const {
+  int index = split->getIndex(point);
+  // If 'child' is a tree, then dig deeper
+  FATree * child_node = dynamic_cast<FATree*>(childs[index].get());
+  if (child_node) {
+    return child_node->getPreLeafApproximator(point);
+  }
+  else {
+    return *this;
+  }
+}
+
 
 void FATree::replaceApproximator(const Eigen::VectorXd & point,
                                  std::unique_ptr<FunctionApproximator> fa) {
@@ -136,6 +154,20 @@ int FATree::read(std::istream & in)
   // Check after reading that consistency is ensured
   checkConsistency("FATree::read");
   return bytes_read;
+}
+
+
+std::string FATree::toString() const {
+  std::ostringstream oss;
+  oss << "(FATree|Split: " << split->toString()
+      << "|Approximators:(";
+  int n = split->getNbElements();
+  for (int i = 0; i < n;i++) {
+    oss << childs[i]->toString();
+    if (i < n -1) oss << "|";
+  }
+  oss << "))";
+  return oss.str();
 }
 
 void FATree::checkConsistency(const std::string & caller_name) const
