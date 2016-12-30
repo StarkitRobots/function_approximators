@@ -33,6 +33,10 @@ public:
 
   virtual std::unique_ptr<FunctionApproximator> clone() const override;
 
+  Eigen::VectorXd getBias() const;
+  Eigen::VectorXd getBias(const Eigen::VectorXd & center) const;
+  Eigen::VectorXd getCoeffs() const;
+
   virtual int getOutputDim() const override;
 
   virtual void predict(const Eigen::VectorXd & input,

@@ -58,6 +58,18 @@ std::unique_ptr<FunctionApproximator> LinearApproximator::clone() const {
   return std::unique_ptr<FunctionApproximator>(new LinearApproximator(bias, coeffs));
 }
 
+Eigen::VectorXd LinearApproximator::getBias() const {
+  return bias;
+}
+
+Eigen::VectorXd LinearApproximator::getBias(const Eigen::VectorXd & center) const {
+  return bias + coeffs * center;
+}
+
+Eigen::VectorXd LinearApproximator::getCoeffs() const {
+  return coeffs;
+}
+
 int LinearApproximator::getOutputDim() const
 {
   return bias.rows();

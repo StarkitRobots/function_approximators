@@ -20,6 +20,10 @@ std::unique_ptr<FunctionApproximator> ConstantApproximator::clone() const {
   return std::unique_ptr<FunctionApproximator>(new ConstantApproximator(average));
 }
 
+const Eigen::VectorXd & ConstantApproximator::getValue() const {
+  return average;
+}
+
 int ConstantApproximator::getOutputDim() const
 {
   return average.rows();
