@@ -49,6 +49,21 @@ int FATree::getOutputDim() const
   return childs[0]->getOutputDim();
 }
 
+void FATree::addSpaces(const Eigen::MatrixXd & global_space,
+                       std::vector<Eigen::MatrixXd> * spaces) const{
+  std::vector<Eigen::MatrixXd> sub_spaces = split->splitSpace(global_space);
+  for (unsigned int idx = 0; idx < sub_spaces.size(); idx++) {
+    // If 'child' is a tree, then dig deeper
+    FATree * child_node = dynamic_cast<FATree*>(childs[idx].get());
+    if (child_node) {
+      child_node->addSpaces(sub_spaces[idx], spaces);
+    }
+    else {
+      spaces->push_back(sub_spaces[idx]);
+    }
+  }
+}
+
 const FunctionApproximator &
 FATree::getLeafApproximator(const Eigen::VectorXd & point) const {
   int index = split->getIndex(point);

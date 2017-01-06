@@ -27,6 +27,10 @@ public:
 
   int getOutputDim() const override;
 
+  /// Add all the leaf spaces to the given vector
+  void addSpaces(const Eigen::MatrixXd & global_space,
+                 std::vector<Eigen::MatrixXd> * spaces) const;
+
   /// Retrieve the elemental function approximator used at this point
   const FunctionApproximator &
   getLeafApproximator(const Eigen::VectorXd & point) const;
