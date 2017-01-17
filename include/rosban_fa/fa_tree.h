@@ -47,6 +47,10 @@ public:
   std::unique_ptr<FATree> copyAndReplaceLeaf(const Eigen::VectorXd & point,
                                              std::unique_ptr<FunctionApproximator> fa) const;
 
+  // Due to polymorphism + override of a function named 'predict', we need to
+  // specifically mention the functions from FunctionApproximator
+  using FunctionApproximator::predict;
+
   virtual void predict(const Eigen::VectorXd & input,
                        Eigen::VectorXd & mean,
                        Eigen::MatrixXd & covar) const override;
