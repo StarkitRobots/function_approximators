@@ -6,7 +6,7 @@ find_package(catkin REQUIRED COMPONENTS
   rosban_bbo
 )
 
-find_package(rosban_viewer)
+find_package(rosban_viewer QUIET)
 
 set(DELEG_INCLUDE_DIRS include ${catkin_INCLUDE_DIRS})
 
