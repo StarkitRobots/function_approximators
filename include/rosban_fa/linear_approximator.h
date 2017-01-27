@@ -35,7 +35,9 @@ public:
 
   Eigen::VectorXd getBias() const;
   Eigen::VectorXd getBias(const Eigen::VectorXd & center) const;
-  Eigen::VectorXd getCoeffs() const;
+  const Eigen::MatrixXd & getCoeffs() const;
+  /// Output the coeff as a vector (M_0,0;M_1,0;...;M_0,1;M1,1;...)
+  Eigen::VectorXd getCoeffsAsVector() const;
 
   virtual int getOutputDim() const override;
 

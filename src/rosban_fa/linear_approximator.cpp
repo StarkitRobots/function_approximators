@@ -66,7 +66,15 @@ Eigen::VectorXd LinearApproximator::getBias(const Eigen::VectorXd & center) cons
   return bias + coeffs * center;
 }
 
-Eigen::VectorXd LinearApproximator::getCoeffs() const {
+const Eigen::MatrixXd & LinearApproximator::getCoeffs() const {
+  return coeffs;
+}
+
+Eigen::VectorXd LinearApproximator::getCoeffsAsVector() const {
+  Eigen::VectorXd vector(coeffs.rows() * coeffs.cols());
+  for (int col = 0; col < coeffs.cols(); col++) {
+    vector.segment(col * coeffs.rows(), coeffs.rows()) = coeffs.col(col);
+  }
   return coeffs;
 }
 
