@@ -21,6 +21,11 @@ ForestTrainer::ForestTrainer()
 
 ForestTrainer::~ForestTrainer() {}
 
+void ForestTrainer::setNbTrees(int new_nb_trees)
+{
+  nb_trees = new_nb_trees;
+}
+
 std::unique_ptr<FunctionApproximator>
 ForestTrainer::train(const Eigen::MatrixXd & inputs,
                         const Eigen::MatrixXd & observations,

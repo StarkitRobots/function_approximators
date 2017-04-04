@@ -14,6 +14,8 @@ public:
   ForestTrainer();
   virtual ~ForestTrainer();
 
+  void setNbTrees(int nb_trees);
+
   /// Which type of approximation is used
   virtual regression_forests::Approximation::ID getApproximationID() const = 0;
 
