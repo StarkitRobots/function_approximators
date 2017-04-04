@@ -27,6 +27,8 @@ public:
   virtual void to_xml(std::ostream &out) const override;
   virtual void from_xml(TiXmlNode *node) override;
 
+  void setNbTrees(int nb_trees);
+
 private:
   /// Maximal number of tiles used for getting max
   int max_action_tiles;

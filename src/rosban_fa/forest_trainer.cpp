@@ -75,4 +75,8 @@ void ForestTrainer::from_xml(TiXmlNode *node)
   rosban_utils::xml_tools::try_read<int>(node, "nb_trees", nb_trees);
 }
 
+void ForestTrainer::setNbTrees(int new_nb_trees) {
+  nb_trees = new_nb_trees;
+}
+
 }
