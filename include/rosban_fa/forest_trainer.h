@@ -14,6 +14,8 @@ public:
   ForestTrainer();
   virtual ~ForestTrainer();
 
+  void setNbTrees(int nb_trees);
+
   /// Which type of approximation is used
   virtual regression_forests::Approximation::ID getApproximationID() const = 0;
 
@@ -26,8 +28,6 @@ public:
 
   virtual void to_xml(std::ostream &out) const override;
   virtual void from_xml(TiXmlNode *node) override;
-
-  void setNbTrees(int nb_trees);
 
 private:
   /// Maximal number of tiles used for getting max

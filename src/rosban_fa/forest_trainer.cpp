@@ -21,6 +21,11 @@ ForestTrainer::ForestTrainer()
 
 ForestTrainer::~ForestTrainer() {}
 
+void ForestTrainer::setNbTrees(int new_nb_trees)
+{
+  nb_trees = new_nb_trees;
+}
+
 std::unique_ptr<FunctionApproximator>
 ForestTrainer::train(const Eigen::MatrixXd & inputs,
                         const Eigen::MatrixXd & observations,
@@ -73,10 +78,6 @@ void ForestTrainer::from_xml(TiXmlNode *node)
   rosban_utils::xml_tools::try_read<std::string>(node, "aggregation_method", am_str);
   if (am_str != "") aggregation_method = regression_forests::loadAggregationMethod(am_str);
   rosban_utils::xml_tools::try_read<int>(node, "nb_trees", nb_trees);
-}
-
-void ForestTrainer::setNbTrees(int new_nb_trees) {
-  nb_trees = new_nb_trees;
 }
 
 }
