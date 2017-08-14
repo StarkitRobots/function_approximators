@@ -11,8 +11,8 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <build_depend>rosban_regression_forests</build_depend> <!-- git@bitbucket.org:rhoban/rosban_regression_forests.git -->
-  <build_depend>rosban_bbo</build_depend> <!-- git@bitbucket.org:rhoban/rosban_bbo.git -->
+  <build_depend>rosban_regression_forests</build_depend> <!-- rhoban/rosban_regression_forests.git -->
+  <build_depend>rosban_bbo</build_depend> <!-- rhoban/rosban_bbo.git -->
 
   <run_depend>rosban_regression_forests</run_depend>
   <run_depend>rosban_bbo</run_depend>
