@@ -9,11 +9,14 @@ using regression_forests::Node;
 namespace rosban_fa
 {
 
-ForestApproximator::ForestApproximator() {}
+ForestApproximator::ForestApproximator()
+  : aggregation_method(Forest::AggregationMethod::All)
+{}
 
 ForestApproximator::ForestApproximator(std::unique_ptr<Forests> forests_,
                      int max_action_tiles_)
-  : forests(std::move(forests_)), max_action_tiles(max_action_tiles_)
+  : forests(std::move(forests_)), max_action_tiles(max_action_tiles_),
+    aggregation_method(Forest::AggregationMethod::All)
 {}
 
 ForestApproximator::~ForestApproximator() {}
