@@ -12,6 +12,7 @@ set(SOURCES
   gp_forest.cpp
   gp_forest_trainer.cpp
   linear_approximator.cpp
+  linear_split.cpp
   optimizer_trainer.cpp
   optimizer_trainer_factory.cpp
   orthogonal_split.cpp

@@ -21,7 +21,8 @@ public:
     {
       Orthogonal = 1,
       Point = 2,
-      Fake = 3
+      Fake = 3,
+      Linear = 4
     };
 
   virtual std::unique_ptr<Split> clone() const = 0;
@@ -32,7 +33,6 @@ public:
   /// Return the index of the subspace containing to the given input
   virtual int getIndex(const Eigen::VectorXd & input) const = 0;
 
-  /// TODO: implement this in Split.cpp
   /// Separate all elements of input
   /// return a vector v in which v[i] is the set of elements which
   std::vector<Eigen::MatrixXd> splitEntries(const Eigen::MatrixXd & input) const;
