@@ -12,13 +12,20 @@ namespace rosban_fa
 /// FunctionApproximator itself. It is mainly used to represent trees of
 /// FunctionApproximator. Each child of the hub is used to approximate a
 /// subset of the input space
+///
+/// Each node stores the numbers of nodes inside each child, this can be used
+/// to access a node of the tree by only providing its ID or to retrieve the ID
+/// of a node belonging to a given point.
+///
+/// Modification of the tree structure require to update the node counter:
+/// - see: updateNodesCount
 class FATree : public FunctionApproximator
 {
 public:
   FATree();
-  /// Transmit ownership and clear vector 'childs'
+  /// Transmit ownership and clear vector 'children'
   FATree(std::unique_ptr<Split> split,
-         std::vector<std::unique_ptr<FunctionApproximator>> & childs);
+         std::vector<std::unique_ptr<FunctionApproximator>> & children);
   virtual ~FATree();
 
   const Split & getSplit() const;
@@ -39,6 +46,9 @@ public:
   const FATree &
   getPreLeafApproximator(const Eigen::VectorXd & point) const;
 
+  /// Warning, since the structure is changed, it is mandatory to use the
+  /// updateNodesCount function after replacing an approximator before using
+  /// other methods based on node_id
   void replaceApproximator(const Eigen::VectorXd & point,
                            std::unique_ptr<FunctionApproximator> fa);
 
@@ -62,6 +72,21 @@ public:
                           Eigen::VectorXd & input,
                           double & output) const override;
 
+  /// How many nodes contains the tree (require a call to updateNodesCount since
+  /// last modification)
+  int getNodesCount() const;
+  
+  /// Modify children_sizes to ensure they contain the appropriate number of nodes
+  void updateNodesCount();
+
+  /// Return the nodeIds of all the leaves, should only be called on the root of the tree
+  /// see updateNodesCount
+  std::vector<int> getLeavesId() const;
+
+  /// Return the nodeId of the leaf corresponding to the provided point
+  /// see updateNodesCount
+  int getLeafId(const Eigen::VectorXd & point) const;
+
   virtual int getClassID() const override;
   virtual int writeInternal(std::ostream & out) const override;
   virtual int read(std::istream & in) override;
@@ -70,13 +95,20 @@ public:
 
 protected:
 
+  /// Push the ids of all the leaves in the tree inside the provided vector
+  /// see updateNodesCount
+  void fillLeavesId(std::vector<int> * leaves_id, int offset) const;
+
   /// Throws an explicit exception if content was not properly set
   void checkConsistency(const std::string & caller_name) const;
 
   /// The input space is separated in several parts (eventually more than two)
   std::unique_ptr<Split> split;
-  /// List of the childs which can be used for the tree
-  std::vector<std::unique_ptr<FunctionApproximator>> childs;
+  /// List of the children which can be used for the tree
+  std::vector<std::unique_ptr<FunctionApproximator>> children;
+
+  /// How many nodes in children (child included)
+  std::vector<int> children_sizes;
 
 };
 
