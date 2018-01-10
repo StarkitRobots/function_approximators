@@ -2,14 +2,14 @@
 
 #include "rosban_fa/split.h"
 
-#include "rosban_utils/factory.h"
+#include "rhoban_utils/serialization/factory.h"
 
 #include <map>
 
 namespace rosban_fa
 {
 
-class SplitFactory : public rosban_utils::Factory<Split>
+class SplitFactory : public rhoban_utils::Factory<Split>
 {
 public:
   SplitFactory();

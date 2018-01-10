@@ -6,6 +6,8 @@
 
 #include "rosban_random/tools.h"
 
+#include "rhoban_utils/io_tools.h"
+
 #include <iostream>
 
 using rosban_gp::GaussianProcess;
@@ -95,7 +97,7 @@ int GP::getClassID() const
 int GP::writeInternal(std::ostream & out) const
 {
   int bytes_written = 0;
-  bytes_written += rosban_utils::write<int>(out, getOutputDim());
+  bytes_written += rhoban_utils::write<int>(out, getOutputDim());
   for (int dim = 0; dim < getOutputDim(); dim++) {
     bytes_written += (*gps)[dim].write(out);//TODO: change to write internal if it is changed
   }
@@ -106,7 +108,7 @@ int GP::read(std::istream & in)
 {
   int bytes_read = 0;
   int output_dims;
-  bytes_read += rosban_utils::read<int>(in, &output_dims);
+  bytes_read += rhoban_utils::read<int>(in, &output_dims);
   gps = std::unique_ptr<std::vector<GaussianProcess>>(new std::vector<GaussianProcess>(output_dims));
   for (int output_dim = 0; output_dim < output_dims; output_dim++) {
     bytes_read += (*gps)[output_dim].read(in);

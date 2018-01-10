@@ -2,8 +2,8 @@
 
 #include "rosban_fa/function_approximator_factory.h"
 
-#include <rosban_utils/space_tools.h>
-#include <rosban_utils/string_tools.h>
+#include <rhoban_utils/space_tools.h>
+#include <rhoban_utils/string_tools.h>
 
 #include <fstream>
 #include <iostream>
@@ -42,9 +42,9 @@ Viewer::Viewer(const std::string& fa_path,
   }
   // Treat config file content
   std::vector<std::string> mins, maxs;
-  dim_names = rosban_utils::split_string(lines[0], ',');
-  mins      = rosban_utils::split_string(lines[1], ',');
-  maxs      = rosban_utils::split_string(lines[2], ',');
+  dim_names = rhoban_utils::split_string(lines[0], ',');
+  mins      = rhoban_utils::split_string(lines[1], ',');
+  maxs      = rhoban_utils::split_string(lines[2], ',');
   if (dim_names.size() != mins.size() || dim_names.size() != maxs.size()) {
     throw std::runtime_error("Inconsistent config file");
   }
@@ -301,7 +301,7 @@ void Viewer::updateCorners()
 
   std::cout << "Discretizing the state space inside limits" << std::endl;
   Eigen::MatrixXd inputs;
-  inputs = rosban_utils::discretizeSpace(input_limits, samples_by_dim);
+  inputs = rhoban_utils::discretizeSpace(input_limits, samples_by_dim);
   std::cout << "-> #Inputs: " << inputs.cols() << std::endl;
   std::cout << "Computing outputs" << std::endl;
   Eigen::VectorXd outputs(inputs.cols());

@@ -1,6 +1,6 @@
 #pragma once
 
-#include "rosban_utils/stream_serializable.h"
+#include "rhoban_utils/serialization/stream_serializable.h"
 
 #include <Eigen/Core>
 
@@ -14,7 +14,7 @@ namespace rosban_fa
 /// f: R^I -> R^O
 /// where I is the dimension of the input space and O the dimension
 /// of the output space
-class FunctionApproximator : public rosban_utils::StreamSerializable
+class FunctionApproximator : public rhoban_utils::StreamSerializable
 {
 public:
 

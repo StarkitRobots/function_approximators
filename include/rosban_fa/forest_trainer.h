@@ -26,8 +26,8 @@ public:
         const Eigen::MatrixXd & observations,
         const Eigen::MatrixXd & limits) const override;
 
-  virtual void to_xml(std::ostream &out) const override;
-  virtual void from_xml(TiXmlNode *node) override;
+  virtual Json::Value toJson() const override;
+  virtual void fromJson(const Json::Value & v, const std::string & dir_name) override;
 
 private:
   /// Maximal number of tiles used for getting max

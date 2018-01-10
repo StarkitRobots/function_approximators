@@ -1,6 +1,6 @@
 #pragma once
 
-#include "rosban_utils/serializable.h"
+#include "rhoban_utils/serialization/json_serializable.h"
 
 #include <Eigen/Core>
 
@@ -15,7 +15,7 @@ class FunctionApproximator;
 /// Describe the interface of a FunctionApproximator trainer.
 /// Can be serialized from/to xml files
 /// Can be built with a TrainerFactory
-class Trainer : public rosban_utils::Serializable
+class Trainer : public rhoban_utils::JsonSerializable
 {
 public:
 
@@ -36,8 +36,8 @@ public:
   /// Update the number of threads allowed for the trainer
   void setNbThreads(int nb_threads);
 
-  virtual void to_xml(std::ostream &out) const override;
-  virtual void from_xml(TiXmlNode *node) override;
+  virtual Json::Value toJson() const override;
+  virtual void fromJson(const Json::Value & v, const std::string & dir_name) override;
 
 protected:
   /// Throws an explicit logic_error if informations are not consistent

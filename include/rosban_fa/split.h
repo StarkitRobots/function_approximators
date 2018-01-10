@@ -1,6 +1,6 @@
 #pragma once
 
-#include "rosban_utils/stream_serializable.h"
+#include "rhoban_utils/serialization/stream_serializable.h"
 
 #include <Eigen/Core>
 
@@ -13,7 +13,7 @@ namespace rosban_fa
 /// This interface do not require to cut the space on which the split is applied
 /// because it is not mandatory for splits (e.g. orthogonal split only require
 /// to store the dimension id and the value to be valid)
-class Split : public rosban_utils::StreamSerializable
+class Split : public rhoban_utils::StreamSerializable
 {
 public:
 

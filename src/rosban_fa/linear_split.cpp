@@ -1,6 +1,6 @@
 #include "rosban_fa/linear_split.h"
 
-#include "rosban_utils/io_tools.h"
+#include "rhoban_utils/io_tools.h"
 
 //TODO: a check for coeffs value should be used to avoid the specific case where all elements are 0
 
@@ -65,9 +65,9 @@ int LinearSplit::writeInternal(std::ostream & out) const
 {
   int bytes_written = 0;
   int dim = coeffs.rows();
-  bytes_written += rosban_utils::write<int>(out, dim);
-  bytes_written += rosban_utils::writeDoubleArray(out, coeffs.data(), dim);
-  bytes_written += rosban_utils::write<double>(out, offset);
+  bytes_written += rhoban_utils::write<int>(out, dim);
+  bytes_written += rhoban_utils::writeDoubleArray(out, coeffs.data(), dim);
+  bytes_written += rhoban_utils::write<double>(out, offset);
   return bytes_written;
 }
 
@@ -75,10 +75,10 @@ int LinearSplit::read(std::istream & in)
 {
   int bytes_read = 0;
   int dim(0);
-  bytes_read += rosban_utils::read<int>(in, &dim);
+  bytes_read += rhoban_utils::read<int>(in, &dim);
   coeffs = Eigen::VectorXd(dim);
-  bytes_read += rosban_utils::readDoubleArray(in, coeffs.data(), dim);
-  bytes_read += rosban_utils::read<double>(in, &offset);
+  bytes_read += rhoban_utils::readDoubleArray(in, coeffs.data(), dim);
+  bytes_read += rhoban_utils::read<double>(in, &offset);
   return bytes_read;
 }
 

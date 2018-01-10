@@ -1,6 +1,6 @@
 #include "rosban_fa/linear_approximator.h"
 
-#include "rosban_utils/io_tools.h"
+#include "rhoban_utils/io_tools.h"
 
 namespace rosban_fa
 {
@@ -121,10 +121,10 @@ int LinearApproximator::writeInternal(std::ostream & out) const
   int bytes_written = 0;
   int output_dim = getOutputDim();
   int input_dim  = coeffs.cols();
-  bytes_written += rosban_utils::write<int>(out, output_dim);
-  bytes_written += rosban_utils::write<int>(out, input_dim);
-  bytes_written += rosban_utils::writeArray<double>(out, output_dim, bias.data());
-  bytes_written += rosban_utils::writeArray<double>(out, input_dim * output_dim, coeffs.data());
+  bytes_written += rhoban_utils::write<int>(out, output_dim);
+  bytes_written += rhoban_utils::write<int>(out, input_dim);
+  bytes_written += rhoban_utils::writeArray<double>(out, output_dim, bias.data());
+  bytes_written += rhoban_utils::writeArray<double>(out, input_dim * output_dim, coeffs.data());
   return bytes_written;
 }
 
@@ -132,12 +132,12 @@ int LinearApproximator::read(std::istream & in)
 {
   int bytes_read = 0;
   int output_dim, input_dim;
-  bytes_read += rosban_utils::read<int>(in, &output_dim);
-  bytes_read += rosban_utils::read<int>(in, &input_dim);
+  bytes_read += rhoban_utils::read<int>(in, &output_dim);
+  bytes_read += rhoban_utils::read<int>(in, &input_dim);
   bias = Eigen::VectorXd(output_dim);
   coeffs = Eigen::MatrixXd(output_dim, input_dim);
-  bytes_read += rosban_utils::readDoubleArray(in, bias.data()  , output_dim);
-  bytes_read += rosban_utils::readDoubleArray(in, coeffs.data(), output_dim * input_dim);
+  bytes_read += rhoban_utils::readDoubleArray(in, bias.data()  , output_dim);
+  bytes_read += rhoban_utils::readDoubleArray(in, coeffs.data(), output_dim * input_dim);
   return bytes_read;
 }
 

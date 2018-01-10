@@ -12,10 +12,10 @@
 
 #include "rosban_random/tools.h"
 
-#include "rosban_utils/multi_core.h"
-#include "rosban_utils/time_stamp.h"
+#include "rhoban_utils/threading/multi_core.h"
+#include "rhoban_utils/timing/time_stamp.h"
 
-using rosban_utils::TimeStamp;
+using rhoban_utils::TimeStamp;
 
 namespace rosban_fa
 {
@@ -370,7 +370,7 @@ AdaptativeTree::getEvaluationFunction(RewardFunction rf,
      std::default_random_engine * engine)
     {
       std::vector<double> rewards(training_set.cols());
-      rosban_utils::MultiCore::StochasticTask eval_task =
+      rhoban_utils::MultiCore::StochasticTask eval_task =
         [&] (int start_idx, int end_idx, std::default_random_engine * engine)
         {
           for (int col = start_idx; col < end_idx; col++) {
@@ -388,7 +388,7 @@ AdaptativeTree::getEvaluationFunction(RewardFunction rf,
       // getting engines
       std::vector<std::default_random_engine> engines;
       engines = rosban_random::getRandomEngines(threads_used, engine);
-      rosban_utils::MultiCore::runParallelStochasticTask(eval_task,
+      rhoban_utils::MultiCore::runParallelStochasticTask(eval_task,
                                                          training_set.cols(),
                                                          &engines);
       // Summing rewards
@@ -537,40 +537,42 @@ AdaptativeTree::optimizeLinearPolicy(EvaluationFunction policy_evaluator,
 }
 
 
-std::string AdaptativeTree::class_name() const
+std::string AdaptativeTree::getClassName() const
 {
   return "AdaptativeTree";
 }
 
-void AdaptativeTree::to_xml(std::ostream &out) const
+Json::Value AdaptativeTree::toJson() const
 {
-  rosban_utils::xml_tools::write<int>   ("nb_generations"     , nb_generations     , out);
-  rosban_utils::xml_tools::write<int>   ("nb_samples"         , nb_samples         , out);
-  rosban_utils::xml_tools::write<int>   ("evaluation_trials"  , evaluation_trials  , out);
-  rosban_utils::xml_tools::write<int>   ("verbosity"          , verbosity          , out);
-  rosban_utils::xml_tools::write<int>   ("max_depth"          , max_depth          , out);
-  rosban_utils::xml_tools::write<bool>  ("reuse_samples"      , reuse_samples      , out);
-  rosban_utils::xml_tools::write<bool>  ("use_point_splits"   , use_point_splits   , out);
-  rosban_utils::xml_tools::write<bool>  ("narrow_linear_slope", narrow_linear_slope, out);
-  rosban_utils::xml_tools::write<bool>  ("constant_uses_guess", constant_uses_guess, out);
-  rosban_utils::xml_tools::write<bool>  ("linear_uses_guess"  , linear_uses_guess  , out);
-  rosban_utils::xml_tools::write<double>("cv_ratio"           , cv_ratio           , out);
+  Json::Value v;
+  v["nb_generations"     ] = nb_generations     ;
+  v["nb_samples"         ] = nb_samples         ;
+  v["evaluation_trials"  ] = evaluation_trials  ;
+  v["verbosity"          ] = verbosity          ;
+  v["max_depth"          ] = max_depth          ;
+  v["reuse_samples"      ] = reuse_samples      ;
+  v["use_point_splits"   ] = use_point_splits   ;
+  v["narrow_linear_slope"] = narrow_linear_slope;
+  v["constant_uses_guess"] = constant_uses_guess;
+  v["linear_uses_guess"  ] = linear_uses_guess  ;
+  v["cv_ratio"           ] = cv_ratio           ;
+  return v;
 }
 
-void AdaptativeTree::from_xml(TiXmlNode *node)
+void AdaptativeTree::fromJson(const Json::Value & v, const std::string & dir_name)
 {
-  rosban_utils::xml_tools::try_read<int>   (node, "nb_generations"     , nb_generations     );
-  rosban_utils::xml_tools::try_read<int>   (node, "nb_samples"         , nb_samples         );
-  rosban_utils::xml_tools::try_read<int>   (node, "evaluation_trials"  , evaluation_trials  );
-  rosban_utils::xml_tools::try_read<int>   (node, "verbosity"          , verbosity          );
-  rosban_utils::xml_tools::try_read<int>   (node, "max_depth"          , max_depth          );
-  rosban_utils::xml_tools::try_read<bool>  (node, "reuse_samples"      , reuse_samples      );
-  rosban_utils::xml_tools::try_read<bool>  (node, "use_point_splits"   , use_point_splits   );
-  rosban_utils::xml_tools::try_read<bool>  (node, "narrow_linear_slope", narrow_linear_slope);
-  rosban_utils::xml_tools::try_read<bool>  (node, "constant_uses_guess", constant_uses_guess);
-  rosban_utils::xml_tools::try_read<bool>  (node, "linear_uses_guess"  , linear_uses_guess  );
-  rosban_utils::xml_tools::try_read<double>(node, "cv_ratio"           , cv_ratio           );
-  rosban_bbo::OptimizerFactory().tryRead   (node,"model_optimizer", model_optimizer);
+  rhoban_utils::tryRead(v, "nb_generations"     , &nb_generations     );
+  rhoban_utils::tryRead(v, "nb_samples"         , &nb_samples         );
+  rhoban_utils::tryRead(v, "evaluation_trials"  , &evaluation_trials  );
+  rhoban_utils::tryRead(v, "verbosity"          , &verbosity          );
+  rhoban_utils::tryRead(v, "max_depth"          , &max_depth          );
+  rhoban_utils::tryRead(v, "reuse_samples"      , &reuse_samples      );
+  rhoban_utils::tryRead(v, "use_point_splits"   , &use_point_splits   );
+  rhoban_utils::tryRead(v, "narrow_linear_slope", &narrow_linear_slope);
+  rhoban_utils::tryRead(v, "constant_uses_guess", &constant_uses_guess);
+  rhoban_utils::tryRead(v, "linear_uses_guess"  , &linear_uses_guess  );
+  rhoban_utils::tryRead(v, "cv_ratio"           , &cv_ratio           );
+  rosban_bbo::OptimizerFactory().tryRead(v,"model_optimizer", dir_name, &model_optimizer);
 }
 
 void AdaptativeTree::print(const ApproximatorCandidate & candidate,

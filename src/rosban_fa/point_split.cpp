@@ -1,6 +1,6 @@
 #include "rosban_fa/point_split.h"
 
-#include "rosban_utils/io_tools.h"
+#include "rhoban_utils/io_tools.h"
 
 namespace rosban_fa
 {
@@ -91,8 +91,8 @@ int PointSplit::writeInternal(std::ostream & out) const
 {
   int bytes_written = 0;
   int dim = split_point.rows();
-  bytes_written += rosban_utils::write<int>(out, dim);
-  bytes_written += rosban_utils::writeDoubleArray(out, split_point.data(), dim);
+  bytes_written += rhoban_utils::write<int>(out, dim);
+  bytes_written += rhoban_utils::writeDoubleArray(out, split_point.data(), dim);
   return bytes_written;
 }
 
@@ -100,9 +100,9 @@ int PointSplit::read(std::istream & in)
 {
   int bytes_read = 0;
   int dim(0);
-  bytes_read += rosban_utils::read<int>(in, &dim);
+  bytes_read += rhoban_utils::read<int>(in, &dim);
   split_point = Eigen::VectorXd(dim);
-  bytes_read += rosban_utils::readDoubleArray(in, split_point.data(), dim);
+  bytes_read += rhoban_utils::readDoubleArray(in, split_point.data(), dim);
   return bytes_read;
 }
 

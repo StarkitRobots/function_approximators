@@ -63,21 +63,23 @@ ForestTrainer::train(const Eigen::MatrixXd & inputs,
   return std::move(result);
 }
 
-void ForestTrainer::to_xml(std::ostream &out) const
+Json::Value ForestTrainer::toJson() const
 {
-  rosban_utils::xml_tools::write<int>("max_action_tiles", max_action_tiles, out);
-  std::string am_str = regression_forests::aggregationMethod2Str(aggregation_method);
-  rosban_utils::xml_tools::write<std::string>("aggregation_method", am_str, out);
-  rosban_utils::xml_tools::write<int>("nb_trees", nb_trees, out);
+  Json::Value v = Trainer::toJson();
+  v["max_action_tiles"] = max_action_tiles;
+  v["nb_trees"] = nb_trees;
+  v["am_str"] = regression_forests::aggregationMethod2Str(aggregation_method);
+  return v;
 }
 
-void ForestTrainer::from_xml(TiXmlNode *node)
+void ForestTrainer::fromJson(const Json::Value & v, const std::string & dir_name)
 {
-  rosban_utils::xml_tools::try_read<int>(node, "max_action_tiles", max_action_tiles);
+  Trainer::fromJson(v, dir_name);
   std::string am_str;
-  rosban_utils::xml_tools::try_read<std::string>(node, "aggregation_method", am_str);
+  rhoban_utils::tryRead(v, "max_action_tiles"  , &max_action_tiles);
+  rhoban_utils::tryRead(v, "nb_trees"          , &nb_trees        );
+  rhoban_utils::tryRead(v, "aggregation_method", &am_str          );
   if (am_str != "") aggregation_method = regression_forests::loadAggregationMethod(am_str);
-  rosban_utils::xml_tools::try_read<int>(node, "nb_trees", nb_trees);
 }
 
 }

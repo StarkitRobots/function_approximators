@@ -1,6 +1,6 @@
 #include "rosban_fa/orthogonal_split.h"
 
-#include "rosban_utils/io_tools.h"
+#include "rhoban_utils/io_tools.h"
 
 namespace rosban_fa
 {
@@ -67,16 +67,16 @@ int OrthogonalSplit::getClassID() const
 int OrthogonalSplit::writeInternal(std::ostream & out) const
 {
   int bytes_written = 0;
-  bytes_written += rosban_utils::write<int>(out, dim);
-  bytes_written += rosban_utils::write<double>(out, val);
+  bytes_written += rhoban_utils::write<int>(out, dim);
+  bytes_written += rhoban_utils::write<double>(out, val);
   return bytes_written;
 }
 
 int OrthogonalSplit::read(std::istream & in)
 {
   int bytes_read = 0;
-  bytes_read += rosban_utils::read<int>(in, &dim);
-  bytes_read += rosban_utils::read<double>(in, &val);
+  bytes_read += rhoban_utils::read<int>(in, &dim);
+  bytes_read += rhoban_utils::read<double>(in, &val);
   return bytes_read;
 }
 

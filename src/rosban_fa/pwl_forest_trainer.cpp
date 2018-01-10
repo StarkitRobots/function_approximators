@@ -13,7 +13,7 @@ regression_forests::Approximation::ID PWLForestTrainer::getApproximationID() con
   return Approximation::ID::PWL;
 }
 
-std::string PWLForestTrainer::class_name() const
+std::string PWLForestTrainer::getClassName() const
 {
   return "PWLForestTrainer";
 }

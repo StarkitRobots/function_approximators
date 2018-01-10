@@ -38,21 +38,23 @@ std::unique_ptr<FunctionApproximator> GPTrainer::train(const Eigen::MatrixXd & i
   return std::unique_ptr<FunctionApproximator>(new GP(std::move(gps), ga_conf));
 }
 
-std::string GPTrainer::class_name() const
+std::string GPTrainer::getClassName() const
 {
   return "GPTrainer";
 }
 
-void GPTrainer::to_xml(std::ostream &out) const
+Json::Value GPTrainer::toJson() const
 {
-  autotune_conf.write("autotune_conf", out);
-  ga_conf.write("ga_conf", out);
+  Json::Value v = Trainer::toJson();
+  v["autotune_conf"] = autotune_conf.toJson();
+  v["ga_conf"] = ga_conf.toJson();
 }
 
-void GPTrainer::from_xml(TiXmlNode *node)
+void GPTrainer::fromJson(const Json::Value & v, const std::string & dir_name)
 {
-  autotune_conf.tryRead(node, "auto_tune_conf");
-  ga_conf.tryRead(node, "ga_conf");
+  Trainer::fromJson(v,dir_name);
+  autotune_conf.tryRead(v, "auto_tune_conf");
+  ga_conf.tryRead(v, "ga_conf");
 }
 
 }

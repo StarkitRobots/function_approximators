@@ -4,6 +4,8 @@
 
 #include "rosban_regression_forests/algorithms/extra_trees.h"
 
+#include "rhoban_utils/io_tools.h"
+
 using regression_forests::Approximation;
 using regression_forests::ExtraTrees;
 using regression_forests::TrainingSet;
@@ -61,25 +63,28 @@ GPForestTrainer::train(const Eigen::MatrixXd & inputs,
   return std::unique_ptr<FunctionApproximator>(new GPForest(std::move(forests), ga_conf));
 }
 
-std::string GPForestTrainer::class_name() const
+std::string GPForestTrainer::getClassName() const
 {
   return "GPForestTrainer";
 }
 
-void GPForestTrainer::to_xml(std::ostream &out) const
+Json::Value GPForestTrainer::toJson() const
 {
-  rosban_utils::xml_tools::write<std::string>("type", to_string(type), out);
-  autotune_conf.write("autotune_conf", out);
-  ga_conf.write("ga_conf", out);
+  Json::Value v = Trainer::toJson();
+  v["type"] = to_string(type);
+  v["autotune_conf"] = autotune_conf.toJson();
+  v["ga_conf"] = ga_conf.toJson();
+  return v;
 }
 
-void GPForestTrainer::from_xml(TiXmlNode *node)
+void GPForestTrainer::fromJson(const Json::Value & v, const std::string & dir_name)
 {
+  Trainer::fromJson(v, dir_name);
   std::string type_str;
-  rosban_utils::xml_tools::try_read<std::string>(node, "type", type_str);
+  rhoban_utils::tryRead(v, "type", &type_str);
   if (type_str.size() != 0) type = loadType(type_str);
-  autotune_conf.tryRead(node, "auto_tune_conf");
-  ga_conf.tryRead(node, "ga_conf");
+  autotune_conf.tryRead(v, "auto_tune_conf", dir_name);
+  ga_conf.tryRead(v, "ga_conf", dir_name);
 }
 
 GPForestTrainer::Type GPForestTrainer::loadType(const std::string &s)

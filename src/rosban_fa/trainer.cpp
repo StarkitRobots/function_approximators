@@ -15,14 +15,17 @@ void Trainer::setNbThreads(int new_nb_threads)
   nb_threads = new_nb_threads;
 }
 
-void Trainer::to_xml(std::ostream &out) const
+Json::Value Trainer::toJson() const
 {
-  rosban_utils::xml_tools::write<int>("nb_threads", nb_threads, out);
+  Json::Value v;
+  v["nb_threads"] = nb_threads;
+  return v;
 }
 
-void Trainer::from_xml(TiXmlNode *node)
+void Trainer::fromJson(const Json::Value & v, const std::string & dir_name)
 {
-  rosban_utils::xml_tools::try_read<int>(node, "nb_threads", nb_threads);
+  (void)dir_name;
+  rhoban_utils::tryRead(v, "nb_threads", &nb_threads);
 }
 
 void Trainer::checkConsistency(const Eigen::MatrixXd & inputs,

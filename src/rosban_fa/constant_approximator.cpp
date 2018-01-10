@@ -1,6 +1,6 @@
 #include "rosban_fa/constant_approximator.h"
 
-#include "rosban_utils/io_tools.h"
+#include "rhoban_utils/io_tools.h"
 
 namespace rosban_fa
 {
@@ -63,8 +63,8 @@ int ConstantApproximator::writeInternal(std::ostream & out) const
 {
   int bytes_written = 0;
   int dim = getOutputDim();
-  bytes_written += rosban_utils::write<int>(out, dim);
-  bytes_written += rosban_utils::writeArray<double>(out, dim, average.data());
+  bytes_written += rhoban_utils::write<int>(out, dim);
+  bytes_written += rhoban_utils::writeArray<double>(out, dim, average.data());
   return bytes_written;
 }
 
@@ -72,9 +72,9 @@ int ConstantApproximator::read(std::istream & in)
 {
   int bytes_read = 0;
   int output_dim;
-  bytes_read += rosban_utils::read<int>(in, &output_dim);
+  bytes_read += rhoban_utils::read<int>(in, &output_dim);
   average = Eigen::VectorXd(output_dim);
-  bytes_read += rosban_utils::readDoubleArray(in, average.data(), output_dim);
+  bytes_read += rhoban_utils::readDoubleArray(in, average.data(), output_dim);
   return bytes_read;
 }
 

@@ -2,6 +2,8 @@
 
 #include "rosban_regression_forests/algorithms/extra_trees.h"
 
+#include "rhoban_utils/io_tools.h"
+
 using regression_forests::Forest;
 using regression_forests::Tree;
 using regression_forests::Node;
@@ -91,11 +93,11 @@ int ForestApproximator::getClassID() const
 int ForestApproximator::writeInternal(std::ostream & out) const
 {
   int bytes_written = 0;
-  bytes_written += rosban_utils::write<int>(out, getOutputDim());
+  bytes_written += rhoban_utils::write<int>(out, getOutputDim());
   for (int dim = 0; dim < getOutputDim(); dim++) {
     bytes_written += (*forests)[dim]->writeInternal(out);
   }
-  bytes_written += rosban_utils::write<int>(out, max_action_tiles);
+  bytes_written += rhoban_utils::write<int>(out, max_action_tiles);
   return bytes_written;
 }
 
@@ -107,13 +109,13 @@ int ForestApproximator::read(std::istream & in)
   // Then read
   int bytes_read = 0;
   int output_dim;
-  bytes_read += rosban_utils::read<int>(in, &output_dim);
+  bytes_read += rhoban_utils::read<int>(in, &output_dim);
   for (int dim = 0; dim < output_dim; dim++) {
     std::unique_ptr<Forest> ptr(new Forest);
     bytes_read += ptr->read(in);
     forests->push_back(std::move(ptr));
   }
-  bytes_read += rosban_utils::read<int>(in, &max_action_tiles);
+  bytes_read += rhoban_utils::read<int>(in, &max_action_tiles);
   return bytes_read;
 }
 

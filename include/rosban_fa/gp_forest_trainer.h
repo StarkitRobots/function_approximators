@@ -13,7 +13,7 @@ public:
   /// Which type of GPForest is used
   /// - SQRT: |samples|^{1/2} samples per node min
   /// - CURT: |samples|^{1/3} samples per node min
-  /// - LOG2: log_2(|samples|)  sampels per node min
+  /// - LOG2: log_2(|samples|)  samples per node min
   enum class Type
   { SQRT, CURT, LOG2};
 
@@ -24,9 +24,9 @@ public:
         const Eigen::MatrixXd & observations,
         const Eigen::MatrixXd & limits) const override;
 
-  virtual std::string class_name() const override;
-  virtual void to_xml(std::ostream &out) const override;
-  virtual void from_xml(TiXmlNode *node) override;
+  virtual std::string getClassName() const override;
+  virtual Json::Value toJson() const override;
+  virtual void fromJson(const Json::Value & v, const std::string & dir_name) override;
 
 private:
   Type type;

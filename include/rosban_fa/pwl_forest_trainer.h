@@ -13,7 +13,7 @@ public:
 
   virtual regression_forests::Approximation::ID getApproximationID() const override;
 
-  virtual std::string class_name() const override;
+  virtual std::string getClassName() const override;
 };
 
 }

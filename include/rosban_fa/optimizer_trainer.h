@@ -2,7 +2,7 @@
 
 #include "rosban_fa/function_approximator.h"
 
-#include "rosban_utils/serializable.h"
+#include "rhoban_utils/serialization/json_serializable.h"
 
 #include <Eigen/Core>
 
@@ -26,7 +26,7 @@ namespace rosban_fa
 ///
 /// The task of the optimizer is to implement a method which returns a function
 /// approximator pi: S -> A, mapping states to estimation of optimal actions.
-class OptimizerTrainer : public rosban_utils::Serializable
+class OptimizerTrainer : public rhoban_utils::JsonSerializable
 {
 public:
   typedef std::function<double(const Eigen::VectorXd & parameters,

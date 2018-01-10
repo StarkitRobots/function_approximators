@@ -80,7 +80,7 @@ int main(int argc, char ** argv)
   std::default_random_engine engine = rosban_random::getRandomEngine();
   // Read optimizer trainer
   std::unique_ptr<OptimizerTrainer> optimizer_trainer;
-  optimizer_trainer = OptimizerTrainerFactory().buildFromXmlFile(argv[1],"OptimizerTrainer");
+  optimizer_trainer = OptimizerTrainerFactory().buildFromJsonFile(argv[1]);
   // Building pbb and customizing trainer
   struct ParametrizedBlackBox pbb = getContinuousBlackBox(2, 0.05,0.1);
   optimizer_trainer->setParametersLimits(pbb.parameters_limits);
