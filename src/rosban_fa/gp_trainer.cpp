@@ -48,6 +48,7 @@ Json::Value GPTrainer::toJson() const
   Json::Value v = Trainer::toJson();
   v["autotune_conf"] = autotune_conf.toJson();
   v["ga_conf"] = ga_conf.toJson();
+  return v;
 }
 
 void GPTrainer::fromJson(const Json::Value & v, const std::string & dir_name)
