@@ -43,6 +43,8 @@ public:
   virtual int writeInternal(std::ostream & out) const override;
   virtual int read(std::istream & in) override;
 
+  static std::unique_ptr<Forests> cloneForests(const Forests & f);
+
 protected:
   std::unique_ptr<Forests> forests;
   int max_action_tiles;

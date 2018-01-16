@@ -16,7 +16,7 @@ ForestApproximator::ForestApproximator()
 {}
 
 ForestApproximator::ForestApproximator(std::unique_ptr<Forests> forests_,
-                     int max_action_tiles_)
+                                       int max_action_tiles_)
   : forests(std::move(forests_)), max_action_tiles(max_action_tiles_),
     aggregation_method(Forest::AggregationMethod::All)
 {}
@@ -117,6 +117,16 @@ int ForestApproximator::read(std::istream & in)
   }
   bytes_read += rhoban_utils::read<int>(in, &max_action_tiles);
   return bytes_read;
+}
+
+std::unique_ptr<ForestApproximator::Forests>
+ForestApproximator::cloneForests(const ForestApproximator::Forests & f)
+{
+  std::unique_ptr<Forests> result(new std::vector<std::unique_ptr<Forest>>());
+  for (size_t idx = 0; idx < f.size(); idx++) {
+    result->push_back(std::unique_ptr<Forest>(f[idx]->clone()));
+  }
+  return result;
 }
 
 }

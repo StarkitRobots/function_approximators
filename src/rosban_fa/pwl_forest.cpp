@@ -13,7 +13,11 @@ PWLForest::PWLForest(std::unique_ptr<Forests> forests_,
 PWLForest::~PWLForest() {}
 
 std::unique_ptr<FunctionApproximator> PWLForest::clone() const {
-  throw std::logic_error("PWLForest::clone: not implemented");
+  std::unique_ptr<PWLForest> copy(new PWLForest);
+  copy->forests = cloneForests(*forests);
+  copy->max_action_tiles = max_action_tiles;
+  copy->aggregation_method = aggregation_method;
+  return std::move(copy);
 }
 
 int PWLForest::getClassID() const
