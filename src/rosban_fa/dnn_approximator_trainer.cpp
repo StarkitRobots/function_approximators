@@ -2,6 +2,8 @@
 
 #include "rosban_fa/dnn_approximator.h"
 
+#include "rosban_random/tools.h"
+
 using namespace tiny_dnn;
 
 static vec_t cvtEigen2Tiny(const Eigen::VectorXd & v) {
@@ -12,11 +14,22 @@ static vec_t cvtEigen2Tiny(const Eigen::VectorXd & v) {
   return tiny;
 }
 
+static std::vector<vec_t> extractAndCvtEntries(const Eigen::MatrixXd & data,
+                                               const std::vector<size_t> & indices) {
+  std::vector<vec_t> result(indices.size());
+  int dst_idx = 0;
+  for (size_t idx : indices) {
+    result[dst_idx] = cvtEigen2Tiny(data.col(idx));
+    dst_idx++;
+  }
+  return result;
+}
+
 namespace rosban_fa
 {
 
 DNNApproximatorTrainer::DNNApproximatorTrainer()
-  : nb_units(1), learning_rate(0.05), nb_minibatches(10), nb_train_epochs(5)
+  : layer_units({1}), learning_rate(0.05), nb_minibatches(10), nb_train_epochs(5), cv_ratio(0)
 {
 }
 
@@ -24,21 +37,31 @@ std::unique_ptr<FunctionApproximator>
 DNNApproximatorTrainer::train(const Eigen::MatrixXd & inputs,
                               const Eigen::MatrixXd & observations,
                               const Eigen::MatrixXd & limits) const {
+  std::default_random_engine engine = rosban_random::getRandomEngine();
   checkConsistency(inputs, observations, limits);
+  Eigen::MatrixXd outputs = observations.transpose();
   // Getting dimensions and nb entries
   int nb_entries = inputs.cols();
   int input_dim = inputs.rows();
-  int output_dim = observations.cols();
+  int output_dim = outputs.rows();
+  // Separating data in training and cross_validation
+  size_t nb_entries_cv = std::floor(cv_ratio * nb_entries);
+  size_t nb_entries_training = nb_entries - nb_entries_cv;
+  std::vector<size_t> set_sizes = {nb_entries_training, nb_entries_cv};
+  std::vector<std::vector<size_t>> splitted_indices =
+    rosban_random::splitIndices(nb_entries-1, set_sizes, &engine);
+  const std::vector<size_t> & training_indices = splitted_indices[0];
+  const std::vector<size_t> & cv_indices = splitted_indices[1];
   // Formatting input
-  std::vector<vec_t> formatted_inputs(nb_entries), formatted_outputs(nb_entries);
-  for (int idx = 0; idx < nb_entries; idx++) {
-    formatted_inputs[idx] = cvtEigen2Tiny(inputs.col(idx));
-    formatted_outputs[idx] = cvtEigen2Tiny(observations.row(idx));
-  }
+  std::vector<vec_t> training_inputs, training_outputs, cv_inputs, cv_outputs;
+  training_inputs  = extractAndCvtEntries(inputs , training_indices);
+  training_outputs = extractAndCvtEntries(outputs, training_indices);
+  cv_inputs  = extractAndCvtEntries(inputs , cv_indices);
+  cv_outputs = extractAndCvtEntries(outputs, cv_indices);
   // Running network optimization
   adam optimizer;
   optimizer.alpha *= learning_rate;
-  DNNApproximator::network nn = DNNApproximator::buildNN(input_dim, output_dim, nb_units);
+  DNNApproximator::network nn = DNNApproximator::buildNN(input_dim, output_dim, layer_units);
   for (size_t i = 0; i < nn.depth(); i++) {
     std::cout << "#layer:" << i << "\n";
     std::cout << "layer type:" << nn[i]->layer_type() << "\n";
@@ -47,19 +70,24 @@ DNNApproximatorTrainer::train(const Eigen::MatrixXd & inputs,
   }
   // create callback
   auto on_enumerate_epoch = [&]() {
-    double loss = nn.get_loss<mse>(formatted_inputs, formatted_outputs);
-    std::cout << "Loss: " << loss << std::endl;
+    if (verbose > 0) {
+      double training_loss = nn.get_loss<mse>(training_inputs, training_outputs) / training_inputs.size();
+      if (cv_inputs.size() > 0) {
+        double cv_loss = nn.get_loss<mse>(cv_inputs, cv_outputs) / cv_inputs.size();
+        std::cout << "CV mean loss: " << cv_loss;
+      }
+      std::cout << " (training mean loss : " << training_loss << ")" << std::endl;
+    }
   };
   
   auto on_enumerate_minibatch = [&]() {
   };
   // Launching training
-  nn.fit<mse>(optimizer, formatted_inputs, formatted_outputs, nb_minibatches, nb_train_epochs,
+  nn.fit<mse>(optimizer, training_inputs, training_outputs, nb_minibatches, nb_train_epochs,
               on_enumerate_minibatch, on_enumerate_epoch);
-  DNNApproximator::network nncp = nn;
   // Copy Neural network to get a function approximator
-  std::unique_ptr<FunctionApproximator> result(new DNNApproximator(nn, input_dim,
-                                                                   output_dim, nb_units));
+  std::unique_ptr<FunctionApproximator> result(
+    new DNNApproximator(nn, input_dim, output_dim, layer_units));
   // Return the function approximator
   return std::move(result);
 }
@@ -70,19 +98,21 @@ std::string DNNApproximatorTrainer::getClassName() const {
 
 Json::Value DNNApproximatorTrainer::toJson() const {
   Json::Value v;
-  v["nb_units"] = nb_units;
+  v["layer_units"] = rhoban_utils::vector2Json(layer_units);
   v["learning_rate"] = learning_rate;
   v["nb_minibatches"] = nb_minibatches;
   v["nb_train_epochs"] = nb_train_epochs;
+  v["cv_ratio"] = cv_ratio;
+  v["verbose"] = verbose;
   return v;
 }
 
 void DNNApproximatorTrainer::fromJson(const Json::Value & v, const std::string & dir_name) {
   (void) dir_name;
-  rhoban_utils::tryRead(v,"nb_units"       , &nb_units       );
+  rhoban_utils::tryReadVector(v,"layer_units", &layer_units);
   rhoban_utils::tryRead(v,"learning_rate"  , &learning_rate  );
   rhoban_utils::tryRead(v,"nb_minibatches" , &nb_minibatches );
   rhoban_utils::tryRead(v,"nb_train_epochs", &nb_train_epochs);
-}
-
+  rhoban_utils::tryRead(v,"cv_ratio", &cv_ratio);
+  rhoban_utils::tryRead(v,"verbose", &verbose);}
 }

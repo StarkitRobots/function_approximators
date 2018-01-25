@@ -19,8 +19,8 @@ public:
   virtual void fromJson(const Json::Value & v, const std::string & dir_name) override;
 
 private:
-  /// Nb elements in hidden layer
-  int nb_units;
+  /// Nb elements in each hidden layer
+  std::vector<int> layer_units;
 
   /// Learning rate used
   double learning_rate;
@@ -31,6 +31,11 @@ private:
   /// Number of train epochs
   int nb_train_epochs;
 
+  /// Ratio of data used for cross validation ([0,1])
+  double cv_ratio;
+
+  /// Verbosity of the trainer
+  int verbose;
 };
 
 }

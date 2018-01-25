@@ -7,7 +7,7 @@ using namespace rosban_fa;
 
 Eigen::VectorXd sampleOutput(const Eigen::VectorXd & input,
                              std::default_random_engine * engine) {
-  std::normal_distribution<double> noise_distrib(0, 0.001);
+  std::normal_distribution<double> noise_distrib(0, 0.01);
   Eigen::VectorXd result(1);
   result(0) = sin(input(0)) + noise_distrib(*engine);
   return result;

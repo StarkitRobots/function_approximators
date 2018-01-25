@@ -8,17 +8,24 @@ namespace rosban_fa
 {
 
 DNNApproximator::DNNApproximator()
-  : input_dim(0), output_dim(0), nb_units(1)
+  : input_dim(0), output_dim(0), layer_units({1})
 {
 }
 
-DNNApproximator::DNNApproximator(const network & nn_, int input_dims, int output_dims, int nb_units)
-  : nn(nn_), input_dim(input_dims), output_dim(output_dims), nb_units(nb_units)
+DNNApproximator::DNNApproximator(const network & nn, int input_dims, int output_dims, int nb_units)
+  : DNNApproximator(nn, input_dims, output_dims, {nb_units})
+{
+}
+
+
+DNNApproximator::DNNApproximator(const network & nn_, int input_dims, int output_dims,
+                                 const std::vector<int> layer_units)
+  : nn(nn_), input_dim(input_dims), output_dim(output_dims), layer_units(layer_units)
 {
 }
 
 DNNApproximator::DNNApproximator(const DNNApproximator & other)
-  : DNNApproximator(other.nn, other.input_dim, other.output_dim, other.nb_units)
+  : DNNApproximator(other.nn, other.input_dim, other.output_dim, other.layer_units)
 {
 }
 
@@ -70,7 +77,8 @@ int DNNApproximator::writeInternal(std::ostream & out) const {
   int bytes_written = 0;
   bytes_written += rhoban_utils::write<int>(out, input_dim);
   bytes_written += rhoban_utils::write<int>(out, output_dim);
-  bytes_written += rhoban_utils::write<int>(out, nb_units);
+  bytes_written += rhoban_utils::write<int>(out, layer_units.size());
+  bytes_written += rhoban_utils::writeIntArray(out, layer_units.data(), layer_units.size());
   for (size_t i = 0; i < nn.depth(); i++) {
     std::vector<const vec_t*> node_weights = nn[i]->weights();
     for (const vec_t * weights : node_weights){
@@ -88,8 +96,10 @@ int DNNApproximator::read(std::istream & in) {
   int bytes_read = 0;
   bytes_read += rhoban_utils::read<int>(in, &input_dim);
   bytes_read += rhoban_utils::read<int>(in, &output_dim);
-  bytes_read += rhoban_utils::read<int>(in, &nb_units);
-  nn = buildNN(input_dim, output_dim, nb_units);
+  int nb_layers;
+  bytes_read += rhoban_utils::read<int>(in, &nb_layers);
+  rhoban_utils::readIntArray(in, layer_units.data(), nb_layers);
+  nn = buildNN(input_dim, output_dim, layer_units);
   for (size_t i = 0; i < nn.depth(); i++) {
     std::vector<vec_t*> node_weights = nn[i]->weights();
     for (vec_t * weights : node_weights){
@@ -104,10 +114,15 @@ int DNNApproximator::read(std::istream & in) {
 }
 
 
-DNNApproximator::network DNNApproximator::buildNN(int input_dim, int output_dim, int nb_units) {
+DNNApproximator::network DNNApproximator::buildNN(int input_dim, int output_dim,
+                                                  const std::vector<int> & layer_units) {
   network nn;
-  nn << fully_connected_layer<activation::tan_h>(input_dim, nb_units)
-     << fully_connected_layer<activation::identity>(nb_units, output_dim);
+  int last_layer_dim = input_dim;
+  for (int nb_units : layer_units) {
+    nn << fully_connected_layer<activation::tan_h>(last_layer_dim, nb_units);
+    last_layer_dim = nb_units;
+  }
+  nn << fully_connected_layer<activation::identity>(last_layer_dim, output_dim);
   return nn;
 }
 

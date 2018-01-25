@@ -16,6 +16,8 @@ public:
 
   DNNApproximator();
   DNNApproximator(const network & nn, int input_dims, int output_dims, int nb_units);
+  DNNApproximator(const network & nn, int input_dims, int output_dims,
+                  const std::vector<int> layer_units);
   DNNApproximator(const DNNApproximator & other);
 
   virtual std::unique_ptr<FunctionApproximator> clone() const;
@@ -38,8 +40,12 @@ public:
   virtual int writeInternal(std::ostream & out) const override;
   virtual int read(std::istream & in) override;
 
-  /// Update the structure of the neural network according to inner parameters
-  static network buildNN(int input_dim, int output_dim, int nb_units);
+  /// Structure is as following:
+  /// input_dim -> layer_units[0]
+  /// ...
+  /// layer_units[k] -> output_dim
+  static network buildNN(int input_dim, int output_dim,
+                         const std::vector<int> & layer_units);
 
 private:
   /// The neural network used to predict approximation
@@ -52,7 +58,7 @@ private:
   int output_dim;
 
   /// Nb elements in hidden layer
-  int nb_units;
+  std::vector<int> layer_units;
 };
 
 }
