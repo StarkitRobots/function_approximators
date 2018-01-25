@@ -98,6 +98,7 @@ int DNNApproximator::read(std::istream & in) {
   bytes_read += rhoban_utils::read<int>(in, &output_dim);
   int nb_layers;
   bytes_read += rhoban_utils::read<int>(in, &nb_layers);
+  layer_units = std::vector<int>(nb_layers);
   rhoban_utils::readIntArray(in, layer_units.data(), nb_layers);
   nn = buildNN(input_dim, output_dim, layer_units);
   for (size_t i = 0; i < nn.depth(); i++) {

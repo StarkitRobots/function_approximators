@@ -2,9 +2,9 @@
     "class name" : "DNNApproximatorTrainer",
     "content" : {
         "layer_units" : [5,5],
-        "learning_rate" : 0.5,
+        "learning_rate" : 1,
         "nb_minibatches" : 1,
-        "nb_train_epochs" : 20,
+        "nb_train_epochs" : 50,
         "cv_ratio" : 0.2,
         "verbose" : 1
     }
