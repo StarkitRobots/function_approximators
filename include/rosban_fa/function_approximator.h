@@ -87,7 +87,8 @@ public:
       ForestApproximator = 5,
       FATree = 6,
       Constant = 7,
-      Linear = 8
+      Linear = 8,
+      DNNApproximator = 9
     };
 
 };

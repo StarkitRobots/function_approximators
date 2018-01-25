@@ -1,0 +1,9 @@
+{
+    "class name" : "DNNApproximatorTrainer",
+    "content" : {
+        "nb_units" : 100,
+        "learning_rate" : 0.5,
+        "nb_minibatches" : 1,
+        "nb_train_epochs" : 20
+    }
+}

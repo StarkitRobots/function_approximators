@@ -4,9 +4,15 @@ project(rosban_fa)
 # Build options
 option(BUILD_VIEWER "Build FA Viewer (require SFML)" OFF)
 
+#TODO: add options for:
+# - Use of BBO
+# - Use of DNN
+# - Building tests
+
 find_package(catkin REQUIRED COMPONENTS
   rosban_regression_forests
   rosban_bbo
+  tiny-dnn
 )
 
 set(DELEG_INCLUDE_DIRS include ${catkin_INCLUDE_DIRS})
@@ -74,6 +80,9 @@ target_link_libraries(test_fa_io rosban_fa ${DELEG_LIBRARIES}  )
 
 add_executable(test_optimizer_trainer src/test_optimizer_trainer.cpp)
 target_link_libraries(test_optimizer_trainer rosban_fa ${DELEG_LIBRARIES}  )
+
+add_executable(test_fa examples/test_fa.cpp)
+target_link_libraries(test_fa rosban_fa ${DELEG_LIBRARIES}  )
 
 if (BUILD_VIEWER)
   add_executable(viewer src/viewer.cpp)

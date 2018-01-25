@@ -1,6 +1,8 @@
 set(SOURCES
   adaptative_tree.cpp
   constant_approximator.cpp
+  dnn_approximator.cpp
+  dnn_approximator_trainer.cpp
   fa_tree.cpp
   fake_split.cpp
   forest_approximator.cpp

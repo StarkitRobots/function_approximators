@@ -1,6 +1,7 @@
 #include "rosban_fa/function_approximator_factory.h"
 
 #include "rosban_fa/constant_approximator.h"
+#include "rosban_fa/dnn_approximator.h"
 #include "rosban_fa/fa_tree.h"
 #include "rosban_fa/forest_approximator.h"
 #include "rosban_fa/gp.h"
@@ -30,6 +31,8 @@ FunctionApproximatorFactory::FunctionApproximatorFactory()
                   []() { return std::unique_ptr<FunctionApproximator>(new ConstantApproximator); });
   registerBuilder(FunctionApproximator::Linear,
                   []() { return std::unique_ptr<FunctionApproximator>(new LinearApproximator); });
+  registerBuilder(FunctionApproximator::DNNApproximator,
+                  []() { return std::unique_ptr<FunctionApproximator>(new DNNApproximator); });
 }
 
 }
