@@ -16,6 +16,7 @@ DNNApproximator::DNNApproximator(const network & nn_, int input_dims, int output
                                  const std::vector<int> layer_units)
   : nn(nn_), input_dim(input_dims), output_dim(output_dims), layer_units(layer_units)
 {
+  updateWeightsFromNN();
 }
 
 DNNApproximator::DNNApproximator(const DNNApproximator & other)
@@ -35,17 +36,19 @@ void DNNApproximator::predict(const Eigen::VectorXd & input,
                               Eigen::VectorXd & mean,
                               Eigen::MatrixXd & covar) const {
   (void) covar;// Currently not filling covariance matrix
-  network copy(nn);//TODO: should be fixed, but require strong modifications of tiny-dnn
-  // Convert input to tiny format
-  vec_t tiny_input;
-  for (int row = 0; row < input.rows(); row++) {
-    tiny_input.push_back(input(row));
+  Eigen::VectorXd tmp = input;
+  for (size_t layer_idx = 0; layer_idx < layer_weights.size(); layer_idx++) {
+    const Eigen::MatrixXd & coeffs = layer_weights[layer_idx].first;
+    const Eigen::VectorXd & bias = layer_weights[layer_idx].second;
+    tmp = coeffs * tmp + bias;
+    // Last layer is not normalized
+    if ( layer_idx != layer_weights.size() -1) {
+      for (int dim = 0; dim < tmp.rows(); dim++) {
+        tmp(dim) = tanh(tmp(dim));
+      }
+    }
   }
-  vec_t res = copy.predict(tiny_input);
-  mean = Eigen::VectorXd(output_dim);
-  for (int d = 0; d < output_dim; d++) {
-    mean(d) = res[d];
-  }
+  mean = tmp;
 }
 
 void DNNApproximator::gradient(const Eigen::VectorXd & input,
@@ -76,6 +79,7 @@ int DNNApproximator::writeInternal(std::ostream & out) const {
   for (size_t i = 0; i < nn.depth(); i++) {
     std::vector<const vec_t*> node_weights = nn[i]->weights();
     for (const vec_t * weights : node_weights){
+      std::cout << "writing weights[" << i << "][.] (size " << weights->size() << ")" << std::endl;
       std::vector<double> weights_double(weights->size());
       for (size_t idx = 0; idx < weights->size(); idx++) {
         weights_double[idx] = (*weights)[idx];
@@ -105,6 +109,7 @@ int DNNApproximator::read(std::istream & in) {
       }
     }
   }
+  updateWeightsFromNN();
   return bytes_read;
 }
 
@@ -119,6 +124,48 @@ DNNApproximator::network DNNApproximator::buildNN(int input_dim, int output_dim,
   }
   nn << fully_connected_layer<activation::identity>(last_layer_dim, output_dim);
   return nn;
+}
+
+static void fillEigenFromTiny(const vec_t & tiny, Eigen::VectorXd * eigen) {
+  if (eigen->rows() != (int)tiny.size()) {
+    throw std::logic_error("fillEigenFromTiny: size mismatch");
+  }
+  for (size_t idx = 0; idx < tiny.size(); idx++) {
+    (*eigen)(idx) = tiny[idx];
+  }
+}
+
+static void fillEigenFromTiny(const vec_t & tiny, Eigen::MatrixXd * eigen) {
+  if (eigen->rows() * eigen->cols() != (int)tiny.size()) {
+    throw std::logic_error("fillEigenFromTiny: size mismatch");
+  }
+  for (size_t idx = 0; idx < tiny.size(); idx++) {
+    size_t row = idx % eigen->rows();
+    size_t col = idx / eigen->rows();
+    (*eigen)(row, col) = tiny[idx];
+  }
+}
+
+void DNNApproximator::updateWeightsFromNN() {
+  layer_weights.clear();
+  int src_dim = input_dim;
+  for (size_t layer_idx = 0; layer_idx < nn.depth(); layer_idx++) {
+    bool output_layer = layer_idx == nn.depth() - 1;
+    int dst_dim;
+    if (output_layer) {
+      dst_dim = output_dim;
+    } else {
+      dst_dim = layer_units[layer_idx];
+    }
+    Eigen::MatrixXd coeffs(dst_dim, src_dim);
+    Eigen::VectorXd bias(dst_dim);
+    fillEigenFromTiny(*(nn[layer_idx]->weights()[0]), &coeffs);
+    fillEigenFromTiny(*(nn[layer_idx]->weights()[1]), &bias);
+    layer_weights.push_back({coeffs,bias});
+    // New input dim is last_layer dim
+    src_dim = dst_dim;
+  }
+  
 }
 
 }
