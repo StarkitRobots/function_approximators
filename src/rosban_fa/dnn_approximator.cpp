@@ -12,12 +12,6 @@ DNNApproximator::DNNApproximator()
 {
 }
 
-DNNApproximator::DNNApproximator(const network & nn, int input_dims, int output_dims, int nb_units)
-  : DNNApproximator(nn, input_dims, output_dims, {nb_units})
-{
-}
-
-
 DNNApproximator::DNNApproximator(const network & nn_, int input_dims, int output_dims,
                                  const std::vector<int> layer_units)
   : nn(nn_), input_dim(input_dims), output_dim(output_dims), layer_units(layer_units)

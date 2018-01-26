@@ -15,7 +15,6 @@ public:
   typedef tiny_dnn::network<tiny_dnn::sequential> network;
 
   DNNApproximator();
-  DNNApproximator(const network & nn, int input_dims, int output_dims, int nb_units);
   DNNApproximator(const network & nn, int input_dims, int output_dims,
                   const std::vector<int> layer_units);
   DNNApproximator(const DNNApproximator & other);
