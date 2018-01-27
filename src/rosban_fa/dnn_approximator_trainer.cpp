@@ -92,8 +92,6 @@ void DNNApproximatorTrainer::trainNN(DNNApproximator::network * nn,
   // Getting dimensions and nb entries
   Eigen::MatrixXd outputs = observations.transpose();
   int nb_entries = inputs.cols();
-  int input_dim = inputs.rows();
-  int output_dim = outputs.rows();
   // Separating data in training and cross_validation
   size_t nb_entries_cv = std::floor(cv_ratio * nb_entries);
   size_t nb_entries_training = nb_entries - nb_entries_cv;
@@ -126,7 +124,7 @@ void DNNApproximatorTrainer::trainNN(DNNApproximator::network * nn,
   adam optimizer;
   optimizer.alpha *= learning_rate;
   nn->fit<mse>(optimizer, training_inputs, training_outputs, nb_minibatches, nb_train_epochs,
-               on_enumerate_minibatch, on_enumerate_epoch);
+               on_enumerate_minibatch, on_enumerate_epoch, reset_weights);
 }
 
 std::string DNNApproximatorTrainer::getClassName() const {
