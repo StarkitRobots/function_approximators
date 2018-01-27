@@ -24,7 +24,7 @@ int main(int argc, char ** argv) {
   std::default_random_engine engine = rosban_random::getRandomEngine();
 
   // Getting inputs and observations
-  int nb_entries = 500;
+  int nb_entries = 10000;
   Eigen::MatrixXd limits(1,2);
   limits << -M_PI, M_PI;
   Eigen::MatrixXd inputs, observations;

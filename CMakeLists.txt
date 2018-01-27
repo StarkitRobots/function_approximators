@@ -35,6 +35,18 @@ catkin_package(
   CATKIN_DEPENDS rosban_regression_forests rosban_bbo
   )
 
+
+# Use SSE2 and AVX if provided, otherwise, show a warning
+#if ("${CMAKE_CXX_FLAGS}" MATCHES "-msse2" AND
+#    "${CMAKE_CXX_FLAGS}" MATCHES "-mavx")
+#  # Enable SSE2 optimizations
+#  add_definitions(-DCNN_USE_SSE)
+#  # Enable Advanced Vector Extensions
+#  add_definitions(-DCNN_USE_AVX)
+#else()
+#  message(WARNING "missing flags for SSE2 and AVX! DNN will be really slow")
+#endif()
+
 ###########
 ## Build ##
 ###########

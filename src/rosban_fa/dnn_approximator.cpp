@@ -66,6 +66,10 @@ void DNNApproximator::getMaximum(const Eigen::MatrixXd & limits,
   throw std::logic_error("DNNApproximator::getMaximum: not implemented");
 }
 
+const DNNApproximator::network & DNNApproximator::getNetwork() const {
+  return nn;
+}
+
 int DNNApproximator::getClassID() const {
   return FunctionApproximator::ID::DNNApproximator;
 }

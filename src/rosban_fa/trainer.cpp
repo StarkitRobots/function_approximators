@@ -1,5 +1,7 @@
 #include "rosban_fa/trainer.h"
 
+#include "rosban_fa/function_approximator.h"
+
 #include <sstream>
 #include <stdexcept>
 
@@ -9,6 +11,15 @@ namespace rosban_fa
 Trainer::Trainer() : nb_threads(1) {}
 
 Trainer::~Trainer() {}
+
+std::unique_ptr<FunctionApproximator>
+Trainer::train(const Eigen::MatrixXd & inputs,
+               const Eigen::MatrixXd & observations,
+               const Eigen::MatrixXd & limits,
+               const FunctionApproximator & initial_fa) const {
+  (void) initial_fa;
+  return train(inputs,observations, limits);
+}
 
 void Trainer::setNbThreads(int new_nb_threads)
 {

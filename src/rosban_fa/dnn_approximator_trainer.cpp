@@ -37,10 +37,60 @@ std::unique_ptr<FunctionApproximator>
 DNNApproximatorTrainer::train(const Eigen::MatrixXd & inputs,
                               const Eigen::MatrixXd & observations,
                               const Eigen::MatrixXd & limits) const {
-  std::default_random_engine engine = rosban_random::getRandomEngine();
+  (void)limits;
   checkConsistency(inputs, observations, limits);
-  Eigen::MatrixXd outputs = observations.transpose();
+  int input_dim = inputs.rows();
+  int output_dim = observations.cols();
+  DNNApproximator::network nn = DNNApproximator::buildNN(input_dim, output_dim, layer_units);
+  if (verbose) {
+    for (size_t i = 0; i < nn.depth(); i++) {
+      std::cout << "#layer:" << i << "\n";
+      std::cout << "layer type:" << nn[i]->layer_type() << "\n";
+      std::cout << "input:" << nn[i]->in_data_size() << "(" << nn[i]->in_data_shape() << ")\n";
+      std::cout << "output:" << nn[i]->out_data_size() << "(" << nn[i]->out_data_shape() << ")\n";
+    }
+  }
+  trainNN(&nn, inputs, observations, true);
+  // Copy Neural network to get a function approximator
+  std::unique_ptr<FunctionApproximator> result(
+    new DNNApproximator(nn, input_dim, output_dim, layer_units));
+  // Return the function approximator
+  return std::move(result);
+}
+
+std::unique_ptr<FunctionApproximator>
+DNNApproximatorTrainer::train(const Eigen::MatrixXd & inputs,
+                              const Eigen::MatrixXd & observations,
+                              const Eigen::MatrixXd & limits,
+                              const FunctionApproximator & initial_fa) const {
+  (void)limits;
+  checkConsistency(inputs, observations, limits);
+  int input_dim = inputs.rows();
+  int output_dim = observations.cols();
+  // Initialize network with old approximation
+  DNNApproximator::network nn;
+  try {
+    const DNNApproximator & initial_dnn = dynamic_cast<const DNNApproximator &>(initial_fa);
+    nn = initial_dnn.getNetwork();
+  } catch (const std::bad_cast & exc) {
+    throw std::logic_error("DNNApproximator::train: expecting DNNApproximator as initial_fa");
+  }
+  // Train network without weight resets
+  trainNN(&nn, inputs, observations, false);
+  // Copy Neural network to get a function approximator
+  std::unique_ptr<FunctionApproximator> result(
+    new DNNApproximator(nn, input_dim, output_dim, layer_units));
+  // Return the function approximator
+  return std::move(result);
+}
+
+void DNNApproximatorTrainer::trainNN(DNNApproximator::network * nn,
+                                     const Eigen::MatrixXd & inputs,
+                                     const Eigen::MatrixXd & observations,
+                                     bool reset_weights) const {
+  std::default_random_engine engine = rosban_random::getRandomEngine();
   // Getting dimensions and nb entries
+  Eigen::MatrixXd outputs = observations.transpose();
   int nb_entries = inputs.cols();
   int input_dim = inputs.rows();
   int output_dim = outputs.rows();
@@ -58,22 +108,12 @@ DNNApproximatorTrainer::train(const Eigen::MatrixXd & inputs,
   training_outputs = extractAndCvtEntries(outputs, training_indices);
   cv_inputs  = extractAndCvtEntries(inputs , cv_indices);
   cv_outputs = extractAndCvtEntries(outputs, cv_indices);
-  // Running network optimization
-  adam optimizer;
-  optimizer.alpha *= learning_rate;
-  DNNApproximator::network nn = DNNApproximator::buildNN(input_dim, output_dim, layer_units);
-  for (size_t i = 0; i < nn.depth(); i++) {
-    std::cout << "#layer:" << i << "\n";
-    std::cout << "layer type:" << nn[i]->layer_type() << "\n";
-    std::cout << "input:" << nn[i]->in_data_size() << "(" << nn[i]->in_data_shape() << ")\n";
-    std::cout << "output:" << nn[i]->out_data_size() << "(" << nn[i]->out_data_shape() << ")\n";
-  }
   // create callback
   auto on_enumerate_epoch = [&]() {
     if (verbose > 0) {
-      double training_loss = nn.get_loss<mse>(training_inputs, training_outputs) / training_inputs.size();
+      double training_loss = nn->get_loss<mse>(training_inputs, training_outputs) / training_inputs.size();
       if (cv_inputs.size() > 0) {
-        double cv_loss = nn.get_loss<mse>(cv_inputs, cv_outputs) / cv_inputs.size();
+        double cv_loss = nn->get_loss<mse>(cv_inputs, cv_outputs) / cv_inputs.size();
         std::cout << "CV mean loss: " << cv_loss;
       }
       std::cout << " (training mean loss : " << training_loss << ")" << std::endl;
@@ -83,13 +123,10 @@ DNNApproximatorTrainer::train(const Eigen::MatrixXd & inputs,
   auto on_enumerate_minibatch = [&]() {
   };
   // Launching training
-  nn.fit<mse>(optimizer, training_inputs, training_outputs, nb_minibatches, nb_train_epochs,
-              on_enumerate_minibatch, on_enumerate_epoch);
-  // Copy Neural network to get a function approximator
-  std::unique_ptr<FunctionApproximator> result(
-    new DNNApproximator(nn, input_dim, output_dim, layer_units));
-  // Return the function approximator
-  return std::move(result);
+  adam optimizer;
+  optimizer.alpha *= learning_rate;
+  nn->fit<mse>(optimizer, training_inputs, training_outputs, nb_minibatches, nb_train_epochs,
+               on_enumerate_minibatch, on_enumerate_epoch);
 }
 
 std::string DNNApproximatorTrainer::getClassName() const {

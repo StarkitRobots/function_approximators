@@ -33,6 +33,14 @@ public:
         const Eigen::MatrixXd & observations,
         const Eigen::MatrixXd & limits) const = 0;
 
+  /// Train the function approximator using initial_fa as a basis:
+  /// - Default implementation is to ignore the initial_fa, but can be overriden
+  virtual std::unique_ptr<FunctionApproximator>
+  train(const Eigen::MatrixXd & inputs,
+        const Eigen::MatrixXd & observations,
+        const Eigen::MatrixXd & limits,
+        const FunctionApproximator & initial_fa) const;
+
   /// Update the number of threads allowed for the trainer
   void setNbThreads(int nb_threads);
 

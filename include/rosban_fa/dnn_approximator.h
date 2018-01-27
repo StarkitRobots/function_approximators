@@ -2,9 +2,12 @@
 
 #include "rosban_fa/function_approximator.h"
 
+// tiny_dnn (and its dependencies) throw many warnings
 #pragma GCC diagnostic push
 #pragma GCC diagnostic ignored "-Wunused-parameter"
+#if __GNUC__ >= 6
 #pragma GCC diagnostic ignored "-Wmisleading-indentation"
+#endif
 #include "tiny_dnn/tiny_dnn.h"
 #pragma GCC diagnostic pop
 
@@ -42,6 +45,8 @@ public:
   virtual int getClassID() const override;
   virtual int writeInternal(std::ostream & out) const override;
   virtual int read(std::istream & in) override;
+
+  const network & getNetwork() const;
 
   /// Structure is as following:
   /// input_dim -> layer_units[0]

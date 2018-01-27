@@ -2,6 +2,8 @@
 
 #include "rosban_fa/trainer.h"
 
+#include "rosban_fa/dnn_approximator.h"
+
 namespace rosban_fa
 {
 
@@ -13,6 +15,17 @@ public:
   train(const Eigen::MatrixXd & inputs,
         const Eigen::MatrixXd & observations,
         const Eigen::MatrixXd & limits) const override;
+
+  virtual std::unique_ptr<FunctionApproximator>
+  train(const Eigen::MatrixXd & inputs,
+        const Eigen::MatrixXd & observations,
+        const Eigen::MatrixXd & limits,
+        const FunctionApproximator & initial_fa) const override;
+
+  void trainNN(DNNApproximator::network * nn,
+               const Eigen::MatrixXd & input,
+               const Eigen::MatrixXd & observations,
+               bool reset_weights) const;
 
   virtual std::string getClassName() const override;
   virtual Json::Value toJson() const override;
