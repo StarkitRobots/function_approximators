@@ -73,7 +73,8 @@ DNNApproximatorTrainer::train(const Eigen::MatrixXd & inputs,
     const DNNApproximator & initial_dnn = dynamic_cast<const DNNApproximator &>(initial_fa);
     nn = initial_dnn.getNetwork();
   } catch (const std::bad_cast & exc) {
-    throw std::logic_error("DNNApproximator::train: expecting DNNApproximator as initial_fa");
+    std::cerr << "DNNApproximator::train: expecting DNNApproximator as initial_fa";
+    return train(inputs,observations,limits);
   }
   // Train network without weight resets
   trainNN(&nn, inputs, observations, false);
