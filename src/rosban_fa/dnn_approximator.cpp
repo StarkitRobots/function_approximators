@@ -44,7 +44,7 @@ void DNNApproximator::predict(const Eigen::VectorXd & input,
     // Last layer is not normalized
     if ( layer_idx != layer_weights.size() -1) {
       for (int dim = 0; dim < tmp.rows(); dim++) {
-        tmp(dim) = tanh(tmp(dim));
+        tmp(dim) = std::max(0.0,tmp(dim));
       }
     }
   }
@@ -123,7 +123,7 @@ DNNApproximator::network DNNApproximator::buildNN(int input_dim, int output_dim,
   network nn;
   int last_layer_dim = input_dim;
   for (int nb_units : layer_units) {
-    nn << fully_connected_layer<activation::tan_h>(last_layer_dim, nb_units);
+    nn << fully_connected_layer<activation::relu>(last_layer_dim, nb_units);
     last_layer_dim = nb_units;
   }
   nn << fully_connected_layer<activation::identity>(last_layer_dim, output_dim);

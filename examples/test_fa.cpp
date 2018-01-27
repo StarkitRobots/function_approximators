@@ -9,7 +9,7 @@ Eigen::VectorXd sampleOutput(const Eigen::VectorXd & input,
                              std::default_random_engine * engine) {
   std::normal_distribution<double> noise_distrib(0, 0.01);
   Eigen::VectorXd result(1);
-  result(0) = sin(input(0)) + noise_distrib(*engine);
+  result(0) = 100 * sin(input(0)) + noise_distrib(*engine);
   return result;
 }
 
@@ -24,7 +24,7 @@ int main(int argc, char ** argv) {
   std::default_random_engine engine = rosban_random::getRandomEngine();
 
   // Getting inputs and observations
-  int nb_entries = 10000;
+  int nb_entries = 500;
   Eigen::MatrixXd limits(1,2);
   limits << -M_PI, M_PI;
   Eigen::MatrixXd inputs, observations;
