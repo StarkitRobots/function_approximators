@@ -1,11 +1,15 @@
 {
     "class name" : "DNNApproximatorTrainer",
     "content" : {
-        "layer_units" : [5,5],
-        "learning_rate" : 1,
-        "nb_minibatches" : 1,
-        "nb_train_epochs" : 50,
+        "dnn_config" : { 
+            "layer_units" : [64,64],
+            "activation" : "Relu"
+        },
+        "learning_rates" : [1,2,4,8],
+        "nb_minibatches" : 8,
+        "nb_train_epochs" : 10,
         "cv_ratio" : 0.2,
-        "verbose" : 1
+        "verbose" : 1,
+        "nb_threads" : 4
     }
 }

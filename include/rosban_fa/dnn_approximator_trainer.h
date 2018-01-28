@@ -22,10 +22,23 @@ public:
         const Eigen::MatrixXd & limits,
         const FunctionApproximator & initial_fa) const override;
 
-  void trainNN(DNNApproximator::network * nn,
-               const Eigen::MatrixXd & input,
-               const Eigen::MatrixXd & observations,
-               bool reset_weights) const;
+  /// Train several networks with different learning rates simultaneously and
+  /// returns the best according to cross-validation loss
+  DNNApproximator::network trainBestNN(const DNNApproximator::network & initial_network,
+                                       const Eigen::MatrixXd & inputs,
+                                       const Eigen::MatrixXd & outputs,
+                                       bool reset_weights) const;
+
+  /// Train the provided neural network with the given data and learning rate
+  /// The final loss for the cross_validation set is placed in cv_loss
+  void trainNN(const std::vector<tiny_dnn::vec_t> & training_inputs,
+               const std::vector<tiny_dnn::vec_t> & training_outputs,
+               const std::vector<tiny_dnn::vec_t> & cv_inputs,
+               const std::vector<tiny_dnn::vec_t> & cv_outputs,
+               double learning_rate,
+               bool reset_weights,
+               DNNApproximator::network * nn,
+               double * cv_loss) const;
 
   virtual std::string getClassName() const override;
   virtual Json::Value toJson() const override;
@@ -33,10 +46,10 @@ public:
 
 private:
   /// Nb elements in each hidden layer
-  std::vector<int> layer_units;
+  DNNApproximator::Config dnn_config;
 
-  /// Learning rate used
-  double learning_rate;
+  /// Learning rates used (best DNN based on CV is chosen finally)
+  std::vector<double> learning_rates;
 
   /// Number of minibatches
   int nb_minibatches;
