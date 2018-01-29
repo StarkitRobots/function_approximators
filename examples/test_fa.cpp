@@ -8,8 +8,9 @@ using namespace rosban_fa;
 Eigen::VectorXd sampleOutput(const Eigen::VectorXd & input,
                              std::default_random_engine * engine) {
   std::normal_distribution<double> noise_distrib(0, 0.01);
-  Eigen::VectorXd result(1);
+  Eigen::VectorXd result(2);
   result(0) = 100 * sin(input(0)) + noise_distrib(*engine);
+  result(1) = 100 * cos(input(0)) + noise_distrib(*engine);
   return result;
 }
 
@@ -24,14 +25,14 @@ int main(int argc, char ** argv) {
   std::default_random_engine engine = rosban_random::getRandomEngine();
 
   // Getting inputs and observations
-  int nb_entries = 500;
+  int nb_entries = 10000;
   Eigen::MatrixXd limits(1,2);
   limits << -M_PI, M_PI;
   Eigen::MatrixXd inputs, observations;
   inputs = rosban_random::getUniformSamplesMatrix(limits, nb_entries, &engine);
-  observations = Eigen::MatrixXd(nb_entries,1);
+  observations = Eigen::MatrixXd(nb_entries,2);
   for (int i = 0; i < nb_entries; i++) {
-    observations.row(i) = sampleOutput(inputs.col(i), &engine);
+    observations.row(i) = sampleOutput(inputs.col(i), &engine).transpose();
   }
   // Learning approximator, saving it and reading it to get a copy
   std::unique_ptr<FunctionApproximator> fa = trainer->train(inputs, observations, limits);

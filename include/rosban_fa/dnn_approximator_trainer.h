@@ -9,6 +9,9 @@ namespace rosban_fa
 
 class DNNApproximatorTrainer : public Trainer {
 public:
+
+  enum LossFunction {MSE, Abs};
+
   DNNApproximatorTrainer();
 
   virtual std::unique_ptr<FunctionApproximator>
@@ -59,6 +62,9 @@ private:
 
   /// Ratio of data used for cross validation ([0,1])
   double cv_ratio;
+
+  /// Which loss function is used for training
+  LossFunction loss;
 
   /// Verbosity of the trainer
   int verbose;

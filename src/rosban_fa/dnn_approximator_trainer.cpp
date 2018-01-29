@@ -8,6 +8,9 @@
 
 using namespace tiny_dnn;
 
+namespace rosban_fa
+{
+
 static vec_t cvtEigen2Tiny(const Eigen::VectorXd & v) {
   vec_t tiny(v.rows());
   for (int row = 0; row < v.rows(); row++) {
@@ -27,11 +30,23 @@ static std::vector<vec_t> extractAndCvtEntries(const Eigen::MatrixXd & data,
   return result;
 }
 
-namespace rosban_fa
-{
+static std::string loss2Str(DNNApproximatorTrainer::LossFunction loss) {
+  switch(loss) {
+    case DNNApproximatorTrainer::LossFunction::MSE: return "MSE";
+    case DNNApproximatorTrainer::LossFunction::Abs: return "Abs";
+  }
+  throw std::logic_error("loss2Str: unknown value for loss");
+}
+
+static DNNApproximatorTrainer::LossFunction str2Loss(const std::string & str) {
+  if (str == "MSE") return DNNApproximatorTrainer::LossFunction::MSE;
+  if (str == "Abs") return DNNApproximatorTrainer::LossFunction::Abs;
+  throw std::logic_error("str2Loss: unknown value '" + str + "'");
+}
 
 DNNApproximatorTrainer::DNNApproximatorTrainer()
-  : learning_rates({1}), nb_minibatches(10), nb_train_epochs(5), cv_ratio(0)
+  : learning_rates({1}), nb_minibatches(10), nb_train_epochs(5), cv_ratio(0),
+    loss(LossFunction::MSE), verbose(0)
 {
 }
 
@@ -115,6 +130,9 @@ DNNApproximatorTrainer::trainBestNN(const DNNApproximator::network & initial_net
   // Preparing multiple copies of networks and cv_values to learn simultaneously
   // TinyDNN copy of network is not a 'real' in depth copy, therefore, multi-threading
   // issues occurs when using the copy constructor
+  //
+  // TODO: either reimplement network copy, or at least use a randomly generated
+  // name and check if it exists in order to avoid collision of files
   initial_network.save(".tmp_file.data");
   std::vector<DNNApproximator::network> networks(learning_rates.size());
   for (size_t idx = 0; idx < learning_rates.size(); idx++) {
@@ -168,12 +186,21 @@ void DNNApproximatorTrainer::trainNN(const std::vector<vec_t> & training_inputs,
   auto on_enumerate_minibatch = [&]() {
   };
 
-  std::cout << "NN address : " << nn << std::endl;
   // Launching training
   adam optimizer;
   optimizer.alpha *= learning_rate;
-  nn->fit<mse>(optimizer, training_inputs, training_outputs, nb_minibatches, nb_train_epochs,
-               on_enumerate_minibatch, on_enumerate_epoch, reset_weights, 1);
+  switch (loss) {
+    case LossFunction::MSE:
+      nn->fit<mse>(optimizer, training_inputs, training_outputs,
+                   nb_minibatches, nb_train_epochs,
+                   on_enumerate_minibatch, on_enumerate_epoch, reset_weights, 1);
+      break;
+    case LossFunction::Abs:
+      nn->fit<absolute>(optimizer, training_inputs, training_outputs,
+                        nb_minibatches, nb_train_epochs,
+                        on_enumerate_minibatch, on_enumerate_epoch, reset_weights, 1);
+      break;
+  }
 }
 
 std::string DNNApproximatorTrainer::getClassName() const {
@@ -187,16 +214,22 @@ Json::Value DNNApproximatorTrainer::toJson() const {
   v["nb_minibatches"] = nb_minibatches;
   v["nb_train_epochs"] = nb_train_epochs;
   v["cv_ratio"] = cv_ratio;
+  v["loss"] = loss2Str(loss);
   v["verbose"] = verbose;
   return v;
 }
 
 void DNNApproximatorTrainer::fromJson(const Json::Value & v, const std::string & dir_name) {
   Trainer::fromJson(v, dir_name);
+  std::string loss_str;
   dnn_config.tryRead(v, "dnn_config", dir_name);
   rhoban_utils::tryReadVector(v,"learning_rates", &learning_rates);
   rhoban_utils::tryRead(v,"nb_minibatches" , &nb_minibatches );
   rhoban_utils::tryRead(v,"nb_train_epochs", &nb_train_epochs);
   rhoban_utils::tryRead(v,"cv_ratio", &cv_ratio);
-  rhoban_utils::tryRead(v,"verbose", &verbose);}
+  rhoban_utils::tryRead(v,"loss", &loss_str);
+  rhoban_utils::tryRead(v,"verbose", &verbose);
+  if (loss_str!="") loss = str2Loss(loss_str);
+}
+
 }
