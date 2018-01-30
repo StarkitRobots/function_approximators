@@ -167,7 +167,7 @@ DNNApproximatorTrainer::trainBestNN(const DNNApproximator::network & initial_net
 
 double DNNApproximatorTrainer::getLoss(DNNApproximator::network * nn,
                                        const std::vector<tiny_dnn::vec_t> & inputs,
-                                       const std::vector<tiny_dnn::vec_t> & outputs) {
+                                       const std::vector<tiny_dnn::vec_t> & outputs) const {
   switch(loss) {
     case LossFunction::MSE:
       return nn->get_loss<mse>(inputs, outputs) / inputs.size();
