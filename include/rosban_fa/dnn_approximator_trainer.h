@@ -32,6 +32,10 @@ public:
                                        const Eigen::MatrixXd & outputs,
                                        bool reset_weights) const;
 
+  double getLoss(DNNApproximator::network * nn,
+                 const std::vector<tiny_dnn::vec_t> & training_inputs,
+                 const std::vector<tiny_dnn::vec_t> & training_outputs);
+
   /// Train the provided neural network with the given data and learning rate
   /// The final loss for the cross_validation set is placed in cv_loss
   void trainNN(const std::vector<tiny_dnn::vec_t> & training_inputs,

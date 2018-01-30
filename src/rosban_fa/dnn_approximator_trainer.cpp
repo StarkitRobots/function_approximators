@@ -165,6 +165,18 @@ DNNApproximatorTrainer::trainBestNN(const DNNApproximator::network & initial_net
   return networks[best_cv_idx];
 }
 
+double DNNApproximatorTrainer::getLoss(DNNApproximator::network * nn,
+                                       const std::vector<tiny_dnn::vec_t> & inputs,
+                                       const std::vector<tiny_dnn::vec_t> & outputs) {
+  switch(loss) {
+    case LossFunction::MSE:
+      return nn->get_loss<mse>(inputs, outputs) / inputs.size();
+    case LossFunction::Abs:
+      return nn->get_loss<absolute>(inputs, outputs) / inputs.size();
+  }
+  throw std::logic_error("DNNApproximatorTrainer::getLoss: unknown loss function");
+}
+
 void DNNApproximatorTrainer::trainNN(const std::vector<vec_t> & training_inputs,
                                      const std::vector<vec_t> & training_outputs,
                                      const std::vector<vec_t> & cv_inputs,
@@ -175,9 +187,9 @@ void DNNApproximatorTrainer::trainNN(const std::vector<vec_t> & training_inputs,
                                      double * cv_loss) const {
   // create callback
   auto on_enumerate_epoch = [&]() {
-    *cv_loss = nn->get_loss<mse>(cv_inputs, cv_outputs) / cv_inputs.size();
+    *cv_loss = getLoss(nn, cv_inputs, cv_outputs);
     if (verbose > 0) {
-      double training_loss = nn->get_loss<mse>(training_inputs, training_outputs) / training_inputs.size();
+      double training_loss = getLoss(nn, training_inputs, training_outputs);
       std::cout << "[LR: " << learning_rate << "] CV mean loss: " << (*cv_loss)
                 << " (training mean loss : " << training_loss << ")" << std::endl;
     }

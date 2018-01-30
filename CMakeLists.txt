@@ -96,6 +96,9 @@ target_link_libraries(test_optimizer_trainer rosban_fa ${DELEG_LIBRARIES}  )
 add_executable(test_fa examples/test_fa.cpp)
 target_link_libraries(test_fa rosban_fa ${DELEG_LIBRARIES}  )
 
+add_executable(fa_on_dataset examples/fa_on_dataset.cpp)
+target_link_libraries(fa_on_dataset rosban_fa ${DELEG_LIBRARIES}  )
+
 if (BUILD_VIEWER)
   add_executable(viewer src/viewer.cpp)
   target_link_libraries(viewer rosban_fa ${DELEG_LIBRARIES}  )
