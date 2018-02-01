@@ -6,7 +6,7 @@
 #include "rosban_gp/tools.h"
 #include "rosban_gp/core/gaussian_process.h"
 
-#include "rosban_random/tools.h"
+#include "rhoban_random/tools.h"
 
 using regression_forests::GPApproximation;
 using regression_forests::Forest;

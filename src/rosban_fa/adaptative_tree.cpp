@@ -10,7 +10,7 @@
 
 #include "rosban_bbo/optimizer_factory.h"
 
-#include "rosban_random/tools.h"
+#include "rhoban_random/tools.h"
 
 #include "rhoban_utils/threading/multi_core.h"
 #include "rhoban_utils/timing/time_stamp.h"
@@ -66,7 +66,7 @@ Eigen::MatrixXd AdaptativeTree::generateParametersSet(std::default_random_engine
   Eigen::MatrixXd parameters_set;
   // On first generation get samples from random
   if (processed_leaves.empty()) {
-    parameters_set = rosban_random::getUniformSamplesMatrix(parameters_limits,
+    parameters_set = rhoban_random::getUniformSamplesMatrix(parameters_limits,
                                                             nb_samples,
                                                             engine);
   }
@@ -81,7 +81,7 @@ Eigen::MatrixXd AdaptativeTree::generateParametersSet(std::default_random_engine
     }
     // space_index -> nb_samples wished
     std::map<int,int> space_occurences;
-    space_occurences = rosban_random::sampleWeightedIndicesMap(weights,
+    space_occurences = rhoban_random::sampleWeightedIndicesMap(weights,
                                                                nb_samples,
                                                                engine);
     // Computing parameters set
@@ -93,7 +93,7 @@ Eigen::MatrixXd AdaptativeTree::generateParametersSet(std::default_random_engine
       int leaf_nb_samples = space_occurences[leaf_id];
       // Drawing samples for this leaf
       Eigen::MatrixXd leaf_samples;
-      leaf_samples = rosban_random::getUniformSamplesMatrix(leaf.space,
+      leaf_samples = rhoban_random::getUniformSamplesMatrix(leaf.space,
                                                             leaf_nb_samples,
                                                             engine);
       // Affecting samples
@@ -189,7 +189,7 @@ AdaptativeTree::buildApproximator(RewardFunction rf,
     }
     else {
       for (size_t elem_id = 0; elem_id < spaces.size(); elem_id++) {
-        samples.push_back(rosban_random::getUniformSamplesMatrix(spaces[elem_id],
+        samples.push_back(rhoban_random::getUniformSamplesMatrix(spaces[elem_id],
                                                                  nb_samples,
                                                                  engine));
       }
@@ -321,7 +321,7 @@ Eigen::MatrixXd AdaptativeTree::getCrossValidationSet(const Eigen::MatrixXd & sp
                                                        std::default_random_engine * engine)
 {
   double cv_set_size = training_set_size * cv_ratio;
-  return rosban_random::getUniformSamplesMatrix(space, cv_set_size, engine);
+  return rhoban_random::getUniformSamplesMatrix(space, cv_set_size, engine);
 }
 
 void AdaptativeTree::updateReward(RewardFunction rf,
@@ -387,7 +387,7 @@ AdaptativeTree::getEvaluationFunction(RewardFunction rf,
         };
       // getting engines
       std::vector<std::default_random_engine> engines;
-      engines = rosban_random::getRandomEngines(threads_used, engine);
+      engines = rhoban_random::getRandomEngines(threads_used, engine);
       rhoban_utils::MultiCore::runParallelStochasticTask(eval_task,
                                                          training_set.cols(),
                                                          &engines);

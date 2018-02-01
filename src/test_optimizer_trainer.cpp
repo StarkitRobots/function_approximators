@@ -1,6 +1,6 @@
 #include "rosban_fa/optimizer_trainer_factory.h"
 
-#include "rosban_random/tools.h"
+#include "rhoban_random/tools.h"
 
 #include <iostream>
 
@@ -77,7 +77,7 @@ int main(int argc, char ** argv)
   }
   // Global parameters of execution
   int nb_evaluations = 1000;
-  std::default_random_engine engine = rosban_random::getRandomEngine();
+  std::default_random_engine engine = rhoban_random::getRandomEngine();
   // Read optimizer trainer
   std::unique_ptr<OptimizerTrainer> optimizer_trainer;
   optimizer_trainer = OptimizerTrainerFactory().buildFromJsonFile(argv[1]);
@@ -93,7 +93,7 @@ int main(int argc, char ** argv)
   // Performing evaluation
   double total_reward = 0;
   Eigen::MatrixXd evaluation_set;
-  evaluation_set = rosban_random::getUniformSamplesMatrix(pbb.parameters_limits,
+  evaluation_set = rhoban_random::getUniformSamplesMatrix(pbb.parameters_limits,
                                                           nb_evaluations,
                                                           &engine);
   for (int i = 0; i < nb_evaluations; i++)

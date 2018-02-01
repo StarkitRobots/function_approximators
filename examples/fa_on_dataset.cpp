@@ -1,7 +1,7 @@
 #include "rosban_fa/function_approximator_factory.h"
 #include "rosban_fa/trainer_factory.h"
 
-#include "rosban_random/tools.h"
+#include "rhoban_random/tools.h"
 
 using namespace rosban_fa;
 using namespace rhoban_utils;
@@ -40,8 +40,6 @@ int main(int argc, char ** argv) {
   std::unique_ptr<Trainer> trainer = TrainerFactory().buildFromJsonFile(trainer_path);
   DataSet ds;
   ds.loadFile(dataset_path, "./");
-
-  std::default_random_engine engine = rosban_random::getRandomEngine();
 
   // Learning approximator, saving it and reading it to get a copy
   // TODO: limits should be provided by the dataset

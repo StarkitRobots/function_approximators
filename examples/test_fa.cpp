@@ -1,7 +1,7 @@
 #include "rosban_fa/function_approximator_factory.h"
 #include "rosban_fa/trainer_factory.h"
 
-#include "rosban_random/tools.h"
+#include "rhoban_random/tools.h"
 
 using namespace rosban_fa;
 
@@ -22,14 +22,14 @@ int main(int argc, char ** argv) {
 
   std::unique_ptr<Trainer> trainer = TrainerFactory().buildFromJsonFile(argv[1]);
 
-  std::default_random_engine engine = rosban_random::getRandomEngine();
+  std::default_random_engine engine = rhoban_random::getRandomEngine();
 
   // Getting inputs and observations
   int nb_entries = 10000;
   Eigen::MatrixXd limits(1,2);
   limits << -M_PI, M_PI;
   Eigen::MatrixXd inputs, observations;
-  inputs = rosban_random::getUniformSamplesMatrix(limits, nb_entries, &engine);
+  inputs = rhoban_random::getUniformSamplesMatrix(limits, nb_entries, &engine);
   observations = Eigen::MatrixXd(nb_entries,2);
   for (int i = 0; i < nb_entries; i++) {
     observations.row(i) = sampleOutput(inputs.col(i), &engine).transpose();
@@ -45,7 +45,7 @@ int main(int argc, char ** argv) {
   // Testing approximators
   int nb_tests = 2;
   Eigen::MatrixXd test_inputs;
-  test_inputs = rosban_random::getUniformSamplesMatrix(limits, nb_tests, &engine);
+  test_inputs = rhoban_random::getUniformSamplesMatrix(limits, nb_tests, &engine);
   for (int i = 0; i < test_inputs.cols(); i++) {
     const Eigen::VectorXd & input = test_inputs.col(i);
     Eigen::VectorXd observation;

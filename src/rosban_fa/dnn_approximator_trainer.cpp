@@ -2,7 +2,7 @@
 
 #include "rosban_fa/dnn_approximator.h"
 
-#include "rosban_random/tools.h"
+#include "rhoban_random/tools.h"
 
 #include "rhoban_utils/threading/multi_core.h"
 
@@ -110,7 +110,7 @@ DNNApproximatorTrainer::trainBestNN(const DNNApproximator::network & initial_net
                                     bool reset_weights) const
 {
   // Creating inputs and outputs
-  std::default_random_engine engine = rosban_random::getRandomEngine();
+  std::default_random_engine engine = rhoban_random::getRandomEngine();
   // Getting dimensions and nb entries
   int nb_entries = inputs.cols();
   // Separating data in training and cross_validation
@@ -118,7 +118,7 @@ DNNApproximatorTrainer::trainBestNN(const DNNApproximator::network & initial_net
   size_t nb_entries_training = nb_entries - nb_entries_cv;
   std::vector<size_t> set_sizes = {nb_entries_training, nb_entries_cv};
   std::vector<std::vector<size_t>> splitted_indices =
-    rosban_random::splitIndices(nb_entries-1, set_sizes, &engine);
+    rhoban_random::splitIndices(nb_entries-1, set_sizes, &engine);
   const std::vector<size_t> & training_indices = splitted_indices[0];
   const std::vector<size_t> & cv_indices = splitted_indices[1];
   // Formatting input

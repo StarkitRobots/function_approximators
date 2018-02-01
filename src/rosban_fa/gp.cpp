@@ -4,7 +4,7 @@
 #include "rosban_gp/tools.h"
 #include "rosban_gp/core/squared_exponential.h"
 
-#include "rosban_random/tools.h"
+#include "rhoban_random/tools.h"
 
 #include "rhoban_utils/io_tools.h"
 
