@@ -1,4 +1,4 @@
-#include "rosban_fa/tools/viewer.h"
+#include "rhoban_fa/tools/viewer.h"
 
 #include <iostream>
 
@@ -9,7 +9,7 @@ int main(int argc, char ** argv)
     exit(EXIT_FAILURE);
   }
 
-  rosban_fa::Viewer viewer(argv[1], argv[2],1920,1080);
+  rhoban_fa::Viewer viewer(argv[1], argv[2],1920,1080);
 
   while(viewer.update()) {
   }

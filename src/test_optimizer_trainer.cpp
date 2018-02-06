@@ -1,4 +1,4 @@
-#include "rosban_fa/optimizer_trainer_factory.h"
+#include "rhoban_fa/optimizer_trainer_factory.h"
 
 #include "rhoban_random/tools.h"
 
@@ -7,7 +7,7 @@
 #include <fenv.h>
 
 
-using namespace rosban_fa;
+using namespace rhoban_fa;
 
 struct ParametrizedBlackBox
 {

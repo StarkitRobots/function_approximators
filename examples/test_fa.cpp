@@ -1,9 +1,9 @@
-#include "rosban_fa/function_approximator_factory.h"
-#include "rosban_fa/trainer_factory.h"
+#include "rhoban_fa/function_approximator_factory.h"
+#include "rhoban_fa/trainer_factory.h"
 
 #include "rhoban_random/tools.h"
 
-using namespace rosban_fa;
+using namespace rhoban_fa;
 
 Eigen::VectorXd sampleOutput(const Eigen::VectorXd & input,
                              std::default_random_engine * engine) {
