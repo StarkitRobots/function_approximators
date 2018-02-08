@@ -13,11 +13,13 @@
 
   <build_depend>rhoban_regression_forests</build_depend> <!-- rhoban/regression_forests.git -->
   <build_depend>rhoban_bbo</build_depend> <!-- rhoban/bbo.git -->
-  <build_depend>tiny-dnn</build_depend> <!-- rhobandeps/tiny-dnn.git -->
+  <build_depend>tiny-dnn</build_depend> <!-- optional rhobandeps/tiny-dnn.git -->
+  <build_depend>rhoban_viewer</build_depend> <!-- optional rhoban/viewer.git -->
 
   <run_depend>rhoban_regression_forests</run_depend>
   <run_depend>rhoban_bbo</run_depend>
   <run_depend>tiny-dnn</run_depend>
+  <run_depend>rhoban_viewer</run_depend>
 
   <export/>
 </package>
