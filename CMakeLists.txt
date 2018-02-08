@@ -47,8 +47,6 @@ catkin_package(
 # regression forests. It would be possible to separate those uses if necessary
 # in the future.
 if (RHOBAN_FA_USES_GP)
-  message("CATKIN_LIBS: ${catkin_LIBRARIES}")
-  message("IDX: ${IDX}")
   if (NOT "${catkin_LIBRARIES}" MATCHES "rhoban_gp")
     message(FATAL_ERROR "rhoban_fa cannot use rhoban_gp because rhoban_regression_forests does not uses rhoban_gp")
   endif()
