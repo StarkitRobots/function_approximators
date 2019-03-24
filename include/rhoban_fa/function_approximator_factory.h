@@ -8,11 +8,10 @@
 
 namespace rhoban_fa
 {
-
 class FunctionApproximatorFactory : public rhoban_utils::Factory<FunctionApproximator>
 {
 public:
   FunctionApproximatorFactory();
 };
 
-}
+}  // namespace rhoban_fa

@@ -4,11 +4,9 @@
 
 namespace rhoban_fa
 {
-
 OptimizerTrainerFactory::OptimizerTrainerFactory()
 {
-  registerBuilder("AdaptativeTree",
-                  []() { return std::unique_ptr<OptimizerTrainer>(new AdaptativeTree); });
+  registerBuilder("AdaptativeTree", []() { return std::unique_ptr<OptimizerTrainer>(new AdaptativeTree); });
 }
 
-}
+}  // namespace rhoban_fa

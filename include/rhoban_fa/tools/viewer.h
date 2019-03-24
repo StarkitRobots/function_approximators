@@ -6,18 +6,16 @@
 
 namespace rhoban_fa
 {
-
-class Viewer : public rhoban_viewer::Viewer {
-
+class Viewer : public rhoban_viewer::Viewer
+{
 public:
   /// fa_path should be readable by the FAFactory
   /// config_path should be a csv with n columns and 3 rows
   /// 1. headers (including value)
   /// 2. mins
   /// 3. maxs
-  Viewer(const std::string& fa_path,
-         const std::string& config_path,
-         unsigned int width = 800, unsigned int height = 600);
+  Viewer(const std::string& fa_path, const std::string& config_path, unsigned int width = 800,
+         unsigned int height = 600);
 
   /// Update status message
   void updateStatus();
@@ -30,12 +28,11 @@ public:
   int nbParameters() const;
 
   /**
-   * Jump to previous index if shift is pressed, next otherwise 
+   * Jump to previous index if shift is pressed, next otherwise
    */
   void navigate();
 
 protected:
-
   /// Rescale rawValue from current limits to [0,1]
   double rescaleValue(double rawValue, int dim);
 
@@ -65,10 +62,8 @@ protected:
   void updateCorners();
 
   /// Build a tile with the provided arguments
-  std::vector<Eigen::VectorXd> makeTile(const Eigen::MatrixXd & inputs,
-                                        const Eigen::VectorXd & outputs,
-                                        const std::vector<int> & samples_idx,
-                                        const std::vector<int> & free_dims);
+  std::vector<Eigen::VectorXd> makeTile(const Eigen::MatrixXd& inputs, const Eigen::VectorXd& outputs,
+                                        const std::vector<int>& samples_idx, const std::vector<int>& free_dims);
 
   void drawTiles();
 
@@ -76,13 +71,13 @@ protected:
   std::vector<int> freeDimensions();
 
   /// Accessors to current limits
-  const Eigen::MatrixXd & getCurrentLimits() const;
+  const Eigen::MatrixXd& getCurrentLimits() const;
 
   /// Append dimension description to a stream
-  void appendDim(int dim, std::ostream &out) const;
+  void appendDim(int dim, std::ostream& out) const;
 
   /// Append dimension limits to a stream
-  void appendLimits(int dim, std::ostream &out) const;
+  void appendLimits(int dim, std::ostream& out) const;
 
 private:
   /// The function approximator which is currently displayed
@@ -126,6 +121,5 @@ private:
   std::vector<std::vector<Eigen::VectorXd>> tiles;
   /// Color of corners
   std::vector<std::vector<rhoban_viewer::Color>> corners_color;
-      
 };
-}
+}  // namespace rhoban_fa

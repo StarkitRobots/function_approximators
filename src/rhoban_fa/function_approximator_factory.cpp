@@ -17,7 +17,6 @@
 
 namespace rhoban_fa
 {
-
 FunctionApproximatorFactory::FunctionApproximatorFactory()
 {
   registerBuilder(FunctionApproximator::ForestApproximator,
@@ -26,8 +25,7 @@ FunctionApproximatorFactory::FunctionApproximatorFactory()
                   []() { return std::unique_ptr<FunctionApproximator>(new PWCForest); });
   registerBuilder(FunctionApproximator::PWLForest,
                   []() { return std::unique_ptr<FunctionApproximator>(new PWLForest); });
-  registerBuilder(FunctionApproximator::FATree,
-                  []() { return std::unique_ptr<FunctionApproximator>(new FATree); });
+  registerBuilder(FunctionApproximator::FATree, []() { return std::unique_ptr<FunctionApproximator>(new FATree); });
   registerBuilder(FunctionApproximator::Constant,
                   []() { return std::unique_ptr<FunctionApproximator>(new ConstantApproximator); });
   registerBuilder(FunctionApproximator::Linear,
@@ -38,11 +36,9 @@ FunctionApproximatorFactory::FunctionApproximatorFactory()
                   []() { return std::unique_ptr<FunctionApproximator>(new DNNApproximator); });
 #endif
 #ifdef RHOBAN_FA_USES_GP
-  registerBuilder(FunctionApproximator::GP,
-                  []() { return std::unique_ptr<FunctionApproximator>(new GP); });
-  registerBuilder(FunctionApproximator::GPForest,
-                  []() { return std::unique_ptr<FunctionApproximator>(new GPForest); });
+  registerBuilder(FunctionApproximator::GP, []() { return std::unique_ptr<FunctionApproximator>(new GP); });
+  registerBuilder(FunctionApproximator::GPForest, []() { return std::unique_ptr<FunctionApproximator>(new GPForest); });
 #endif
 }
 
-}
+}  // namespace rhoban_fa

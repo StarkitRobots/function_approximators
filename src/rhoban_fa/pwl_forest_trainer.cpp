@@ -4,9 +4,12 @@ using regression_forests::Approximation;
 
 namespace rhoban_fa
 {
-
-PWLForestTrainer::PWLForestTrainer() {}
-PWLForestTrainer::~PWLForestTrainer() {}
+PWLForestTrainer::PWLForestTrainer()
+{
+}
+PWLForestTrainer::~PWLForestTrainer()
+{
+}
 
 regression_forests::Approximation::ID PWLForestTrainer::getApproximationID() const
 {
@@ -18,4 +21,4 @@ std::string PWLForestTrainer::getClassName() const
   return "PWLForestTrainer";
 }
 
-}
+}  // namespace rhoban_fa

@@ -4,75 +4,77 @@
 
 namespace rhoban_fa
 {
+LinearApproximator::LinearApproximator()
+{
+}
 
-LinearApproximator::LinearApproximator() {}
-
-LinearApproximator::LinearApproximator(const Eigen::VectorXd & bias_,
-                                       const Eigen::MatrixXd & coeffs_)
+LinearApproximator::LinearApproximator(const Eigen::VectorXd& bias_, const Eigen::MatrixXd& coeffs_)
   : bias(bias_), coeffs(coeffs_)
 {
 }
 
-LinearApproximator::LinearApproximator(int input_dim,
-                                       int output_dim,
-                                       const Eigen::VectorXd & parameters)
+LinearApproximator::LinearApproximator(int input_dim, int output_dim, const Eigen::VectorXd& parameters)
 {
   int expected_rows = (input_dim + 1) * output_dim;
-  if (parameters.rows() != expected_rows) {
+  if (parameters.rows() != expected_rows)
+  {
     std::ostringstream oss;
     oss << "LinearApproximator::LinearApproximator(int,int,const Eigen::VectorXd &): "
-        << "parameters has " << parameters.rows() << " rows, expected: "
-        << expected_rows;
+        << "parameters has " << parameters.rows() << " rows, expected: " << expected_rows;
     throw std::runtime_error(oss.str());
   }
-  bias = parameters.segment(0,output_dim);
+  bias = parameters.segment(0, output_dim);
   coeffs = Eigen::MatrixXd(output_dim, input_dim);
-  for (int col = 0; col < input_dim; col++) {
+  for (int col = 0; col < input_dim; col++)
+  {
     coeffs.col(col) = parameters.segment((col + 1) * output_dim, output_dim);
   }
 }
 
-LinearApproximator::LinearApproximator(int input_dim,
-                                       int output_dim,
-                                       const Eigen::VectorXd & parameters,
-                                       const Eigen::VectorXd & center)
+LinearApproximator::LinearApproximator(int input_dim, int output_dim, const Eigen::VectorXd& parameters,
+                                       const Eigen::VectorXd& center)
   : LinearApproximator(input_dim, output_dim, parameters)
 {
-  if (input_dim != center.rows()) {
+  if (input_dim != center.rows())
+  {
     std::ostringstream oss;
     oss << "LinearApproximator::LinearApproximator"
         << "(int,int,const Eigen::VectorXd &,const Eigen::VectorXd &): "
-        << "center has " << parameters.rows() << " rows, expected: "
-        << input_dim;
+        << "center has " << parameters.rows() << " rows, expected: " << input_dim;
     throw std::runtime_error(oss.str());
   }
   bias = bias - coeffs * center;
 }
 
-
 LinearApproximator::~LinearApproximator()
 {
 }
 
-std::unique_ptr<FunctionApproximator> LinearApproximator::clone() const {
+std::unique_ptr<FunctionApproximator> LinearApproximator::clone() const
+{
   return std::unique_ptr<FunctionApproximator>(new LinearApproximator(bias, coeffs));
 }
 
-Eigen::VectorXd LinearApproximator::getBias() const {
+Eigen::VectorXd LinearApproximator::getBias() const
+{
   return bias;
 }
 
-Eigen::VectorXd LinearApproximator::getBias(const Eigen::VectorXd & center) const {
+Eigen::VectorXd LinearApproximator::getBias(const Eigen::VectorXd& center) const
+{
   return bias + coeffs * center;
 }
 
-const Eigen::MatrixXd & LinearApproximator::getCoeffs() const {
+const Eigen::MatrixXd& LinearApproximator::getCoeffs() const
+{
   return coeffs;
 }
 
-Eigen::VectorXd LinearApproximator::getCoeffsAsVector() const {
+Eigen::VectorXd LinearApproximator::getCoeffsAsVector() const
+{
   Eigen::VectorXd vector(coeffs.rows() * coeffs.cols());
-  for (int col = 0; col < coeffs.cols(); col++) {
+  for (int col = 0; col < coeffs.cols(); col++)
+  {
     vector.segment(col * coeffs.rows(), coeffs.rows()) = coeffs.col(col);
   }
   return coeffs;
@@ -83,30 +85,25 @@ int LinearApproximator::getOutputDim() const
   return bias.rows();
 }
 
-void LinearApproximator::predict(const Eigen::VectorXd & input,
-                                 Eigen::VectorXd & mean,
-                                 Eigen::MatrixXd & covar) const
+void LinearApproximator::predict(const Eigen::VectorXd& input, Eigen::VectorXd& mean, Eigen::MatrixXd& covar) const
 {
-  (void) input;
+  (void)input;
   mean = bias + coeffs * input;
-  covar = Eigen::MatrixXd::Zero(getOutputDim(),getOutputDim());
+  covar = Eigen::MatrixXd::Zero(getOutputDim(), getOutputDim());
 }
 
-void LinearApproximator::gradient(const Eigen::VectorXd & input,
-                                  Eigen::VectorXd & gradient) const
+void LinearApproximator::gradient(const Eigen::VectorXd& input, Eigen::VectorXd& gradient) const
 {
-  (void) input;
+  (void)input;
   check1DOutput("getMaximum");
   gradient = coeffs.row(0);
 }
 
-void LinearApproximator::getMaximum(const Eigen::MatrixXd & limits,
-                                    Eigen::VectorXd & input,
-                                    double & output) const
+void LinearApproximator::getMaximum(const Eigen::MatrixXd& limits, Eigen::VectorXd& input, double& output) const
 {
-  (void) limits;
-  (void) input;
-  (void) output;
+  (void)limits;
+  (void)input;
+  (void)output;
   check1DOutput("getMaximum");
   throw std::logic_error("LinearApproximator::getMaximum is not implemented");
 }
@@ -116,11 +113,11 @@ int LinearApproximator::getClassID() const
   return Linear;
 }
 
-int LinearApproximator::writeInternal(std::ostream & out) const
+int LinearApproximator::writeInternal(std::ostream& out) const
 {
   int bytes_written = 0;
   int output_dim = getOutputDim();
-  int input_dim  = coeffs.cols();
+  int input_dim = coeffs.cols();
   bytes_written += rhoban_utils::write<int>(out, output_dim);
   bytes_written += rhoban_utils::write<int>(out, input_dim);
   bytes_written += rhoban_utils::writeArray<double>(out, output_dim, bias.data());
@@ -128,7 +125,7 @@ int LinearApproximator::writeInternal(std::ostream & out) const
   return bytes_written;
 }
 
-int LinearApproximator::read(std::istream & in)
+int LinearApproximator::read(std::istream& in)
 {
   int bytes_read = 0;
   int output_dim, input_dim;
@@ -136,72 +133,75 @@ int LinearApproximator::read(std::istream & in)
   bytes_read += rhoban_utils::read<int>(in, &input_dim);
   bias = Eigen::VectorXd(output_dim);
   coeffs = Eigen::MatrixXd(output_dim, input_dim);
-  bytes_read += rhoban_utils::readDoubleArray(in, bias.data()  , output_dim);
+  bytes_read += rhoban_utils::readDoubleArray(in, bias.data(), output_dim);
   bytes_read += rhoban_utils::readDoubleArray(in, coeffs.data(), output_dim * input_dim);
   return bytes_read;
 }
 
-std::string LinearApproximator::toString() const {
+std::string LinearApproximator::toString() const
+{
   std::ostringstream oss;
   oss << "(LinearApproximator| bias: " << bias.transpose() << " | coeffs: ";
-  for (int row = 0; row < coeffs.rows(); row++) {
+  for (int row = 0; row < coeffs.rows(); row++)
+  {
     oss << coeffs.row(row);
-    if (row != coeffs.rows() - 1) oss << "; ";
+    if (row != coeffs.rows() - 1)
+      oss << "; ";
   }
   oss << ")";
   return oss.str();
 }
 
-
-Eigen::MatrixXd
-LinearApproximator::getParametersSpace(const Eigen::MatrixXd & input_limits,
-                                       const Eigen::MatrixXd & output_limits,
-                                       bool narrow_slope) {
+Eigen::MatrixXd LinearApproximator::getParametersSpace(const Eigen::MatrixXd& input_limits,
+                                                       const Eigen::MatrixXd& output_limits, bool narrow_slope)
+{
   // Storing number of dimensions
   int input_dims = input_limits.rows();
   int output_dims = output_limits.rows();
   int training_dims = output_dims * (input_dims + 1);
-  
-  Eigen::MatrixXd linear_parameters_space(training_dims,2);
+
+  Eigen::MatrixXd linear_parameters_space(training_dims, 2);
   // Bias Limits
-  linear_parameters_space.block(0,0,output_dims, 2) = output_limits;
+  linear_parameters_space.block(0, 0, output_dims, 2) = output_limits;
   // Coeffs Limits
   // For each parameter, it might at most make the output vary from min to max in given space
-  for (int output_dim = 0; output_dim < output_dims; output_dim++) {
-    double output_amplitude = output_limits(output_dim,1) - output_limits(output_dim,0);
-    for (int input_dim = 0; input_dim < input_dims; input_dim++) {
+  for (int output_dim = 0; output_dim < output_dims; output_dim++)
+  {
+    double output_amplitude = output_limits(output_dim, 1) - output_limits(output_dim, 0);
+    for (int input_dim = 0; input_dim < input_dims; input_dim++)
+    {
       int index = output_dim + output_dims * (1 + input_dim);
-      double input_min = input_limits(input_dim,0);
-      double input_max = input_limits(input_dim,1);
+      double input_min = input_limits(input_dim, 0);
+      double input_max = input_limits(input_dim, 1);
       // Avoiding numerical issues
-      double input_amplitude = std::max(input_max - input_min,
-                                        std::pow(10,-12));
+      double input_amplitude = std::max(input_max - input_min, std::pow(10, -12));
       double max_coeff = output_amplitude / input_amplitude;
       // If narrow_slope is activated, then coefficients have to be combined
       // to make the output vary from min to max output
-      if (narrow_slope) {
+      if (narrow_slope)
+      {
         max_coeff /= input_dims;
       }
       linear_parameters_space(index, 0) = -max_coeff;
-      linear_parameters_space(index, 1) =  max_coeff;
+      linear_parameters_space(index, 1) = max_coeff;
     }
   }
   return linear_parameters_space;
 }
 
-Eigen::VectorXd
-LinearApproximator::getDefaultParameters(const Eigen::MatrixXd & input_limits,
-                                         const Eigen::MatrixXd & output_limits) {
+Eigen::VectorXd LinearApproximator::getDefaultParameters(const Eigen::MatrixXd& input_limits,
+                                                         const Eigen::MatrixXd& output_limits)
+{
   // Storing number of dimensions
   int input_dims = input_limits.rows();
   int output_dims = output_limits.rows();
-  int training_dims = (input_dims+1) * output_dims;
+  int training_dims = (input_dims + 1) * output_dims;
   // Default slopes are 0
   Eigen::VectorXd initial_params = Eigen::VectorXd::Zero(training_dims);
   // Default bias is middle of output limits
-  initial_params.segment(0,output_dims) = (output_limits.col(0) + output_limits.col(1)) / 2;
-  
+  initial_params.segment(0, output_dims) = (output_limits.col(0) + output_limits.col(1)) / 2;
+
   return initial_params;
 }
 
-}
+}  // namespace rhoban_fa

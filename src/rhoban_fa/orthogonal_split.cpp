@@ -4,17 +4,16 @@
 
 namespace rhoban_fa
 {
-
 OrthogonalSplit::OrthogonalSplit() : dim(-1), val(0)
 {
 }
 
-OrthogonalSplit::OrthogonalSplit(int dim_, double val_)
-  : dim(dim_), val(val_)
+OrthogonalSplit::OrthogonalSplit(int dim_, double val_) : dim(dim_), val(val_)
 {
 }
 
-std::unique_ptr<Split> OrthogonalSplit::clone() const {
+std::unique_ptr<Split> OrthogonalSplit::clone() const
+{
   return std::unique_ptr<Split>(new OrthogonalSplit(dim, val));
 }
 
@@ -23,7 +22,7 @@ int OrthogonalSplit::getNbElements() const
   return 2;
 }
 
-int OrthogonalSplit::getIndex(const Eigen::VectorXd & input) const
+int OrthogonalSplit::getIndex(const Eigen::VectorXd& input) const
 {
   // Checking for eventual issues
   if (dim < 0)
@@ -31,23 +30,23 @@ int OrthogonalSplit::getIndex(const Eigen::VectorXd & input) const
   if (input.rows() < dim)
   {
     std::ostringstream oss;
-    oss << "OrthogonalSplit::getIndex(): input has not enough rows: "
-        << input.rows() << " rows while split dim is " << dim;
+    oss << "OrthogonalSplit::getIndex(): input has not enough rows: " << input.rows() << " rows while split dim is "
+        << dim;
     throw std::logic_error(oss.str());
   }
   // Computing index
   return input(dim) < val ? 0 : 1;
 }
 
-std::vector<Eigen::MatrixXd> OrthogonalSplit::splitSpace(const Eigen::MatrixXd & space) const
+std::vector<Eigen::MatrixXd> OrthogonalSplit::splitSpace(const Eigen::MatrixXd& space) const
 {
   std::vector<Eigen::MatrixXd> result(2);
   // Index 0: max is val
   result[0] = space;
-  result[0](dim,1) = val;
+  result[0](dim, 1) = val;
   // Index 1: min is val
   result[1] = space;
-  result[1](dim,0) = val;
+  result[1](dim, 0) = val;
   return result;
 }
 
@@ -58,13 +57,12 @@ std::string OrthogonalSplit::toString() const
   return oss.str();
 }
 
-
 int OrthogonalSplit::getClassID() const
 {
   return ID::Orthogonal;
 }
 
-int OrthogonalSplit::writeInternal(std::ostream & out) const
+int OrthogonalSplit::writeInternal(std::ostream& out) const
 {
   int bytes_written = 0;
   bytes_written += rhoban_utils::write<int>(out, dim);
@@ -72,7 +70,7 @@ int OrthogonalSplit::writeInternal(std::ostream & out) const
   return bytes_written;
 }
 
-int OrthogonalSplit::read(std::istream & in)
+int OrthogonalSplit::read(std::istream& in)
 {
   int bytes_read = 0;
   bytes_read += rhoban_utils::read<int>(in, &dim);
@@ -80,4 +78,4 @@ int OrthogonalSplit::read(std::istream & in)
   return bytes_read;
 }
 
-}
+}  // namespace rhoban_fa

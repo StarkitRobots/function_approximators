@@ -5,8 +5,8 @@
 
 using namespace rhoban_fa;
 
-Eigen::VectorXd sampleOutput(const Eigen::VectorXd & input,
-                             std::default_random_engine * engine) {
+Eigen::VectorXd sampleOutput(const Eigen::VectorXd& input, std::default_random_engine* engine)
+{
   std::normal_distribution<double> noise_distrib(0, 0.01);
   Eigen::VectorXd result(2);
   result(0) = 100 * sin(input(0)) + noise_distrib(*engine);
@@ -14,8 +14,10 @@ Eigen::VectorXd sampleOutput(const Eigen::VectorXd & input,
   return result;
 }
 
-int main(int argc, char ** argv) {
-  if (argc < 2) {
+int main(int argc, char** argv)
+{
+  if (argc < 2)
+  {
     std::cerr << "Usage: " << argv[0] << " <trainer_config.json>" << std::endl;
     exit(EXIT_FAILURE);
   }
@@ -26,12 +28,13 @@ int main(int argc, char ** argv) {
 
   // Getting inputs and observations
   int nb_entries = 10000;
-  Eigen::MatrixXd limits(1,2);
+  Eigen::MatrixXd limits(1, 2);
   limits << -M_PI, M_PI;
   Eigen::MatrixXd inputs, observations;
   inputs = rhoban_random::getUniformSamplesMatrix(limits, nb_entries, &engine);
-  observations = Eigen::MatrixXd(nb_entries,2);
-  for (int i = 0; i < nb_entries; i++) {
+  observations = Eigen::MatrixXd(nb_entries, 2);
+  for (int i = 0; i < nb_entries; i++)
+  {
     observations.row(i) = sampleOutput(inputs.col(i), &engine).transpose();
   }
   // Learning approximator, saving it and reading it to get a copy
@@ -40,14 +43,15 @@ int main(int argc, char ** argv) {
   fa->save("fa.bin");
 
   std::unique_ptr<FunctionApproximator> fa_read;
-  FunctionApproximatorFactory().loadFromFile("fa.bin",fa_read);
+  FunctionApproximatorFactory().loadFromFile("fa.bin", fa_read);
 
   // Testing approximators
   int nb_tests = 2;
   Eigen::MatrixXd test_inputs;
   test_inputs = rhoban_random::getUniformSamplesMatrix(limits, nb_tests, &engine);
-  for (int i = 0; i < test_inputs.cols(); i++) {
-    const Eigen::VectorXd & input = test_inputs.col(i);
+  for (int i = 0; i < test_inputs.cols(); i++)
+  {
+    const Eigen::VectorXd& input = test_inputs.col(i);
     Eigen::VectorXd observation;
     Eigen::VectorXd mean_1, mean_2;
     Eigen::MatrixXd covar_1, covar_2;

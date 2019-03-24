@@ -4,7 +4,6 @@
 
 namespace rhoban_fa
 {
-
 class PWCForestTrainer : public ForestTrainer
 {
 public:
@@ -16,4 +15,4 @@ public:
   virtual std::string getClassName() const override;
 };
 
-}
+}  // namespace rhoban_fa

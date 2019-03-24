@@ -9,14 +9,11 @@
 
 namespace rhoban_fa
 {
-
 class GP : public FunctionApproximator
 {
 public:
-
   GP();
-  GP(std::unique_ptr<std::vector<rhoban_gp::GaussianProcess>> gps,
-     const rhoban_gp::RandomizedRProp::Config & ga_conf);
+  GP(std::unique_ptr<std::vector<rhoban_gp::GaussianProcess>> gps, const rhoban_gp::RandomizedRProp::Config& ga_conf);
 
   virtual ~GP();
 
@@ -24,20 +21,15 @@ public:
 
   virtual int getOutputDim() const override;
 
-  virtual void predict(const Eigen::VectorXd & inputs,
-                       Eigen::VectorXd & mean,
-                       Eigen::MatrixXd & covar) const override;
+  virtual void predict(const Eigen::VectorXd& inputs, Eigen::VectorXd& mean, Eigen::MatrixXd& covar) const override;
 
-  virtual void gradient(const Eigen::VectorXd & inputs,
-                        Eigen::VectorXd & gradients) const override;
+  virtual void gradient(const Eigen::VectorXd& inputs, Eigen::VectorXd& gradients) const override;
 
-  virtual void getMaximum(const Eigen::MatrixXd & limits,
-                          Eigen::VectorXd & input,
-                          double & output) const override;
+  virtual void getMaximum(const Eigen::MatrixXd& limits, Eigen::VectorXd& input, double& output) const override;
 
   virtual int getClassID() const override;
-  virtual int writeInternal(std::ostream & out) const override;
-  virtual int read(std::istream & in) override;
+  virtual int writeInternal(std::ostream& out) const override;
+  virtual int read(std::istream& in) override;
 
 private:
   /// One Gaussian process per output dimension
@@ -45,4 +37,4 @@ private:
   rhoban_gp::RandomizedRProp::Config ga_conf;
 };
 
-}
+}  // namespace rhoban_fa

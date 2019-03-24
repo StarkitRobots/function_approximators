@@ -8,11 +8,10 @@
 
 namespace rhoban_fa
 {
-
 class SplitFactory : public rhoban_utils::Factory<Split>
 {
 public:
   SplitFactory();
 };
 
-}
+}  // namespace rhoban_fa

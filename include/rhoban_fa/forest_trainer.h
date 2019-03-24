@@ -7,7 +7,6 @@
 
 namespace rhoban_fa
 {
-
 class ForestTrainer : public Trainer
 {
 public:
@@ -21,13 +20,12 @@ public:
 
   /// Update internal structure according to the provided samples
   /// Current method uses default configuration for extra-trees
-  virtual std::unique_ptr<FunctionApproximator>
-  train(const Eigen::MatrixXd & inputs,
-        const Eigen::MatrixXd & observations,
-        const Eigen::MatrixXd & limits) const override;
+  virtual std::unique_ptr<FunctionApproximator> train(const Eigen::MatrixXd& inputs,
+                                                      const Eigen::MatrixXd& observations,
+                                                      const Eigen::MatrixXd& limits) const override;
 
   virtual Json::Value toJson() const override;
-  virtual void fromJson(const Json::Value & v, const std::string & dir_name) override;
+  virtual void fromJson(const Json::Value& v, const std::string& dir_name) override;
 
 private:
   /// Maximal number of tiles used for getting max
@@ -38,4 +36,4 @@ private:
   int nb_trees;
 };
 
-}
+}  // namespace rhoban_fa

@@ -6,20 +6,28 @@
 using namespace rhoban_fa;
 using namespace rhoban_utils;
 
-class DataSet : public JsonSerializable {
+class DataSet : public JsonSerializable
+{
 public:
-  DataSet() {}
+  DataSet()
+  {
+  }
 
-  std::string getClassName() const override { return "DataSet";}
+  std::string getClassName() const override
+  {
+    return "DataSet";
+  }
 
-  void fromJson(const Json::Value & v, const std::string & dir_name) override {
-    (void) dir_name;
+  void fromJson(const Json::Value& v, const std::string& dir_name) override
+  {
+    (void)dir_name;
     inputs = rhoban_utils::read<Eigen::MatrixXd>(v, "inputs");
     outputs = rhoban_utils::read<Eigen::MatrixXd>(v, "outputs");
   }
-  Json::Value toJson() const override {
+  Json::Value toJson() const override
+  {
     Json::Value v;
-    v["inputs"]  = matrix2Json(inputs);
+    v["inputs"] = matrix2Json(inputs);
     v["outputs"] = matrix2Json(outputs);
     return v;
   }
@@ -28,9 +36,10 @@ public:
   Eigen::MatrixXd outputs;
 };
 
-
-int main(int argc, char ** argv) {
-  if (argc < 3) {
+int main(int argc, char** argv)
+{
+  if (argc < 3)
+  {
     std::cerr << "Usage: " << argv[0] << " <trainer_config.json> <dataset.json>" << std::endl;
     exit(EXIT_FAILURE);
   }
@@ -43,17 +52,18 @@ int main(int argc, char ** argv) {
 
   // Learning approximator, saving it and reading it to get a copy
   // TODO: limits should be provided by the dataset
-  std::unique_ptr<FunctionApproximator> fa = trainer->train(ds.inputs, ds.outputs.transpose(), Eigen::MatrixXd(10,2));
+  std::unique_ptr<FunctionApproximator> fa = trainer->train(ds.inputs, ds.outputs.transpose(), Eigen::MatrixXd(10, 2));
 
   fa->save("fa.bin");
 
   std::unique_ptr<FunctionApproximator> fa_read;
-  FunctionApproximatorFactory().loadFromFile("fa.bin",fa_read);
+  FunctionApproximatorFactory().loadFromFile("fa.bin", fa_read);
 
   // Testing approximators on inputs
   int nb_tests = 5;
-  for (int i = 0; i < nb_tests; i++) {
-    const Eigen::VectorXd & input = ds.inputs.col(i);
+  for (int i = 0; i < nb_tests; i++)
+  {
+    const Eigen::VectorXd& input = ds.inputs.col(i);
     Eigen::VectorXd observation;
     Eigen::VectorXd mean_1, mean_2;
     Eigen::MatrixXd covar_1, covar_2;

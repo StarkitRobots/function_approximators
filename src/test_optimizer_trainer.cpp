@@ -6,7 +6,6 @@
 
 #include <fenv.h>
 
-
 using namespace rhoban_fa;
 
 struct ParametrizedBlackBox
@@ -23,34 +22,31 @@ struct ParametrizedBlackBox
 struct ParametrizedBlackBox getContinuousBlackBox(int dim, double noise_ratio, double tol)
 {
   struct ParametrizedBlackBox result;
-  result.parameters_limits = Eigen::MatrixXd(dim,2);
+  result.parameters_limits = Eigen::MatrixXd(dim, 2);
   result.parameters_limits.col(0) = Eigen::VectorXd::Constant(dim, -1);
-  result.parameters_limits.col(1) = Eigen::VectorXd::Constant(dim,  1);
+  result.parameters_limits.col(1) = Eigen::VectorXd::Constant(dim, 1);
   result.actions_limits = result.parameters_limits;
-  result.reward = 
-    [noise_ratio, tol](const Eigen::VectorXd & parameters,
-       const Eigen::VectorXd & actions,
-       std::default_random_engine * engine)
-    {
-      std::uniform_real_distribution<double> noise_distrib(1 - noise_ratio, 1 + noise_ratio);
-      double move_ratio = noise_distrib(*engine);
-      Eigen::VectorXd final_pos = parameters + actions * move_ratio;
-      double error = std::sqrt(final_pos.squaredNorm());
-      double extra_error = std::max(0.0,error - tol);
-      return -(extra_error * extra_error);
-    };
+  result.reward = [noise_ratio, tol](const Eigen::VectorXd& parameters, const Eigen::VectorXd& actions,
+                                     std::default_random_engine* engine) {
+    std::uniform_real_distribution<double> noise_distrib(1 - noise_ratio, 1 + noise_ratio);
+    double move_ratio = noise_distrib(*engine);
+    Eigen::VectorXd final_pos = parameters + actions * move_ratio;
+    double error = std::sqrt(final_pos.squaredNorm());
+    double extra_error = std::max(0.0, error - tol);
+    return -(extra_error * extra_error);
+  };
   return result;
 }
 
 // NOT WORKING YET
-//struct ParametrizedBlackBox getDiscreteBlackBox(int dim)
+// struct ParametrizedBlackBox getDiscreteBlackBox(int dim)
 //{
 //  struct ParametrizedBlackBox result;
 //  result.parameters_limits = Eigen::MatrixXd(dim,2);
 //  result.parameters_limits.col(0) = Eigen::VectorXd::Constant(dim, -1);
 //  result.parameters_limits.col(1) = Eigen::VectorXd::Constant(dim,  1);
 //  result.actions_limits = result.parameters_limits;
-//  result.reward = 
+//  result.reward =
 //    [noise_ratio, tol](const Eigen::VectorXd & parameters,
 //       const Eigen::VectorXd & actions,
 //       std::default_random_engine * engine)
@@ -65,9 +61,9 @@ struct ParametrizedBlackBox getContinuousBlackBox(int dim, double noise_ratio, d
 //  return result;
 //}
 
-int main(int argc, char ** argv)
+int main(int argc, char** argv)
 {
-  feenableexcept(FE_DIVBYZERO| FE_INVALID | FE_OVERFLOW);
+  feenableexcept(FE_DIVBYZERO | FE_INVALID | FE_OVERFLOW);
 
   // Checking parameters
   if (argc < 2)
@@ -82,7 +78,7 @@ int main(int argc, char ** argv)
   std::unique_ptr<OptimizerTrainer> optimizer_trainer;
   optimizer_trainer = OptimizerTrainerFactory().buildFromJsonFile(argv[1]);
   // Building pbb and customizing trainer
-  struct ParametrizedBlackBox pbb = getContinuousBlackBox(2, 0.05,0.1);
+  struct ParametrizedBlackBox pbb = getContinuousBlackBox(2, 0.05, 0.1);
   optimizer_trainer->setParametersLimits(pbb.parameters_limits);
   optimizer_trainer->setActionsLimits(pbb.actions_limits);
   // Running optimizer trainer
@@ -93,9 +89,7 @@ int main(int argc, char ** argv)
   // Performing evaluation
   double total_reward = 0;
   Eigen::MatrixXd evaluation_set;
-  evaluation_set = rhoban_random::getUniformSamplesMatrix(pbb.parameters_limits,
-                                                          nb_evaluations,
-                                                          &engine);
+  evaluation_set = rhoban_random::getUniformSamplesMatrix(pbb.parameters_limits, nb_evaluations, &engine);
   for (int i = 0; i < nb_evaluations; i++)
   {
     Eigen::VectorXd parameters = evaluation_set.col(i);

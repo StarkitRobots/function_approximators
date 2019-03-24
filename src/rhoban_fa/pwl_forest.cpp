@@ -2,17 +2,21 @@
 
 namespace rhoban_fa
 {
+PWLForest::PWLForest()
+{
+}
 
-PWLForest::PWLForest() {}
-
-PWLForest::PWLForest(std::unique_ptr<Forests> forests_,
-                     int max_action_tiles_)
+PWLForest::PWLForest(std::unique_ptr<Forests> forests_, int max_action_tiles_)
   : ForestApproximator(std::move(forests_), max_action_tiles_)
-{}
+{
+}
 
-PWLForest::~PWLForest() {}
+PWLForest::~PWLForest()
+{
+}
 
-std::unique_ptr<FunctionApproximator> PWLForest::clone() const {
+std::unique_ptr<FunctionApproximator> PWLForest::clone() const
+{
   std::unique_ptr<PWLForest> copy(new PWLForest);
   copy->forests = cloneForests(*forests);
   copy->max_action_tiles = max_action_tiles;
@@ -25,4 +29,4 @@ int PWLForest::getClassID() const
   return FunctionApproximator::PWLForest;
 }
 
-}
+}  // namespace rhoban_fa

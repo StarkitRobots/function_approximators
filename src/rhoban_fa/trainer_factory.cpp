@@ -13,19 +13,17 @@
 
 namespace rhoban_fa
 {
-
 TrainerFactory::TrainerFactory()
 {
-  registerBuilder("PWCForestTrainer", [](){return std::unique_ptr<Trainer>(new PWCForestTrainer);});
-  registerBuilder("PWLForestTrainer", [](){return std::unique_ptr<Trainer>(new PWLForestTrainer);});
+  registerBuilder("PWCForestTrainer", []() { return std::unique_ptr<Trainer>(new PWCForestTrainer); });
+  registerBuilder("PWLForestTrainer", []() { return std::unique_ptr<Trainer>(new PWLForestTrainer); });
 #ifdef RHOBAN_FA_USES_DNN
-  registerBuilder("DNNApproximatorTrainer",
-                  [](){return std::unique_ptr<Trainer>(new DNNApproximatorTrainer);});
+  registerBuilder("DNNApproximatorTrainer", []() { return std::unique_ptr<Trainer>(new DNNApproximatorTrainer); });
 #endif
 #ifdef RHOBAN_FA_USES_GP
-  registerBuilder("GPTrainer"       , [](){return std::unique_ptr<Trainer>(new GPTrainer);       });
-  registerBuilder("GPForestTrainer" , [](){return std::unique_ptr<Trainer>(new GPForestTrainer); });
+  registerBuilder("GPTrainer", []() { return std::unique_ptr<Trainer>(new GPTrainer); });
+  registerBuilder("GPForestTrainer", []() { return std::unique_ptr<Trainer>(new GPForestTrainer); });
 #endif
 }
 
-}
+}  // namespace rhoban_fa

@@ -6,50 +6,44 @@
 
 namespace rhoban_fa
 {
-
-class DNNApproximatorTrainer : public Trainer {
+class DNNApproximatorTrainer : public Trainer
+{
 public:
-
-  enum LossFunction {MSE, Abs};
+  enum LossFunction
+  {
+    MSE,
+    Abs
+  };
 
   DNNApproximatorTrainer();
 
-  virtual std::unique_ptr<FunctionApproximator>
-  train(const Eigen::MatrixXd & inputs,
-        const Eigen::MatrixXd & observations,
-        const Eigen::MatrixXd & limits) const override;
+  virtual std::unique_ptr<FunctionApproximator> train(const Eigen::MatrixXd& inputs,
+                                                      const Eigen::MatrixXd& observations,
+                                                      const Eigen::MatrixXd& limits) const override;
 
-  virtual std::unique_ptr<FunctionApproximator>
-  train(const Eigen::MatrixXd & inputs,
-        const Eigen::MatrixXd & observations,
-        const Eigen::MatrixXd & limits,
-        const FunctionApproximator & initial_fa) const override;
+  virtual std::unique_ptr<FunctionApproximator> train(const Eigen::MatrixXd& inputs,
+                                                      const Eigen::MatrixXd& observations,
+                                                      const Eigen::MatrixXd& limits,
+                                                      const FunctionApproximator& initial_fa) const override;
 
   /// Train several networks with different learning rates simultaneously and
   /// returns the best according to cross-validation loss
-  DNNApproximator::network trainBestNN(const DNNApproximator::network & initial_network,
-                                       const Eigen::MatrixXd & inputs,
-                                       const Eigen::MatrixXd & outputs,
-                                       bool reset_weights) const;
+  DNNApproximator::network trainBestNN(const DNNApproximator::network& initial_network, const Eigen::MatrixXd& inputs,
+                                       const Eigen::MatrixXd& outputs, bool reset_weights) const;
 
-  double getLoss(DNNApproximator::network * nn,
-                 const std::vector<tiny_dnn::vec_t> & training_inputs,
-                 const std::vector<tiny_dnn::vec_t> & training_outputs) const;
+  double getLoss(DNNApproximator::network* nn, const std::vector<tiny_dnn::vec_t>& training_inputs,
+                 const std::vector<tiny_dnn::vec_t>& training_outputs) const;
 
   /// Train the provided neural network with the given data and learning rate
   /// The final loss for the cross_validation set is placed in cv_loss
-  void trainNN(const std::vector<tiny_dnn::vec_t> & training_inputs,
-               const std::vector<tiny_dnn::vec_t> & training_outputs,
-               const std::vector<tiny_dnn::vec_t> & cv_inputs,
-               const std::vector<tiny_dnn::vec_t> & cv_outputs,
-               double learning_rate,
-               bool reset_weights,
-               DNNApproximator::network * nn,
-               double * cv_loss) const;
+  void trainNN(const std::vector<tiny_dnn::vec_t>& training_inputs,
+               const std::vector<tiny_dnn::vec_t>& training_outputs, const std::vector<tiny_dnn::vec_t>& cv_inputs,
+               const std::vector<tiny_dnn::vec_t>& cv_outputs, double learning_rate, bool reset_weights,
+               DNNApproximator::network* nn, double* cv_loss) const;
 
   virtual std::string getClassName() const override;
   virtual Json::Value toJson() const override;
-  virtual void fromJson(const Json::Value & v, const std::string & dir_name) override;
+  virtual void fromJson(const Json::Value& v, const std::string& dir_name) override;
 
 private:
   /// Nb elements in each hidden layer
@@ -74,4 +68,4 @@ private:
   int verbose;
 };
 
-}
+}  // namespace rhoban_fa

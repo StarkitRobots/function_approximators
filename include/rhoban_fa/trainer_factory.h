@@ -4,7 +4,6 @@
 
 namespace rhoban_fa
 {
-
 class TrainerFactory : public rhoban_utils::Factory<Trainer>
 {
 public:
@@ -12,5 +11,4 @@ public:
   TrainerFactory();
 };
 
-
-}
+}  // namespace rhoban_fa

@@ -12,7 +12,6 @@
 
 namespace rhoban_fa
 {
-
 /// Optimizer trainers can be used to learn an approximation of the optimal
 /// policy for a function requiring a set of parameters (which are imposed) and
 /// a set of action (which can be chosen according to the parameters).
@@ -29,31 +28,29 @@ namespace rhoban_fa
 class OptimizerTrainer : public rhoban_utils::JsonSerializable
 {
 public:
-  typedef std::function<double(const Eigen::VectorXd & parameters,
-                               const Eigen::VectorXd & actions,
-                               std::default_random_engine * engine)> RewardFunction;
+  typedef std::function<double(const Eigen::VectorXd& parameters, const Eigen::VectorXd& actions,
+                               std::default_random_engine* engine)>
+      RewardFunction;
 
   OptimizerTrainer();
   virtual ~OptimizerTrainer();
 
   /// Generate it's own sample to train on the given function
-  virtual std::unique_ptr<FunctionApproximator>
-  train(RewardFunction rf, std::default_random_engine * engine) = 0;
+  virtual std::unique_ptr<FunctionApproximator> train(RewardFunction rf, std::default_random_engine* engine) = 0;
 
   /// Reset internal memory
   virtual void reset();
 
   /// Update the space of parameters
-  void setParametersLimits(const Eigen::MatrixXd & new_limits);
+  void setParametersLimits(const Eigen::MatrixXd& new_limits);
 
   /// Update the space of actions
-  void setActionsLimits(const Eigen::MatrixXd & new_limits);
+  void setActionsLimits(const Eigen::MatrixXd& new_limits);
 
   /// Choose the number of threads allowed for the optimizer
   void setNbThreads(int nb_threads);
 
 protected:
-
   /// Number of dimensions for parameters
   int getParametersDim() const;
 
@@ -70,4 +67,4 @@ protected:
   int nb_threads;
 };
 
-}
+}  // namespace rhoban_fa

@@ -2,29 +2,29 @@
 
 #include "rhoban_utils/io_tools.h"
 
-//TODO: a check for coeffs value should be used to avoid the specific case where all elements are 0
+// TODO: a check for coeffs value should be used to avoid the specific case where all elements are 0
 
 namespace rhoban_fa
 {
-
 LinearSplit::LinearSplit()
 {
 }
 
-LinearSplit::LinearSplit(const Eigen::VectorXd & coeffs_, double offset_)
+LinearSplit::LinearSplit(const Eigen::VectorXd& coeffs_, double offset_)
 {
-  double length =  coeffs_.norm();
+  double length = coeffs_.norm();
   coeffs = coeffs_ / length;
   offset = offset_ / length;
 }
 
-LinearSplit::LinearSplit(const Eigen::VectorXd & coeffs_, const Eigen::VectorXd & point)
+LinearSplit::LinearSplit(const Eigen::VectorXd& coeffs_, const Eigen::VectorXd& point)
 {
   coeffs = coeffs_.normalized();
   offset = -coeffs.dot(point);
 }
 
-std::unique_ptr<Split> LinearSplit::clone() const {
+std::unique_ptr<Split> LinearSplit::clone() const
+{
   return std::unique_ptr<Split>(new LinearSplit(coeffs, offset));
 }
 
@@ -33,19 +33,20 @@ int LinearSplit::getNbElements() const
   return 2;
 }
 
-int LinearSplit::getIndex(const Eigen::VectorXd & input) const
+int LinearSplit::getIndex(const Eigen::VectorXd& input) const
 {
   // Index is based on signed distance
   double dist = coeffs.dot(input) + offset;
-  if (dist > 0) {
+  if (dist > 0)
+  {
     return 1;
   }
   return 0;
 }
 
-std::vector<Eigen::MatrixXd> LinearSplit::splitSpace(const Eigen::MatrixXd & space) const
+std::vector<Eigen::MatrixXd> LinearSplit::splitSpace(const Eigen::MatrixXd& space) const
 {
-  (void) space;
+  (void)space;
   throw std::logic_error("LinearSplit::splitSpace: forbidden (cannot split into hyperrectangles)");
 }
 
@@ -61,7 +62,7 @@ int LinearSplit::getClassID() const
   return ID::Linear;
 }
 
-int LinearSplit::writeInternal(std::ostream & out) const
+int LinearSplit::writeInternal(std::ostream& out) const
 {
   int bytes_written = 0;
   int dim = coeffs.rows();
@@ -71,7 +72,7 @@ int LinearSplit::writeInternal(std::ostream & out) const
   return bytes_written;
 }
 
-int LinearSplit::read(std::istream & in)
+int LinearSplit::read(std::istream& in)
 {
   int bytes_read = 0;
   int dim(0);
@@ -82,4 +83,4 @@ int LinearSplit::read(std::istream & in)
   return bytes_read;
 }
 
-}
+}  // namespace rhoban_fa

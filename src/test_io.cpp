@@ -16,14 +16,16 @@ int main()
   // Creating some random samples for test
   int nb_cells = 5;
   int nb_cells2 = nb_cells * nb_cells;
-  Eigen::MatrixXd inputs(2,nb_cells2);
-  Eigen::MatrixXd observations(nb_cells2,2);
-  Eigen::MatrixXd limits(2,2);
+  Eigen::MatrixXd inputs(2, nb_cells2);
+  Eigen::MatrixXd observations(nb_cells2, 2);
+  Eigen::MatrixXd limits(2, 2);
   limits << 0, nb_cells, 0, nb_cells;
   // Creating sample from (x,y) -> (x - 2 * y, abs(x) * sin(y))
   int sample = 0;
-  for (int x = 0; x < nb_cells; x++) {
-    for (int y = 0; y < nb_cells; y++) {
+  for (int x = 0; x < nb_cells; x++)
+  {
+    for (int y = 0; y < nb_cells; y++)
+    {
       inputs(0, sample) = x;
       inputs(1, sample) = y;
       observations(sample, 0) = x - 2 * y;
@@ -31,16 +33,10 @@ int main()
       sample++;
     }
   }
-  std::vector<std::string> test_types =
-    {
-      "GPTrainer",
-      "GPForestTrainer",
-      "PWCForestTrainer",
-      "PWLForestTrainer"
-    };
+  std::vector<std::string> test_types = { "GPTrainer", "GPForestTrainer", "PWCForestTrainer", "PWLForestTrainer" };
   TrainerFactory trainer_factory;
   FunctionApproximatorFactory fa_factory;
-  for (const std::string & trainer_name : test_types)
+  for (const std::string& trainer_name : test_types)
   {
     std::cout << "-------------------------------------------" << std::endl
               << "Running test for trainer: " << trainer_name << std::endl;
@@ -65,7 +61,7 @@ int main()
 
     // writing copy
     int copy_bytes_written = copy_fa->save(copy_filename);
-    std::cout << "Copy bytes written    : " << copy_bytes_written     << std::endl;
+    std::cout << "Copy bytes written    : " << copy_bytes_written << std::endl;
 
     Eigen::VectorXd test_input(2);
     test_input << 1.5, 2.5;
@@ -78,8 +74,10 @@ int main()
     // Outputting some messages:
     std::cout << "For test input: " << test_input.transpose() << std::endl
               << "\toriginal prediction : " << original_prediction.transpose() << std::endl
-              << "\tcopy prediction     : " << copy_prediction.transpose()     << std::endl
-              << "\toriginal variance   : " << std::endl << original_variance  << std::endl
-              << "\tcopy variance       : " << std::endl << copy_variance      << std::endl;
+              << "\tcopy prediction     : " << copy_prediction.transpose() << std::endl
+              << "\toriginal variance   : " << std::endl
+              << original_variance << std::endl
+              << "\tcopy variance       : " << std::endl
+              << copy_variance << std::endl;
   }
 }

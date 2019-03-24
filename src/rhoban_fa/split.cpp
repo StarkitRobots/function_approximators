@@ -2,8 +2,7 @@
 
 namespace rhoban_fa
 {
-
-std::vector<Eigen::MatrixXd> Split::splitEntries(const Eigen::MatrixXd & input) const
+std::vector<Eigen::MatrixXd> Split::splitEntries(const Eigen::MatrixXd& input) const
 {
   // Main variables
   int nb_separations = getNbElements();
@@ -27,4 +26,4 @@ std::vector<Eigen::MatrixXd> Split::splitEntries(const Eigen::MatrixXd & input) 
   return result;
 }
 
-}
+}  // namespace rhoban_fa

@@ -10,29 +10,27 @@ using rhoban_gp::SquaredExponential;
 
 namespace rhoban_fa
 {
-
 GPTrainer::GPTrainer()
 {
   autotune_conf.nb_trials = 2;
   autotune_conf.rprop_conf->max_iterations = 50;
-  autotune_conf.rprop_conf->epsilon = std::pow(10,-6);
+  autotune_conf.rprop_conf->epsilon = std::pow(10, -6);
   autotune_conf.rprop_conf->tuning_space = rhoban_gp::RProp::TuningSpace::Log;
   ga_conf.nb_trials = 10;
   ga_conf.rprop_conf->max_iterations = 1000;
-  ga_conf.rprop_conf->epsilon = std::pow(10,-6);
+  ga_conf.rprop_conf->epsilon = std::pow(10, -6);
 }
 
-std::unique_ptr<FunctionApproximator> GPTrainer::train(const Eigen::MatrixXd & inputs,
-                                                       const Eigen::MatrixXd & observations,
-                                                       const Eigen::MatrixXd & limits) const
+std::unique_ptr<FunctionApproximator> GPTrainer::train(const Eigen::MatrixXd& inputs,
+                                                       const Eigen::MatrixXd& observations,
+                                                       const Eigen::MatrixXd& limits) const
 {
   checkConsistency(inputs, observations, limits);
   std::unique_ptr<std::vector<rhoban_gp::GaussianProcess>> gps(new std::vector<rhoban_gp::GaussianProcess>());
   for (int output_dim = 0; output_dim < observations.cols(); output_dim++)
   {
     std::unique_ptr<CovarianceFunction> cov_func(new SquaredExponential(inputs.rows()));
-    gps->push_back(GaussianProcess(inputs, observations.col(output_dim),
-                                  std::move(cov_func)));
+    gps->push_back(GaussianProcess(inputs, observations.col(output_dim), std::move(cov_func)));
     (*gps)[output_dim].autoTune(autotune_conf);
   }
   return std::unique_ptr<FunctionApproximator>(new GP(std::move(gps), ga_conf));
@@ -51,11 +49,11 @@ Json::Value GPTrainer::toJson() const
   return v;
 }
 
-void GPTrainer::fromJson(const Json::Value & v, const std::string & dir_name)
+void GPTrainer::fromJson(const Json::Value& v, const std::string& dir_name)
 {
-  Trainer::fromJson(v,dir_name);
+  Trainer::fromJson(v, dir_name);
   autotune_conf.tryRead(v, "auto_tune_conf");
   ga_conf.tryRead(v, "ga_conf");
 }
 
-}
+}  // namespace rhoban_fa

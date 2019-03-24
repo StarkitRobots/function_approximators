@@ -4,11 +4,11 @@
 
 namespace rhoban_fa
 {
+ConstantApproximator::ConstantApproximator()
+{
+}
 
-ConstantApproximator::ConstantApproximator() {}
-
-ConstantApproximator::ConstantApproximator(const Eigen::VectorXd & average_)
-  : average(average_)
+ConstantApproximator::ConstantApproximator(const Eigen::VectorXd& average_) : average(average_)
 {
 }
 
@@ -16,11 +16,13 @@ ConstantApproximator::~ConstantApproximator()
 {
 }
 
-std::unique_ptr<FunctionApproximator> ConstantApproximator::clone() const {
+std::unique_ptr<FunctionApproximator> ConstantApproximator::clone() const
+{
   return std::unique_ptr<FunctionApproximator>(new ConstantApproximator(average));
 }
 
-const Eigen::VectorXd & ConstantApproximator::getValue() const {
+const Eigen::VectorXd& ConstantApproximator::getValue() const
+{
   return average;
 }
 
@@ -29,25 +31,20 @@ int ConstantApproximator::getOutputDim() const
   return average.rows();
 }
 
-void ConstantApproximator::predict(const Eigen::VectorXd & input,
-                                   Eigen::VectorXd & mean,
-                                   Eigen::MatrixXd & covar) const
+void ConstantApproximator::predict(const Eigen::VectorXd& input, Eigen::VectorXd& mean, Eigen::MatrixXd& covar) const
 {
-  (void) input;
+  (void)input;
   mean = average;
-  covar = Eigen::MatrixXd::Zero(getOutputDim(),getOutputDim());
+  covar = Eigen::MatrixXd::Zero(getOutputDim(), getOutputDim());
 }
 
-void ConstantApproximator::gradient(const Eigen::VectorXd & input,
-                                    Eigen::VectorXd & gradient) const
+void ConstantApproximator::gradient(const Eigen::VectorXd& input, Eigen::VectorXd& gradient) const
 {
   check1DOutput("getMaximum");
   gradient = Eigen::VectorXd::Zero(input.rows());
 }
 
-void ConstantApproximator::getMaximum(const Eigen::MatrixXd & limits,
-                                     Eigen::VectorXd & input,
-                                     double & output) const
+void ConstantApproximator::getMaximum(const Eigen::MatrixXd& limits, Eigen::VectorXd& input, double& output) const
 {
   check1DOutput("getMaximum");
   input = (limits.col(0) + limits.col(1)) / 2.0;
@@ -59,7 +56,7 @@ int ConstantApproximator::getClassID() const
   return Constant;
 }
 
-int ConstantApproximator::writeInternal(std::ostream & out) const
+int ConstantApproximator::writeInternal(std::ostream& out) const
 {
   int bytes_written = 0;
   int dim = getOutputDim();
@@ -68,7 +65,7 @@ int ConstantApproximator::writeInternal(std::ostream & out) const
   return bytes_written;
 }
 
-int ConstantApproximator::read(std::istream & in)
+int ConstantApproximator::read(std::istream& in)
 {
   int bytes_read = 0;
   int output_dim;
@@ -78,10 +75,11 @@ int ConstantApproximator::read(std::istream & in)
   return bytes_read;
 }
 
-std::string ConstantApproximator::toString() const {
+std::string ConstantApproximator::toString() const
+{
   std::ostringstream oss;
   oss << "(ConstantApproximator| avg: " << average.transpose() << " )";
   return oss.str();
 }
 
-}
+}  // namespace rhoban_fa

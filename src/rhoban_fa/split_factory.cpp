@@ -7,17 +7,12 @@
 
 namespace rhoban_fa
 {
-
 SplitFactory::SplitFactory()
 {
-  registerBuilder(Split::Orthogonal,
-                  []() { return std::unique_ptr<Split>(new OrthogonalSplit); });
-  registerBuilder(Split::Point,
-                  []() { return std::unique_ptr<Split>(new PointSplit); });
-  registerBuilder(Split::Fake,
-                  []() { return std::unique_ptr<Split>(new FakeSplit); });
-  registerBuilder(Split::Linear,
-                  []() { return std::unique_ptr<Split>(new LinearSplit); });
+  registerBuilder(Split::Orthogonal, []() { return std::unique_ptr<Split>(new OrthogonalSplit); });
+  registerBuilder(Split::Point, []() { return std::unique_ptr<Split>(new PointSplit); });
+  registerBuilder(Split::Fake, []() { return std::unique_ptr<Split>(new FakeSplit); });
+  registerBuilder(Split::Linear, []() { return std::unique_ptr<Split>(new LinearSplit); });
 }
 
-}
+}  // namespace rhoban_fa

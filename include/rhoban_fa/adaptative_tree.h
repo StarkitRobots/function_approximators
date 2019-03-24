@@ -9,7 +9,6 @@
 
 namespace rhoban_fa
 {
-
 /// This classes uses the following concepts:
 /// - A set of samples is used to build tree-based approximations
 /// - The set of samples can only be splitted on medians and is always splitted
@@ -17,7 +16,7 @@ namespace rhoban_fa
 /// - Evaluation of interpolation methods is performed through cross-validation,
 ///   in order to avoid over-fitting (on generated states)
 /// - At each step, multiple models are fitted and the best one is chosen
-///   (according to cross-validation) 
+///   (according to cross-validation)
 /// - Multiple generations can be used, in this case each generation is based on
 ///   the previous one and has more chance to optimize samples in areas where
 ///   the loss due to use of the approximator is expected to be the highest
@@ -49,14 +48,12 @@ public:
     int nb_samples;
   };
 
-
-  typedef std::function<double(const FunctionApproximator & policy,
-                               std::default_random_engine * engine)> EvaluationFunction;
+  typedef std::function<double(const FunctionApproximator& policy, std::default_random_engine* engine)>
+      EvaluationFunction;
   AdaptativeTree();
   virtual ~AdaptativeTree();
 
-  virtual std::unique_ptr<FunctionApproximator>
-  train(RewardFunction rf, std::default_random_engine * engine);
+  virtual std::unique_ptr<FunctionApproximator> train(RewardFunction rf, std::default_random_engine* engine);
 
   /// Reset all internal memory of the algorithm
   virtual void reset() override;
@@ -64,78 +61,64 @@ public:
   /// Generate a new set of samples:
   /// - Using uniformous random for first generation
   /// - Based on processed leaves on further generation
-  Eigen::MatrixXd generateParametersSet(std::default_random_engine * engine);
+  Eigen::MatrixXd generateParametersSet(std::default_random_engine* engine);
 
   /// Initialize the tree for the provide set of samples
   /// - generate the set of samples to be used for the generation
   /// - use recursion to determine the complete FunctionApproximator
-  std::unique_ptr<FunctionApproximator> runGeneration(RewardFunction rf,
-                                                      std::default_random_engine * engine);
+  std::unique_ptr<FunctionApproximator> runGeneration(RewardFunction rf, std::default_random_engine* engine);
 
   /// Use an initial guess with its own value and if splitting improves, then split it
   /// - Add leafs created to processed leafs
   /// - Return the function approximator chosen by candidate
   /// - Might consume candidate.approximator
-  std::unique_ptr<FunctionApproximator> buildApproximator(RewardFunction rf,
-                                                          ApproximatorCandidate & candidate,
-                                                          std::default_random_engine * engine);
+  std::unique_ptr<FunctionApproximator> buildApproximator(RewardFunction rf, ApproximatorCandidate& candidate,
+                                                          std::default_random_engine* engine);
 
   /// Compute the split candidates from a Matrix in which:
   /// - Lines are dimensions
   /// - Each column is one of the samples
-  std::vector<std::unique_ptr<Split>> getSplitCandidates(const Eigen::MatrixXd & samples);
+  std::vector<std::unique_ptr<Split>> getSplitCandidates(const Eigen::MatrixXd& samples);
 
   /// Build a cross-validation state for the given space and the given training_set_size
-  Eigen::MatrixXd getCrossValidationSet(const Eigen::MatrixXd & space,
-                                        int training_set_size,
-                                        std::default_random_engine * engine);
+  Eigen::MatrixXd getCrossValidationSet(const Eigen::MatrixXd& space, int training_set_size,
+                                        std::default_random_engine* engine);
 
   /// Update the candidate by training a model for its training state
   /// and training space
-  void updateAction(RewardFunction rf,
-                    ApproximatorCandidate & candidate,
-                    const Eigen::VectorXd & guess,
-                    std::default_random_engine * engine);
+  void updateAction(RewardFunction rf, ApproximatorCandidate& candidate, const Eigen::VectorXd& guess,
+                    std::default_random_engine* engine);
 
   /// Return an optimized constant policy
   /// guess is the action currently guessed to be optimal
-  std::unique_ptr<FunctionApproximator>
-  optimizeConstantPolicy(EvaluationFunction policy_evaluator,
-                         const Eigen::VectorXd & guess,
-                         std::default_random_engine * engine);
-    
+  std::unique_ptr<FunctionApproximator> optimizeConstantPolicy(EvaluationFunction policy_evaluator,
+                                                               const Eigen::VectorXd& guess,
+                                                               std::default_random_engine* engine);
+
   /// Return an optimized linear policy
   /// guess is the action currently guessed to be optimal
-  std::unique_ptr<FunctionApproximator>
-  optimizeLinearPolicy(EvaluationFunction policy_evaluator,
-                       const Eigen::MatrixXd & parameters_space,
-                       const Eigen::VectorXd & guess,
-                       std::default_random_engine * engine);
+  std::unique_ptr<FunctionApproximator> optimizeLinearPolicy(EvaluationFunction policy_evaluator,
+                                                             const Eigen::MatrixXd& parameters_space,
+                                                             const Eigen::VectorXd& guess,
+                                                             std::default_random_engine* engine);
 
   /// Update the 'reward' field of the candidate, using his 'approximator'
   /// and cross-validation
-  void updateReward(RewardFunction rf,
-                    ApproximatorCandidate & candidate,
-                    std::default_random_engine * engine);
+  void updateReward(RewardFunction rf, ApproximatorCandidate& candidate, std::default_random_engine* engine);
 
   /// Compute the average reward for the given function approximator
-  double computeAverageReward(RewardFunction rf,
-                              const FunctionApproximator & fa,
-                              const Eigen::VectorXd & parameters,
-                              std::default_random_engine * engine);
+  double computeAverageReward(RewardFunction rf, const FunctionApproximator& fa, const Eigen::VectorXd& parameters,
+                              std::default_random_engine* engine);
 
   /// Return a function
-  EvaluationFunction getEvaluationFunction(RewardFunction rf,
-                                           const Eigen::MatrixXd & training_set);
+  EvaluationFunction getEvaluationFunction(RewardFunction rf, const Eigen::MatrixXd& training_set);
 
   virtual std::string getClassName() const;
   virtual Json::Value toJson() const override;
-  virtual void fromJson(const Json::Value & v, const std::string & dir_name) override;
+  virtual void fromJson(const Json::Value& v, const std::string& dir_name) override;
 
 private:
-
-  static void print(const ApproximatorCandidate & candidate, std::ostream & out);
-
+  static void print(const ApproximatorCandidate& candidate, std::ostream& out);
 
   /// Leafs which have already been processed
   std::deque<ProcessedLeaf> processed_leaves;
@@ -196,4 +179,4 @@ private:
   bool linear_uses_guess;
 };
 
-}
+}  // namespace rhoban_fa

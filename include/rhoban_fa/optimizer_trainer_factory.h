@@ -8,11 +8,10 @@
 
 namespace rhoban_fa
 {
-
 class OptimizerTrainerFactory : public rhoban_utils::Factory<OptimizerTrainer>
 {
 public:
   OptimizerTrainerFactory();
 };
 
-}
+}  // namespace rhoban_fa
