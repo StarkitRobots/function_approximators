@@ -34,7 +34,7 @@ find_package(catkin REQUIRED COMPONENTS ${CATKIN_DEPS})
 
 set(DELEG_INCLUDE_DIRS include ${catkin_INCLUDE_DIRS})
 
-set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -std=c++11")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wall -Wextra -std=c++17")
 
 catkin_package(
   INCLUDE_DIRS ${DELEG_INCLUDE_DIRS}
