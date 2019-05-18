@@ -11,15 +11,15 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <build_depend>rhoban_regression_forests</build_depend> <!-- rhoban/regression_forests.git -->
-  <build_depend>rhoban_bbo</build_depend> <!-- rhoban/bbo.git -->
-  <build_depend>tiny-dnn</build_depend> <!-- optional rhobandeps/tiny-dnn.git -->
-  <build_depend>rhoban_viewer</build_depend> <!-- optional rhoban/viewer.git -->
+  <build_depend>rhoban_regression_forests</build_depend> <!-- StarkitRobots/regression_forests.git -->
+  <build_depend>rhoban_bbo</build_depend> <!-- StarkitRobots/bbo.git -->
+  <build_depend>tiny-dnn</build_depend> <!-- optional StarkitRobots/tiny-dnn.git -->
+  <build_depend>rhoban_viewer</build_depend> <!-- optional StarkitRobots/viewer.git -->
 
-  <run_depend>rhoban_regression_forests</run_depend>
-  <run_depend>rhoban_bbo</run_depend>
+  <run_depend>starkit_regression_forests</run_depend>
+  <run_depend>starkit_bbo</run_depend>
   <run_depend>tiny-dnn</run_depend>
-  <run_depend>rhoban_viewer</run_depend>
+  <run_depend>starkit_viewer</run_depend>
 
   <export/>
 </package>
