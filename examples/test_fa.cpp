@@ -1,9 +1,9 @@
-#include "rhoban_fa/function_approximator_factory.h"
-#include "rhoban_fa/trainer_factory.h"
+#include "starkit_fa/function_approximator_factory.h"
+#include "starkit_fa/trainer_factory.h"
 
-#include "rhoban_random/tools.h"
+#include "starkit_random/tools.h"
 
-using namespace rhoban_fa;
+using namespace starkit_fa;
 
 Eigen::VectorXd sampleOutput(const Eigen::VectorXd& input, std::default_random_engine* engine)
 {
@@ -24,14 +24,14 @@ int main(int argc, char** argv)
 
   std::unique_ptr<Trainer> trainer = TrainerFactory().buildFromJsonFile(argv[1]);
 
-  std::default_random_engine engine = rhoban_random::getRandomEngine();
+  std::default_random_engine engine = starkit_random::getRandomEngine();
 
   // Getting inputs and observations
   int nb_entries = 10000;
   Eigen::MatrixXd limits(1, 2);
   limits << -M_PI, M_PI;
   Eigen::MatrixXd inputs, observations;
-  inputs = rhoban_random::getUniformSamplesMatrix(limits, nb_entries, &engine);
+  inputs = starkit_random::getUniformSamplesMatrix(limits, nb_entries, &engine);
   observations = Eigen::MatrixXd(nb_entries, 2);
   for (int i = 0; i < nb_entries; i++)
   {
@@ -48,7 +48,7 @@ int main(int argc, char** argv)
   // Testing approximators
   int nb_tests = 2;
   Eigen::MatrixXd test_inputs;
-  test_inputs = rhoban_random::getUniformSamplesMatrix(limits, nb_tests, &engine);
+  test_inputs = starkit_random::getUniformSamplesMatrix(limits, nb_tests, &engine);
   for (int i = 0; i < test_inputs.cols(); i++)
   {
     const Eigen::VectorXd& input = test_inputs.col(i);

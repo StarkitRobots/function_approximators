@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <package>
-  <name>rhoban_fa</name>
+  <name>starkit_fa</name>
   <version>0.0.0</version>
   <description>This package contains several function approximators and a factory to build them</description>
 
@@ -11,10 +11,10 @@
 
   <buildtool_depend>catkin</buildtool_depend>
 
-  <build_depend>rhoban_regression_forests</build_depend> <!-- StarkitRobots/regression_forests.git -->
-  <build_depend>rhoban_bbo</build_depend> <!-- StarkitRobots/bbo.git -->
+  <build_depend>starkit_regression_forests</build_depend> <!-- StarkitRobots/regression_forests.git -->
+  <build_depend>starkit_bbo</build_depend> <!-- StarkitRobots/bbo.git -->
   <build_depend>tiny-dnn</build_depend> <!-- optional StarkitRobots/tiny-dnn.git -->
-  <build_depend>rhoban_viewer</build_depend> <!-- optional StarkitRobots/viewer.git -->
+  <build_depend>starkit_viewer</build_depend> <!-- optional StarkitRobots/viewer.git -->
 
   <run_depend>starkit_regression_forests</run_depend>
   <run_depend>starkit_bbo</run_depend>

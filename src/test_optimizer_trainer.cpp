@@ -1,12 +1,12 @@
-#include "rhoban_fa/optimizer_trainer_factory.h"
+#include "starkit_fa/optimizer_trainer_factory.h"
 
-#include "rhoban_random/tools.h"
+#include "starkit_random/tools.h"
 
 #include <iostream>
 
 #include <fenv.h>
 
-using namespace rhoban_fa;
+using namespace starkit_fa;
 
 struct ParametrizedBlackBox
 {
@@ -73,7 +73,7 @@ int main(int argc, char** argv)
   }
   // Global parameters of execution
   int nb_evaluations = 1000;
-  std::default_random_engine engine = rhoban_random::getRandomEngine();
+  std::default_random_engine engine = starkit_random::getRandomEngine();
   // Read optimizer trainer
   std::unique_ptr<OptimizerTrainer> optimizer_trainer;
   optimizer_trainer = OptimizerTrainerFactory().buildFromJsonFile(argv[1]);
@@ -89,7 +89,7 @@ int main(int argc, char** argv)
   // Performing evaluation
   double total_reward = 0;
   Eigen::MatrixXd evaluation_set;
-  evaluation_set = rhoban_random::getUniformSamplesMatrix(pbb.parameters_limits, nb_evaluations, &engine);
+  evaluation_set = starkit_random::getUniformSamplesMatrix(pbb.parameters_limits, nb_evaluations, &engine);
   for (int i = 0; i < nb_evaluations; i++)
   {
     Eigen::VectorXd parameters = evaluation_set.col(i);

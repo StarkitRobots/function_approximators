@@ -1,15 +1,15 @@
-#include "rhoban_fa/function_approximator.h"
-#include "rhoban_fa/function_approximator_factory.h"
-#include "rhoban_fa/trainer.h"
-#include "rhoban_fa/trainer_factory.h"
+#include "starkit_fa/function_approximator.h"
+#include "starkit_fa/function_approximator_factory.h"
+#include "starkit_fa/trainer.h"
+#include "starkit_fa/trainer_factory.h"
 
 #include <fstream>
 #include <iostream>
 
-using rhoban_fa::FunctionApproximator;
-using rhoban_fa::FunctionApproximatorFactory;
-using rhoban_fa::Trainer;
-using rhoban_fa::TrainerFactory;
+using starkit_fa::FunctionApproximator;
+using starkit_fa::FunctionApproximatorFactory;
+using starkit_fa::Trainer;
+using starkit_fa::TrainerFactory;
 
 int main()
 {

@@ -1,4 +1,4 @@
-#include "rhoban_fa/tools/viewer.h"
+#include "starkit_fa/tools/viewer.h"
 
 #include <iostream>
 
@@ -10,7 +10,7 @@ int main(int argc, char** argv)
     exit(EXIT_FAILURE);
   }
 
-  rhoban_fa::Viewer viewer(argv[1], argv[2], 1920, 1080);
+  starkit_fa::Viewer viewer(argv[1], argv[2], 1920, 1080);
 
   while (viewer.update())
   {

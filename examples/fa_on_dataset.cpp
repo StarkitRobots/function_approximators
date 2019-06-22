@@ -1,10 +1,10 @@
-#include "rhoban_fa/function_approximator_factory.h"
-#include "rhoban_fa/trainer_factory.h"
+#include "starkit_fa/function_approximator_factory.h"
+#include "starkit_fa/trainer_factory.h"
 
-#include "rhoban_random/tools.h"
+#include "starkit_random/tools.h"
 
-using namespace rhoban_fa;
-using namespace rhoban_utils;
+using namespace starkit_fa;
+using namespace starkit_utils;
 
 class DataSet : public JsonSerializable
 {
@@ -21,8 +21,8 @@ public:
   void fromJson(const Json::Value& v, const std::string& dir_name) override
   {
     (void)dir_name;
-    inputs = rhoban_utils::read<Eigen::MatrixXd>(v, "inputs");
-    outputs = rhoban_utils::read<Eigen::MatrixXd>(v, "outputs");
+    inputs = starkit_utils::read<Eigen::MatrixXd>(v, "inputs");
+    outputs = starkit_utils::read<Eigen::MatrixXd>(v, "outputs");
   }
   Json::Value toJson() const override
   {
